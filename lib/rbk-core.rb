@@ -51,3 +51,4 @@ end
 require core/'repository'
 require core/'hook'
 require core/'logger'
+require core/'message'
