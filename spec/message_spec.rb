@@ -2,6 +2,27 @@
 
 require File.join(File.dirname(__FILE__),'..','lib', 'rbk-core')
 
+class TestObserved
+	include RedBook::Messaging
+
+	def initialize(o=nil)
+		add_observer o if o
+	end
+
+	def do_something
+		info "Something"
+	end
+end
+
+class TestObserver
+	
+	attr_accessor :data
+
+	def update(data)
+		@data = data
+	end
+end
+
 describe RedBook::Message do
 
 	it "is defined by specifying a name and a value" do
@@ -54,5 +75,24 @@ describe RedBook::Message do
 		result.should == 28
 	end
 
+end
+
+describe RedBook::Messaging do
+
+	it "should define standard message types" do
+		a = TestObserved.new
+		a.info("hello!").name.should == :info
+		a.warning("hello!").name.should == :warning
+		a.error("hello!").name.should == :error
+		a.debug("hello!").name.should == :debug
+	end
+
+	it "should be observable" do
+		observer = TestObserver.new
+		observed = TestObserved.new(observer)
+		observed.do_something
+		observer.data.name.should == :info
+		observer.data.value.should == "Something"
+	end
 end
 

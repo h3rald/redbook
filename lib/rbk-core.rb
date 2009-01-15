@@ -12,6 +12,7 @@ require 'pathname'
 require 'extlib'
 require 'yaml'
 require 'dm-core'
+require 'observer'
 
 lib = Pathname(__FILE__).dirname.expand_path
 core = lib/'rbk-core'

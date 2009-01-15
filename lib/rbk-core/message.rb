@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
 
-
 module RedBook
 	class Message
 
@@ -46,6 +45,35 @@ module RedBook
 			@children.each { |c| c.recurse(&block) } unless @children.empty?
 		end
 	end
+
+	module Messaging
+		
+		include Observable
+		
+		def info(message)
+			notify(:info, message)
+		end
+
+		def warning(message)
+			notify(:warning, message)
+		end
+		
+		def error(message)
+			notify(:error, message)
+		end
+
+		def debug(message)
+			notify(:debug, message)
+		end
+
+		def notify(name, value)
+			changed
+			notify_observers msg(name, value)
+			msg(name, value)
+		end
+		
+	end
+
 end
 
 module Kernel
