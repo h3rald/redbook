@@ -63,7 +63,7 @@ module RedBook
 		end
 
 		def debug(message)
-			notify(:debug, message)
+			notify(:debug, message) if RedBook.debug
 		end
 
 		def notify(name, value)

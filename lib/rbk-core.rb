@@ -26,6 +26,15 @@ module RedBook
 	
 	def self.setup
 		@config = load_config
+		@debug = false
+	end
+
+	def self.debug
+		@debug	
+	end
+
+	def self.debug=(value)
+		@debug = value	
 	end
 
 	def self.config
@@ -49,7 +58,7 @@ module RedBook
 
 end
 
+require core/'message'
 require core/'repository'
 require core/'hook'
-require core/'logger'
-require core/'message'
+require core/'engine'

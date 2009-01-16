@@ -84,6 +84,7 @@ describe RedBook::Messaging do
 		a.info("hello!").name.should == :info
 		a.warning("hello!").name.should == :warning
 		a.error("hello!").name.should == :error
+		RedBook.debug = true
 		a.debug("hello!").name.should == :debug
 	end
 

@@ -26,6 +26,7 @@ module RedBook
 	class HookCollection < Hash
 
 		def run(id, params={})
+			return nil unless self[id]
 			result = nil
 			self[id].each do |c|
 				result = c.execute(params)

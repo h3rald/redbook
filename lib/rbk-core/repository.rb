@@ -15,7 +15,7 @@ module RedBook
 			include DataMapper::Resource
 
 			property :id, Serial
-			property :message, String, :nullable => false
+			property :text, String, :nullable => false
 			property :type, String, :nullable => false, :default => 'entry'
 			property :timestamp, DateTime, :nullable => false
 
