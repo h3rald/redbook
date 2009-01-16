@@ -35,4 +35,15 @@ describe RedBook::Engine do
 		e.select(:timestamp.gt => t).length.should == 3
 		e.select(:type.like => "%ent%", :text.like => '%d%').length.should == 2
 	end
+
+	it "should add selected entries to the dataset" do
+		RedBook::Repository.reset
+		e = RedBook::Engine.new db
+		entries.each { |entry| e.log entry }
+		e.select
+		e.dataset.length.should == 3
+		e.select(:text.like => '%d%')
+		e.dataset.length.should == 2
+	end
+
 end

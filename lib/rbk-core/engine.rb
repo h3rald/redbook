@@ -5,9 +5,10 @@ module RedBook
 	class Engine
 		
 		include Messaging
-		
-		@@hooks = HookCollection.new
+		include Hookable
 
+		attr_accessor :repository, :dataset
+		
 		def initialize(db=nil)
 			db ||= "#{RedBook::HOME_DIR}/log.rbk"
 			@repository = "sqlite3://#{db}"
@@ -16,15 +17,15 @@ module RedBook
 		end
 
 		def log(params={})
-			@@hooks.run :before_insert_entry, :params => params
+			hook :before_insert_entry, params
 			insert_entry params
-			@@hooks.run :after_insert_entry, :params => params
+			hook :after_insert_entry, params
 		end
 
 		def select(params={})
-			@@hooks.run :before_select_entries, :params => params
+			hook :before_select_entries, params
 			@dataset = select_entries params
-			@@hooks.run :after_select_entries, :params => params
+			hook :after_select_entries, params
 			@dataset
 		end
 		

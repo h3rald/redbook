@@ -20,12 +20,10 @@ module RedBook
 		end
 
 	end
-end
 
-module RedBook
 	class HookCollection < Hash
 
-		def run(id, params={})
+		def execute(id, params={})
 			return nil unless self[id]
 			result = nil
 			self[id].each do |c|
@@ -33,6 +31,28 @@ module RedBook
 				break if result[:stop] == true
 			end
 			result[:value]
+		end
+
+	end
+
+	module Hookable
+
+		def self.included(mod)
+			
+			class << mod
+				
+				@@hooks = HookCollection.new
+				
+				def hooks
+					@@hooks
+				end
+			
+			end
+
+		end
+
+		def hook(id, params={})
+			@@hooks.execute id, params
 		end
 
 	end

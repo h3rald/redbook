@@ -4,16 +4,12 @@ require File.join(File.dirname(__FILE__),'..','lib', 'rbk-core')
 
 class RedBook::HookTest
 
-	@@hooks = RedBook::HookCollection.new
+	include RedBook::Hookable
 
 	attr_reader :result
 	
 	def initialize
 		@result = 0
-	end
-
-	def self.hooks
-		@@hooks
 	end
 
 end
@@ -33,7 +29,7 @@ end
 using_hook = lambda do
 	class RedBook::HookTest
 		def do_something
-			@result = @@hooks.run(:test, {:a => 2, :b => 10})
+			@result = hook :test, :a => 2, :b => 10
 		end
 	end
 end
