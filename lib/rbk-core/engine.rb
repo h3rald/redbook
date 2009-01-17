@@ -12,21 +12,35 @@ module RedBook
 		def initialize(db=nil)
 			db ||= "#{RedBook::HOME_DIR}/log.rbk"
 			@repository = "sqlite3://#{db}"
+			@dataset = []
 			Repository.setup @repository
 			create_repository unless File.exists? db			
 		end
 
-		def log(params={})
-			hook :before_insert_entry, params
-			insert_entry params
-			hook :after_insert_entry, params
+		def log(attributes={})
+			hook :before_insert, :attributes => attributes
+			insert_entry attributes
+			hook :after_insert, :attributes => attributes
 		end
 
-		def select(params={})
-			hook :before_select_entries, params
-			@dataset = select_entries params
-			hook :after_select_entries, params
+		def select(attributes={})
+			hook :before_select, :attributes => attributes
+			@dataset = select_entries attributes
+			hook :after_select, :attributes => attributes
 			@dataset
+		end
+
+		def update(index, attributes={})
+			hook :before_update, :index => index, :attributes => attributes
+			entry = update_entry index, attributes
+			hook :after_update, :index => index, :attributes => attributes
+			entry
+		end
+
+		def delete(index)
+			hook :before_delete, :index => index
+			delete_entry index
+			hook :after_delete, :index => index
 		end
 		
 		private
@@ -35,16 +49,32 @@ module RedBook
 			Repository.reset
 		end
 
-		def insert_entry(params={})
-			entry = Repository::Entry.new params
-			raise Exception, "Entry text not specified" unless params[:text] 
+		def insert_entry(attributes={})
+			entry = Repository::Entry.new attributes
+			raise Exception, "Entry text not specified" unless attributes[:text] 
 			entry.type = "entry"
-			entry.timestamp = Time.now unless params[:timestamp]
+			entry.timestamp = Time.now unless attributes[:timestamp]
 			entry.save
 		end
 
-		def select_entries(params={})
-			Repository::Entry.all(params)
+		def update_entry(index, attributes={})
+			raise EngineError, "Empty index" if @dataset.blank?
+			raise EngineError, "Invalid dataset index" unless index >=0 && index < @dataset.length
+			raise EngineError, "Nothing to update" if attributes.blank?
+			entry = @dataset[index]
+			entry.attributes = attributes
+			entry.save
+		end
+		
+		def delete_entry(index)
+			raise EngineError, "Empty index" if @dataset.blank?
+			raise EngineError, "Invalid dataset index" unless index >=0 && index < @dataset.length
+			entry = @dataset[index]
+			entry.destroy
+		end
+
+		def select_entries(attributes={})
+			Repository::Entry.all(attributes)
 		end
 
 	end

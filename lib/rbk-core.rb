@@ -17,9 +17,11 @@ require 'observer'
 lib = Pathname(__FILE__).dirname.expand_path
 core = lib/'rbk-core'
 
-class RedBookError < Exception; {} end;
 
 module RedBook
+	
+	class GenericError < RuntimeError; {} end;
+	class EngineError < RuntimeError; {} end;
 
 	HOME_DIR = RUBY_PLATFORM =~ /win32/i ? ENV['HOMEPATH'] : ENV['HOME']
 	
