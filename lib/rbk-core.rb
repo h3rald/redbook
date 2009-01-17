@@ -21,39 +21,14 @@ class RedBookError < Exception; {} end;
 
 module RedBook
 
-	CORE_DIR = Pathname(__FILE__).dirname.expand_path/'rbk-core'
 	HOME_DIR = RUBY_PLATFORM =~ /win32/i ? ENV['HOMEPATH'] : ENV['HOME']
 	
-	def self.setup
-		@config = load_config
-		@debug = false
-	end
-
 	def self.debug
 		@debug	
 	end
 
 	def self.debug=(value)
 		@debug = value	
-	end
-
-	def self.config
-		@config
-	end
-
-	private 
-
-	def self.load_config
-		cfg = nil
-		rbk_cfg = Pathname(__FILE__).dirname.expand_path/'../rbk-config.yaml'
-		try_file = lambda { |f| return File.exists?(f) ? f : false }
-		cfg = try_file.call(rbk_cfg)
-		raise RedBookError, "Configuration file not found" unless cfg
-		begin
-			YAML.load_file cfg
-		rescue Exception => e
-			raise RedBookError, "Invalid configuration file '#{cfg}' [#{e.message}]"
-		end
 	end
 
 end

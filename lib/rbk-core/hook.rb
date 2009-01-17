@@ -4,7 +4,7 @@ module RedBook
 
 	class Hook
 
-		attr_accessor :class, :id, :params, :proc, :stop
+		attr_accessor :class, :id, :params, :block, :stop
 
 		def initialize(klass, id, stop=false,&block)
 			block_given? ? @block = block :	raise(ArgumentError, "No action specified for '#{id.to_s}' hook")
