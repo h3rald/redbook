@@ -21,7 +21,7 @@ defining_hook = lambda do
 end
 
 defining_another_hook = lambda do
-	RedBook::Hook.new(RedBook::HookTest, :test) do |params|
+	RedBook::HookTest.define_hook(:test) do |params|
 		params[:a]+params[:b]
 	end
 end
@@ -62,11 +62,10 @@ describe RedBook::Hook do
 	it "should stop execution of hooks if necessary" do
 		using_hook
 		defining_hook
-		stoppable = RedBook::Hook.new(RedBook::HookTest, :test) do |params|
+		stoppable = RedBook::Hook.new(RedBook::HookTest, :test, true) do |params|
 			params[:a]*params[:b]
 		end
 		defining_another_hook
-		stoppable.stop = true
 		test = RedBook::HookTest.new
 		test.do_something
 		test.result.should == 20
