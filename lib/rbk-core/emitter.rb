@@ -38,8 +38,6 @@ module RedBook
 			nil
 		end
 
-		private
-
 		def load_templates(dir)
 			Dir.glob(dir/"*.erb").each do	|f| 
 				load_template(:"#{File.basename(f, ".#{@format.to_s}.erb")}") if f =~ /#{@format.to_s}\.erb$/ 

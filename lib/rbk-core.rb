@@ -38,8 +38,8 @@ module RedBook
 
 end
 
+require core/'hook'
 require core/'message'
 require core/'repository'
-require core/'hook'
 require core/'engine'
 require core/'emitter'

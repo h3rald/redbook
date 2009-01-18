@@ -66,4 +66,15 @@ describe RedBook::Engine do
 		e.select.length.should == 2
 	end
 
+	it "should save the dataset to a file" do
+		RedBook::Repository.reset
+		e = RedBook::Engine.new db
+		entries.each { |entry| e.log entry }
+		file = (Pathname(__FILE__).dirname.expand_path/'test.txt').to_s
+		lambda { e.save(file) }.should raise_error
+		e.select
+		lambda { e.save(file) }.should_not raise_error
+		File.exist?(file).should == true
+	end
+
 end

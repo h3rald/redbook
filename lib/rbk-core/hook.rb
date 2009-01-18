@@ -79,6 +79,11 @@ module RedBook
 				def define_hook(id, stop=false, &block)
 					Hook.new self, id, stop, &block
 				end
+				
+				# Triggers the execution of a particular class hook.
+				def hook(id, params={})
+					@@hooks.execute id, params
+				end
 			
 			end
 

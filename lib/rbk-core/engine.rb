@@ -82,7 +82,25 @@ module RedBook
 			delete_entry index
 			hook :after_delete, :index => index
 		end
-		
+
+		# Saves the dataset's contents to a file
+		#
+		# <i>Hooks</i>
+		# * <i>:before_save</i> :file => String, :format => Symbol
+		# * <i>:after_save</i> :file => String
+		def save(file, format=:txt)
+			raise EngineError, "Empty dataset." if @dataset.blank?
+			em = Emitter.new(format)
+			em.load_template :entry
+			hook :before_save, :file => file, :format => format
+			File.open(file, 'w+')	do |f|
+				@dataset.each do |entry|
+					f.write em.render(:entry, :entry => entry)
+				end
+			end
+			hook :after_save, :file => file
+		end
+
 		private
 
 		def create_repository
