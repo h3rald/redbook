@@ -13,6 +13,7 @@ require 'extlib'
 require 'yaml'
 require 'dm-core'
 require 'observer'
+require 'erubis/tiny'
 
 lib = Pathname(__FILE__).dirname.expand_path
 core = lib/'rbk-core'
@@ -22,7 +23,9 @@ module RedBook
 	
 	class GenericError < RuntimeError; {} end;
 	class EngineError < RuntimeError; {} end;
-
+	class EmitterError < RuntimeError; {} end;
+	
+	CORE_DIR = Pathname(__FILE__).dirname.expand_path
 	HOME_DIR = RUBY_PLATFORM =~ /win32/i ? ENV['HOMEPATH'] : ENV['HOME']
 	
 	def self.debug
@@ -39,3 +42,4 @@ require core/'message'
 require core/'repository'
 require core/'hook'
 require core/'engine'
+require core/'emitter'
