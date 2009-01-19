@@ -12,6 +12,10 @@ class TestObserved
 	def do_something
 		info "Something"
 	end
+	
+	def do_something_else
+		warning "Something else"
+	end
 end
 
 class TestObserver
@@ -94,6 +98,11 @@ describe RedBook::Messaging do
 		observed.do_something
 		observer.data.name.should == :info
 		observer.data.value.should == "Something"
+		RedBook.silent = true
+		observed.do_something_else
+		observer.data.name.should == :info
+		observer.data.value.should == "Something"
+		RedBook.silent = false 
 	end
 end
 

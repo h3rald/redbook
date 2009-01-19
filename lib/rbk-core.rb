@@ -28,14 +28,11 @@ module RedBook
 	CORE_DIR = Pathname(__FILE__).dirname.expand_path
 	HOME_DIR = RUBY_PLATFORM =~ /win32/i ? ENV['HOMEPATH'] : ENV['HOME']
 	
-	def self.debug
-		@debug	
-	end
-
-	def self.debug=(value)
-		@debug = value	
-	end
-
+	class << self; attr_accessor :debug, :silent; end
+	
+	@debug = false
+	@silent = false
+	
 end
 
 require core/'hook'

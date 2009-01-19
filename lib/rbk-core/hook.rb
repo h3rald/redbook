@@ -8,13 +8,10 @@ module RedBook
 	class Hook
 
 		# Defines a new hook.
-		def initialize(klass, id, stop=false,&block)
+		def initialize(id, stop=false,&block)
 			block_given? ? @block = block :	raise(ArgumentError, "No action specified for '#{id.to_s}' hook")
-			@class = klass
 			@id = id
 			@stop = stop
-			@class.hooks[id] = [] unless @class.hooks[id]
-			@class.hooks[id] << self
 		end
 
 		# Executes the hook.
@@ -27,13 +24,25 @@ module RedBook
 	# A collection of Hook objects to be executed sequentially
 	# within a method of a class including the
 	# Hookable module (do not use directly).
-	class HookCollection < Hash
+	class HookCollection
+
+		def initialize
+			@contents = {}
+		end
+
+		def [](id)
+			@contents[id]
+		end
+
+		def []=(id, value)
+			@contents[id] = value
+		end
 
 		# Execute the hooks labeled with +id+ sequentially.
 		def execute(id, params={})
 			return nil unless self[id]
 			result = nil
-			self[id].each do |c|
+			@contents[id].each do |c|
 				result = c.execute(params)
 				break if result[:stop] == true
 			end
@@ -64,34 +73,27 @@ module RedBook
 	module Hookable
 
 		def self.included(mod)
-			
-			class << mod
-				
-				@@hooks = HookCollection.new
-			
-				# Returns the HookCollection object used by
-				# the hookable class.	
-				def hooks
-					@@hooks
-				end
+			mod.instance_eval do
+				@hooks = HookCollection.new
+				class << mod;	attr_reader :hooks;	end
 
 				# Defines a new hook for the hookable class.
 				def define_hook(id, stop=false, &block)
-					Hook.new self, id, stop, &block
+					h = Hook.new id, stop, &block
+					@hooks[id] = [] unless @hooks[id]
+					@hooks[id] << h
 				end
-				
-				# Triggers the execution of a particular class hook.
+
+				# Triggers the execution of a hook at class level.
 				def hook(id, params={})
-					@@hooks.execute id, params
+					@hooks.execute id, params
 				end
-			
 			end
 
-		end
-
-		# Triggers the execution of a particular hook.
-		def hook(id, params={})
-			@@hooks.execute id, params
+			# Triggers the execution of a particular hook at instance level.
+			def hook(id, params={})
+				self.class.hooks.execute id, params
+			end
 		end
 
 	end
