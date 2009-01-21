@@ -6,15 +6,14 @@ module RedBook
 		include Hookable
 		
 		def self.setup(params)
-			self.hook :before_setup, :params => params
 			DataMapper.setup(:default, params)
-			self.hook :after_setup
 		end
 
+		@resources = []
+		class << self; attr_accessor :resources; end
+
 		def self.reset
-			self.hook :before_reset
-			Entry.auto_migrate!
-			self.hook :after_reset
+			self.resources.each { |r| r.auto_migrate! }
 		end
 
 		class Entry
@@ -28,6 +27,8 @@ module RedBook
 			property :timestamp, DateTime, :nullable => false
 
 		end
+
+		resources << Entry
 
 	end
 end

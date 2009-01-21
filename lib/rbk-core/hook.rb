@@ -84,10 +84,6 @@ module RedBook
 					@hooks[id] << h
 				end
 
-				# Triggers the execution of a hook at class level.
-				def hook(id, params={})
-					@hooks.execute id, params
-				end
 			end
 
 			# Triggers the execution of a particular hook at instance level.
