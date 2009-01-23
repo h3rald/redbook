@@ -16,6 +16,7 @@ module RedBook
 	class Engine
 		
 		include Hookable
+		include Messaging
 
 		attr_accessor :repository, :dataset
 		

@@ -32,7 +32,7 @@ module RedBook
 			end
 
 			def parse(value="")
-				raise ParserError, "Parameter ':#{@name.to_s}' is required." if value.blank? && @required
+				raise ParserError, "A value for ':#{@name.to_s}' is required." if value.blank? && @required
 				case @type
 				when :string then
 					return value
@@ -78,6 +78,7 @@ module RedBook
 		# Parser Class
 
 		include Hookable
+		include Messaging
 
 		class << self; attr_accessor :operations, :time_context, :now; end
 
@@ -92,9 +93,10 @@ module RedBook
 		def parse(str)
 			directives = str.split(/(^:[a-z_]+){1}|(\s+:[a-z_]+){1}/)
 			directives.delete_at(0)
+			raise ParserError, "No operation specified." if directives.blank?
 			directives.each { |d| d.strip! }
 			operation = Parser.operations[instance_eval(directives[0])]
-			raise ParserError, "'#{directives[0]}' is not a valid operation." unless operation
+			raise ParserError, "Unrecognized operation '#{directives[0]}'." unless operation
 			parameters = {}
 			i = 0
 			while i < directives.length do
@@ -108,6 +110,7 @@ module RedBook
 				i = i+2
 			end
 			parameters = operation.post_parsing.call parameters if operation.post_parsing
+			parameters = nil if parameters.blank?
 			return operation.name, parameters
 		end
 
@@ -173,5 +176,9 @@ class RedBook::Parser
 			return params[:save], params[:format].to_sym
 		end
 	end
+
+	operation :quit
+	operation :debug
+	operation :output
 
 end
