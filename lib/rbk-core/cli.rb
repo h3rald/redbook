@@ -52,12 +52,12 @@ module RedBook
 		end
 
 		def debug_operation
-			RedBook.debug = !RedBook.debug
+			@engine.debug
 			info "Debug #{RedBook.debug ? 'on' : 'off'}."
 		end
 
 		def output_operation
-			RedBook.output = !RedBook.output
+			@engine.output		
 			info "Output #{RedBook.output ? 'on' : 'off'}."
 		end
 
@@ -109,12 +109,17 @@ module RedBook
 		def ruby_operation(string)
 			result = nil
 			begin 
-				result = @engine.instance_eval string
+				result = @engine.ruby string
 			rescue Exception => e
 				raise CliError, e.message, e.backtrace
 			end
 			result.to_s.each_line { |l| puts " #{l}" if RedBook.output }
 		end	
+
+		def save_operation(params)
+			@engine.save params[0], params[1]
+			info "Dataset saved to '#{params[0]}'"
+		end
 
 		### Private methods
 		private

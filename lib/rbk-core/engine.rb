@@ -57,11 +57,11 @@ module RedBook
 		def select(attributes=nil)
 			attributes = {} if attributes.blank?
 			hook :before_select, :attributes => attributes
-			debug ":select attributes:" 
-			debug attributes.to_yaml
+			m_debug ":select attributes:" 
+			m_debug attributes.to_yaml
 			@dataset = select_entries attributes
 			hook :after_select, :attributes => attributes
-			debug "Items in dataset: #{@dataset.length.to_s}"
+			m_debug "Items in dataset: #{@dataset.length.to_s}"
 			@dataset
 		end
 
@@ -105,6 +105,25 @@ module RedBook
 			end
 			hook :after_save, :file => file
 		end
+		
+		# Redefine Messaging::debug
+		alias m_debug debug
+
+		# Toggles debug output.
+		def debug
+			RedBook.debug = !RedBook.debug
+		end
+
+		# Toggles standard output.
+		def output
+			RedBook.output = !RedBook.output
+		end
+
+		# Evaluates a string as Ruby code.
+		def ruby(string)
+			instance_eval string
+		end	
+
 
 		private
 

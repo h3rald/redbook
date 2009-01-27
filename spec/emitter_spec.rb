@@ -11,7 +11,7 @@ describe RedBook::Emitter do
 	it "should load and render templates" do
 		emitter = RedBook::Emitter.new(:txt)
 		m = emitter.render(:message, :message => msg(:info, "Test #1"))
-		m.should == "[info] Test #1\n"
+		m.should == "[info] Test #1"
 	end
 
 	it "should cache templates" do

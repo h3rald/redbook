@@ -7,6 +7,14 @@ module RedBook
 		class Operation
 
 			attr_accessor :params, :name, :post_parsing
+			
+			def to_s
+				@name.to_s
+			end
+
+			def to_str
+				@name.to_s
+			end
 
 			def initialize(name)
 				@name = name
@@ -18,23 +26,21 @@ module RedBook
 			def parameter(name, &block)
 				@params[name] = Parameter.new(name, &block)
 			end
+
 		end
 
-		def to_s
-			":"+name.to_s
-		end
-
-		alias to_str to_s
 
 		class Parameter 
 
 			attr_accessor :name, :type, :required
 
 			def to_s
-				":"+name.to_s
+				@name.to_s
 			end
 
-			alias to_str to_s
+			def to_str
+				@name.to_s
+			end
 
 			def initialize(name)
 				@name = name
@@ -44,7 +50,7 @@ module RedBook
 			end
 
 			def parse(value="")
-				raise ParserError, "A value for ':#{@name.to_s}' is required." if value.blank? && @required
+				raise ParserError, "A value for ':#{self}' is required." if value.blank? && @required
 				case @type
 				when :string then
 					return value
@@ -52,36 +58,36 @@ module RedBook
 					now = Parser.now || Time.now
 					begin
 						result = Chronic.parse(value, :context => Parser.time_context, :now => now)
-						raise ParserError, "Parameter ':#{@name.to_s}' is not a time expression." unless result.class == Time
+						raise ParserError, "Parameter ':#{self}' is not a time expression." unless result.class == Time
 						return result
 					rescue
-						raise ParserError, "Parameter ':#{@name.to_s}' is not a time expression."
+						raise ParserError, "Parameter ':#{self}' is not a time expression."
 					end
 				when :integer then
 					begin
 						result = value.to_i
-						raise ParserError, "Parameter ':#{@name.to_s}' is not an integer." if result == 0 && value != "0"
+						raise ParserError, "Parameter ':#{self}' is not an integer." if result == 0 && value != "0"
 						return result
 					rescue
-						raise ParserError, "Parameter ':#{@name.to_s}' is not an integer."
+						raise ParserError, "Parameter ':#{self}' is not an integer."
 					end	
 				when :float then
 					begin 
 						result = value.to_f
-						raise ParserError, "Parameter ':#{@name.to_s}' is not a float." if result == 0.0 && value != "0.0"
+						raise ParserError, "Parameter ':#{self}' is not a float." if result == 0.0 && value != "0.0"
 						return result
 					rescue
-						raise ParserError, "Parameter ':#{@name.to_s}' is not a float."
+						raise ParserError, "Parameter ':#{self}' is not a float."
 					end	
 				when :list then
-					raise ParserError, "Parameter ':#{@name.to_s}' is not a list." if value.blank?
+					raise ParserError, "Parameter ':#{self}' is not a list." if value.blank?
 					return value.strip.split(' ')
 				when :bool then 
 					return true 
 				else
 					return_value = nil
 					hook :parse_custom_type, :value => value, :return => return_value
-					raise ParserError, "Unknown type ':#{@type.to_s}' for parameter ':#{@name.to_s}'." unless return_value
+					raise ParserError, "Unknown type ':#{@type.to_s}' for parameter ':#{self}'." unless return_value
 					return return_value
 				end
 			end
@@ -123,7 +129,7 @@ module RedBook
 			end
 			parameters = operation.post_parsing.call parameters if operation.post_parsing
 			parameters = nil if parameters.blank?
-			debug "Parameters for operation #{operation.to_s}:"
+			debug "Parameters for operation '#{operation}':"
 			debug parameters.to_yaml
 			return operation.name, parameters
 		end
@@ -185,7 +191,7 @@ class RedBook::Parser
 
 	operation(:save) do |o|
 		o.parameter(:save) { |p| p.required = true }
-		o.parameter :format
+		o.parameter(:format) { |p| p.required = true }
 		o.post_parsing = lambda do |params|
 			return params[:save], params[:format].to_sym
 		end

@@ -98,11 +98,6 @@ describe RedBook::Messaging do
 		observed.do_something
 		observer.data.name.should == :info
 		observer.data.value.should == "Something"
-		RedBook.silent = true
-		observed.do_something_else
-		observer.data.name.should == :info
-		observer.data.value.should == "Something"
-		RedBook.silent = false 
 	end
 end
 
