@@ -1,0 +1,7 @@
+	<entry>
+		<text><%= @entry.text -%></text>
+		<timestamp><%= @entry.timestamp.to_s -%></timestamp><% if @entry.respond_to? :tags then -%>
+			<tags><% @entry.tags.each do |t| -%>
+			<tag><%= t -%></tag><% end -%>
+		</tags><% end -%>
+	</entry>

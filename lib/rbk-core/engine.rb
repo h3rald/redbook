@@ -93,15 +93,21 @@ module RedBook
 		# <i>Hooks</i>
 		# * <i>:before_save</i> :file => String, :format => Symbol
 		# * <i>:after_save</i> :file => String
+		# * <i>:saved_file_header</i> :format => Symbol # => String
+		# * <i>:saved_file_footer</i> :format => Symbol # => String
 		def save(file, format=:txt)
 			raise EngineError, "Empty dataset." if @dataset.blank?
 			em = Emitter.new(format)
 			em.load_template :entry
 			hook :before_save, :file => file, :format => format
 			File.open(file, 'w+')	do |f|
+				header = hook :saved_file_header, :format => format
+				f.write header unless header.blank?
 				@dataset.each do |entry|
 					f.write em.render(:entry, :entry => entry)
 				end
+				footer = hook :saved_file_footer , :format => format
+				f.write footer unless footer.blank?
 			end
 			hook :after_save, :file => file
 		end
@@ -161,3 +167,42 @@ module RedBook
 
 	end
 end
+
+# Implementing hooks for saving CSV, XML and XHTML files
+
+RedBook::Engine.define_hook :saved_file_header do |params|
+	result = ""
+	case params[:format]
+	when :xml then
+		result <<	"<xml version=\"1.0\" encoding=\"UTF-8\">\n"
+		result << "<dataset>\n"
+	when :csv then
+		s = RedBook.csv_separator
+		result << "Entry"+s+"Timestamp"+s+"Tags\n"
+	when :html||:xhtml then
+		result << "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
+		result << "<head>\n"
+		result << "	<title>RedBook Dataset</title>\n"
+		result << "</head>\n"
+		result << "<body>\n"
+		result << "<h1>RedBook Dataset</h1>\n"
+		result << "<div id=\"dataset\">\n"
+	end
+	result
+end
+
+RedBook::Engine.define_hook :saved_file_footer do |params|
+	result = ""
+	case params[:format]
+	when :xml then
+		result << "\n</dataset>\n"
+	when :html||:xhtml then
+		result << "\n</div>\n"
+		result << "</body>\n"
+	end
+	result
+end
+
+		
+		
+	
