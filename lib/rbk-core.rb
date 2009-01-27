@@ -15,9 +15,9 @@ require 'dm-core'
 require 'observer'
 require 'erubis/tiny'
 require 'chronic'
-require 'highline'
+require 'highline/system_extensions'
+require 'highline/import'
 require 'rawline'
-
 
 lib = Pathname(__FILE__).dirname.expand_path
 core = lib/'rbk-core'
@@ -29,7 +29,7 @@ module RedBook
 	class EngineError < RuntimeError; {} end;
 	class EmitterError < RuntimeError; {} end;
 	class ParserError < RuntimeError; {} end;
-	class ShellError < RuntimeError; {} end;
+	class CliError < RuntimeError; {} end;
 	
 	CORE_DIR = Pathname(__FILE__).dirname.expand_path
 	HOME_DIR = RUBY_PLATFORM =~ /win32/i ? ENV['HOMEPATH'] : ENV['HOME']
@@ -106,4 +106,4 @@ require core/'repository'
 require core/'engine'
 require core/'emitter'
 require core/'parser'
-require core/'shell'
+require core/'cli'

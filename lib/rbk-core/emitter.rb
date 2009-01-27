@@ -31,9 +31,12 @@ module RedBook
 		def render(template, params={})
 			load_template template unless @templates[template]
 			begin
-				return @templates[template].evaluate(params)
-			rescue
-				raise EmitterError, "Unable to render template '#{template.to_s}'"
+				return @templates[template].evaluate(params).chomp
+			rescue Exception => e
+				bkt = []
+			 	bkt << e.message
+				bkt = bkt + e.backtrace	
+				raise EmitterError, "Unable to render template '#{template.to_s}'.", bkt
 			end
 			nil
 		end

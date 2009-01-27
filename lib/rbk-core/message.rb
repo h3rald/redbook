@@ -68,7 +68,7 @@ module RedBook
 
 		def notify(name, value)
 			changed
-			notify_observers msg(name, value) if RedBook.output
+			notify_observers msg(name, value) 
 			msg(name, value)
 		end
 		

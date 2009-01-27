@@ -54,10 +54,14 @@ module RedBook
 		# <i>Hooks</i>
 		# * <i>:before_select</i> :attributes => Hash
 		# * <i>:after_select</i> :attributes => Hash
-		def select(attributes={})
+		def select(attributes=nil)
+			attributes = {} if attributes.blank?
 			hook :before_select, :attributes => attributes
+			debug ":select attributes:" 
+			debug attributes.to_yaml
 			@dataset = select_entries attributes
 			hook :after_select, :attributes => attributes
+			debug "Items in dataset: #{@dataset.length.to_s}"
 			@dataset
 		end
 

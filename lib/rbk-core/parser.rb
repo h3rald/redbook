@@ -20,9 +20,21 @@ module RedBook
 			end
 		end
 
+		def to_s
+			":"+name.to_s
+		end
+
+		alias to_str to_s
+
 		class Parameter 
 
 			attr_accessor :name, :type, :required
+
+			def to_s
+				":"+name.to_s
+			end
+
+			alias to_str to_s
 
 			def initialize(name)
 				@name = name
@@ -111,6 +123,8 @@ module RedBook
 			end
 			parameters = operation.post_parsing.call parameters if operation.post_parsing
 			parameters = nil if parameters.blank?
+			debug "Parameters for operation #{operation.to_s}:"
+			debug parameters.to_yaml
 			return operation.name, parameters
 		end
 
@@ -180,5 +194,13 @@ class RedBook::Parser
 	operation :quit
 	operation :debug
 	operation :output
+	operation :dataset
+
+	operation(:ruby) do |o|
+		o.parameter(:ruby) { |p| p.required = true }
+		o.post_parsing = lambda do |params|
+			return params[:ruby]
+		end
+	end
 
 end
