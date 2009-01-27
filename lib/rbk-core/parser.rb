@@ -50,7 +50,7 @@ module RedBook
 			end
 
 			def parse(value="")
-				raise ParserError, "A value for ':#{self}' is required." if value.blank? && @required
+				raise ParserError, "Please specify a value for the ':#{self}' directive." if value.blank? && @required
 				case @type
 				when :string then
 					return value
@@ -127,12 +127,25 @@ module RedBook
 				parameters[key] = operation.params[key].parse value
 				i = i+2
 			end
+			check_required_parameters operation, parameters
 			parameters = operation.post_parsing.call parameters if operation.post_parsing
 			parameters = nil if parameters.blank?
 			debug "Parameters for operation '#{operation}':"
 			debug parameters.to_yaml
 			return operation.name, parameters
 		end
+
+		private
+		
+		def check_required_parameters(operation, parameters)
+			operation.params.each_pair do |label, p|
+				# operation's target is already checked when parsed as parameter
+				if p.required && label != operation.name then
+					raise ParserError, "Parameter '#{p}' is required." if parameters[p.name].blank?
+				end
+			end
+		end
+					
 
 	end
 end

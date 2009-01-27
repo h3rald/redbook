@@ -168,7 +168,7 @@ module RedBook
 	end
 end
 
-# Implementing hooks for saving CSV, XML and XHTML files
+# Implementing hooks for saving XML and XHTML files
 
 RedBook::Engine.define_hook :saved_file_header do |params|
 	result = ""
@@ -176,9 +176,6 @@ RedBook::Engine.define_hook :saved_file_header do |params|
 	when :xml then
 		result <<	"<xml version=\"1.0\" encoding=\"UTF-8\">\n"
 		result << "<dataset>\n"
-	when :csv then
-		s = RedBook.csv_separator
-		result << "Entry"+s+"Timestamp"+s+"Tags\n"
 	when :html||:xhtml then
 		result << "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
 		result << "<head>\n"

@@ -1,0 +1,7 @@
+	<div class="entry">
+		<span class="timestamp"><%= @entry.timestamp.strftime("%a %b %d %Y - %I:%M:%S %p") -%>: </span>
+		<span class="text"><%= @entry.text -%></span><% if @entry.respond_to? :tags then -%>
+			<ul class="tags"><% @entry.tags.each do |t| -%>
+			<li class="tag"><%= t -%></li><% end -%>
+		</ul><% end -%>
+	</div>
