@@ -21,7 +21,7 @@ module RedBook
 					nil
 				end
 			end
-			@@template_dirs << CORE_DIR/'../templates' unless @@template_dirs.include? CORE_DIR/'../templates'
+			@@template_dirs << LIB_DIR/'../templates' unless @@template_dirs.include? LIB_DIR/'../templates'
 			@templates = {}
 			if @cache then
 				@@template_dirs.each {|d| load_templates d}

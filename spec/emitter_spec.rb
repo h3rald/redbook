@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.join(File.dirname(__FILE__),'..','lib', 'rbk-core')
+require File.join(File.dirname(__FILE__),'..','lib', 'redbook')
 
 describe RedBook::Emitter do
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-require File.join(File.dirname(__FILE__),'..','lib', 'rbk-core')
+require File.join(File.dirname(__FILE__),'..','lib', 'redbook')
 
 db = (Pathname(__FILE__).dirname.expand_path/'test.rbk').to_s
 t = Time.now

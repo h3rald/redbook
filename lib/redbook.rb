@@ -20,7 +20,7 @@ require 'highline/import'
 require 'rawline'
 
 lib = Pathname(__FILE__).dirname.expand_path
-core = lib/'rbk-core'
+core = lib/'redbook'
 
 
 module RedBook
@@ -31,7 +31,7 @@ module RedBook
 	class ParserError < RuntimeError; {} end;
 	class CliError < RuntimeError; {} end;
 	
-	CORE_DIR = Pathname(__FILE__).dirname.expand_path
+	LIB_DIR = Pathname(__FILE__).dirname.expand_path
 	HOME_DIR = RUBY_PLATFORM =~ /win32/i ? ENV['HOMEPATH'] : ENV['HOME']
 	if RUBY_PLATFORM.match /win32/i then
 		begin 
