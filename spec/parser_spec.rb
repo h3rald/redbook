@@ -116,5 +116,18 @@ describe RedBook::Parser do
 		lambda { p.parse ":update 1 :timestamp This won't work" }.should raise_error
 	end
 
+	it "can parse macros" do
+		RedBook::Parser.macros[:test] = ":log Testing <:test>" 
+		RedBook::Parser.macros[:bugfix] = ":log Fixing <:bugfix> :tags <:tags> bugfix"
+		# Macros can be recursive
+	 	RedBook::Parser.macros[:urgfix]	= ":bugfix <:urgfix> :tags urgent"
+		RedBook::Parser.operations[:log].parameter(:tags) {|p| p.type = :list}
+		p = RedBook::Parser.new
+		p.parse(":test GUI").should == p.parse(":log Testing GUI")
+		p.parse(":bugfix A12008 :tags low").should == p.parse(":log Fixing A12008 :tags low bugfix")
+		p.parse(":urgfix A12008").should == p.parse(":log Fixing A12008 :tags urgent bugfix")
+		lambda { p.parse ":wrong This won't work" }.should raise_error
+	end
+
 end
 

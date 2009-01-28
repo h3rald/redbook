@@ -5,9 +5,8 @@ module RedBook
 	class Parser
 
 		class Operation
-
 			attr_accessor :params, :name, :post_parsing
-			
+
 			def to_s
 				@name.to_s
 			end
@@ -26,12 +25,10 @@ module RedBook
 			def parameter(name, &block)
 				@params[name] = Parameter.new(name, &block)
 			end
-
 		end
 
 
 		class Parameter 
-
 			attr_accessor :name, :type, :required
 
 			def to_s
@@ -98,23 +95,62 @@ module RedBook
 		include Hookable
 		include Messaging
 
-		class << self; attr_accessor :operations, :time_context, :now; end
+		class << self; attr_accessor :operations, :macros, :time_context, :now; end
 
 		@now = nil
 		@time_context = :past
 		@operations = {}
+		@macros = {}
 
 		def self.operation(name, &block)
 			self.operations[name] = Operation.new(name, &block)
 		end
 
 		def parse(str)
+			directives = parse_command str
+			operation = Parser.operations[instance_eval(directives[0])]
+			return parse(parse_macro(str, directives)) if operation.blank?		
+			parameters = parse_directives operation, directives
+			check_required_parameters operation, parameters
+			parameters = operation.post_parsing.call parameters if operation.post_parsing
+			parameters = nil if parameters.blank?
+			debug "Parameters for operation '#{operation}':"
+			debug parameters.to_yaml
+			return operation.name, parameters
+		end
+		
+		private
+
+		def parse_macro(str, directives)
+			name = directives[0]
+			macro = Parser.macros[instance_eval(name)]
+			raise ParserError, "Unknown operation/macro '#{name}'." unless macro	
+			placeholders = macro.scan(/<:([a-z_]+)>/).to_a.flatten
+			i = 0
+			raw_params = {}
+			while i < directives.length do
+				key = instance_eval directives[i]
+				value = directives[i+1]
+				raw_params[key] = value
+				i = i+2
+			end
+			result = macro.dup
+			placeholders.each do |p|
+				subst = raw_params[p.to_sym] ? raw_params[p.to_sym] : ''
+				result.gsub!(/<:#{p}>/, subst)
+			end
+			return result
+		end
+
+		def parse_command(str)
 			directives = str.split(/(^:[a-z_]+){1}|(\s+:[a-z_]+){1}/)
 			directives.delete_at(0)
 			raise ParserError, "No operation specified." if directives.blank?
 			directives.each { |d| d.strip! }
-			operation = Parser.operations[instance_eval(directives[0])]
-			raise ParserError, "Unrecognized operation '#{directives[0]}'." unless operation
+			directives
+		end
+
+		def parse_directives(operation, directives)
 			parameters = {}
 			i = 0
 			while i < directives.length do
@@ -127,16 +163,10 @@ module RedBook
 				parameters[key] = operation.params[key].parse value
 				i = i+2
 			end
-			check_required_parameters operation, parameters
-			parameters = operation.post_parsing.call parameters if operation.post_parsing
-			parameters = nil if parameters.blank?
-			debug "Parameters for operation '#{operation}':"
-			debug parameters.to_yaml
-			return operation.name, parameters
+			parameters
 		end
 
-		private
-		
+
 		def check_required_parameters(operation, parameters)
 			operation.params.each_pair do |label, p|
 				# operation's target is already checked when parsed as parameter
@@ -145,7 +175,6 @@ module RedBook
 				end
 			end
 		end
-					
 
 	end
 end
