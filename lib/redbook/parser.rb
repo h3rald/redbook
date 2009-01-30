@@ -5,7 +5,7 @@ module RedBook
 	class Parser
 
 		class Operation
-			attr_accessor :params, :name, :post_parsing
+			attr_accessor :parameters, :name, :post_parsing
 
 			def to_s
 				@name.to_s
@@ -17,13 +17,13 @@ module RedBook
 
 			def initialize(name)
 				@name = name
-				@params = {}
+				@parameters = {}
 				@post_parsing = nil
 				yield self if block_given?
 			end
 
 			def parameter(name, &block)
-				@params[name] = Parameter.new(name, &block)
+				@parameters[name] = Parameter.new(name, &block)
 			end
 		end
 
@@ -124,7 +124,7 @@ module RedBook
 		def parse_macro(str, directives)
 			name = directives[0]
 			macro = Parser.macros[instance_eval(name)]
-			raise ParserError, "Unknown operation/macro '#{name}'." unless macro	
+			raise ParserError, "Unknown operation '#{name}'." unless macro	
 			placeholders = macro.scan(/<:([a-z_]+)>/).to_a.flatten
 			i = 0
 			raw_params = {}
@@ -156,11 +156,11 @@ module RedBook
 			while i < directives.length do
 				key = instance_eval directives[i]
 				value = directives[i+1]
-				unless operation.params[key] # Unknown parameters are ignored
+				unless operation.parameters[key] # Unknown parameters are ignored
 					i = i+2
 					next
 				end
-				parameters[key] = operation.params[key].parse value
+				parameters[key] = operation.parameters[key].parse value
 				i = i+2
 			end
 			parameters
@@ -168,7 +168,7 @@ module RedBook
 
 
 		def check_required_parameters(operation, parameters)
-			operation.params.each_pair do |label, p|
+			operation.parameters.each_pair do |label, p|
 				# operation's target is already checked when parsed as parameter
 				if p.required && label != operation.name then
 					raise ParserError, "Parameter '#{p}' is required." if parameters[p.name].blank?

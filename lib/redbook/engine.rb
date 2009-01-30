@@ -172,7 +172,7 @@ module RedBook
 				Repository::Entry.first(limit, attributes)
 			when :last then
 				attributes[:order] = [:timestamp.desc]
-				Repository::Entry.first(limit, attributes).reverse
+				Repository::Entry.first(limit, attributes)
 			end
 		end
 

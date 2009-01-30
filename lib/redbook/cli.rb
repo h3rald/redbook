@@ -4,6 +4,7 @@ module RedBook
 	class Cli
 
 		include Messaging
+		include Hookable
 
 		def initialize(repository=nil, prompt=" >> ")
 			@prompt = prompt
@@ -13,6 +14,8 @@ module RedBook
 			[@parser, @engine, self].each do |o|
 				o.add_observer self
 			end
+			@editor = RawLine::Editor.new
+			setup_completion
 		end
 		
 		def start
@@ -20,15 +23,14 @@ module RedBook
 			# Main REPL
 			loop do
 				begin
-					print @prompt
-					operation, params = @parser.parse gets
+					operation, params = @parser.parse @editor.read(@prompt).chomp!
 					name = (operation.to_s+"_operation").to_sym
-					raise CliError, "Operation ':#{operation.to_s}' is not accessible via this shell." unless respond_to? name
+					raise CliError, "Operation '#{operation.to_sym.textualize}' is not accessible via this shell." unless respond_to? name
 					m = method(name)
 					(params.blank?) ? m.call : m.call(params)
 				rescue Exception => e
 					if e.class == SystemExit || e.class == Interrupt then
-						warning "RedBook CLI stopped."
+						info "RedBook CLI stopped."
 						exit
 					end
 					(RedBook.debug) ? error("#{e.class.to_s}: #{e.message}") : error(e.message)
@@ -128,6 +130,39 @@ module RedBook
 			puts @emitter.render(symbol, params).chomp
 		end
 
+		def setup_completion
+			operations = []
+		 	RedBook::Parser.operations.each_pair do |l,v|
+				operations << ":#{l.to_s}"
+			end
+		 	RedBook::Parser.macros.each_pair do |l,v|
+				operations << ":#{l.to_s}"
+			end
+			completion_proc = lambda do |str|
+				if @editor.line.text.strip == str.strip then
+					return operations.find_all { |e| e.to_s.match(/^#{Regexp.escape(str)}/) }
+				else
+					matches = []
+					words = @editor.line.text.split @editor.word_separator
+					operation = RedBook::Parser.operations[words[0].symbolize]
+					if operation then
+						operation.parameters.each_pair do |l,v|
+							parameter = v.to_s.symbolize.textualize
+							matches << parameter unless @editor.line.text.match parameter
+						end
+					else
+						# Try macros
+						macro = RedBook::Parser.macros[":#{words[0].symbolize}"]
+						if macro then
+							macro_params = macro.scan(/:([a-z_]+)/).to_a.flatten
+							macro_params.each { |p| matches << p unless @editor.line.text.match p}
+						end
+					end
+					return matches.find_all { |e| e.to_s.match(/^#{Regexp.escape(str)}/) }
+				end
+			end
+			@editor.completion_proc = completion_proc
+		end
 			
 	end
 end

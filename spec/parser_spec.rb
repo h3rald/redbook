@@ -9,9 +9,9 @@ describe RedBook::Parser do
 		op.should_not == nil
 		op.name.should == :log
 		op.post_parsing.should_not == nil
-		op.params[:log].should_not == nil
-		op.params[:timestamp].should_not == nil
-		op.params[:type].should_not == nil
+		op.parameters[:log].should_not == nil
+		op.parameters[:timestamp].should_not == nil
+		op.parameters[:type].should_not == nil
 	end
 
 	it "should define :select operation" do
@@ -19,10 +19,10 @@ describe RedBook::Parser do
 		op.should_not == nil
 		op.name.should == :select
 		op.post_parsing.should_not == nil
-		op.params[:select].should_not == nil
-		op.params[:from].should_not == nil
-		op.params[:to].should_not == nil
-		op.params[:type].should_not == nil
+		op.parameters[:select].should_not == nil
+		op.parameters[:from].should_not == nil
+		op.parameters[:to].should_not == nil
+		op.parameters[:type].should_not == nil
 	end
 
 	it "should define :update operation" do
@@ -30,10 +30,10 @@ describe RedBook::Parser do
 		op.should_not == nil
 		op.name.should == :update
 		op.post_parsing.should_not == nil
-		op.params[:update].should_not == nil
-		op.params[:timestamp].should_not == nil
-		op.params[:text].should_not == nil
-		op.params[:type].should_not == nil
+		op.parameters[:update].should_not == nil
+		op.parameters[:timestamp].should_not == nil
+		op.parameters[:text].should_not == nil
+		op.parameters[:type].should_not == nil
 	end
 
 	it "should define :delete operation" do
@@ -41,7 +41,7 @@ describe RedBook::Parser do
 		op.should_not == nil
 		op.name.should == :delete
 		op.post_parsing.should_not == nil
-		op.params[:delete].should_not == nil
+		op.parameters[:delete].should_not == nil
 	end
 
 	it "should define :save operation" do
@@ -49,8 +49,8 @@ describe RedBook::Parser do
 		op.should_not == nil
 		op.name.should == :save
 		op.post_parsing.should_not == nil
-		op.params[:save].should_not == nil
-		op.params[:format].should_not == nil
+		op.parameters[:save].should_not == nil
+		op.parameters[:format].should_not == nil
 	end
 
 	it "should parse :log operations" do

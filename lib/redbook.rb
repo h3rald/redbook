@@ -51,8 +51,23 @@ module RedBook
 	
 end
 
+class Symbol
+
+	def textualize
+		":#{self.to_s}"
+	end
+end
+
 # The String class has been extended with some methods mainly for colorizing and encoding output.
 class String
+
+	def symbolize
+		if self.match /^:[a-z]+/ then
+			self.sub(':', '').to_sym
+		else
+			self.to_sym
+		end
+	end
 
 	# Make the receiver red.
 	def red; colorize(self, "\e[1;31m"); end

@@ -1,18 +1,18 @@
 <%
-	name = ""
+	prefix = ">>"
 	message = @message.value
 	case @message.name
 	when :info
-		name = "[i]".green
+		prefix = prefix.green
 		message = message.dark_green
 	when :warning
-		name = "[w]".yellow
+		prefix = prefix.yellow
 		message = message.dark_yellow
 	when :error
-		name = "[e]".red
+		prefix = prefix.red
 		message = message.dark_red
 	when :debug
-		name = "[d]".magenta
+		prefix = prefix.magenta
 		message = message.dark_magenta
 	end	
-%> <%= "#{name} #{message}" -%>
+%> <%= "#{prefix} #{message}" -%>
