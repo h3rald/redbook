@@ -26,6 +26,8 @@ module RedBook
 			property :type, String, :nullable => false, :default => 'entry'
 			property :timestamp, DateTime, :nullable => false
 
+			default_scope(:default).update(:order => [:timestamp.asc]) # set default order
+
 		end
 
 		resources << Entry

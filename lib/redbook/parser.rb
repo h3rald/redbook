@@ -199,6 +199,8 @@ class RedBook::Parser
 		o.parameter(:from) { |p| p.type = :time }
 		o.parameter(:to) { |p| p.type = :time }
 		o.parameter :type  
+		o.parameter(:first) { |p| p.type = :integer }
+		o.parameter(:last) { |p| p.type = :integer }
 		o.post_parsing = lambda do |params|
 			result = {}
 			result[:timestamp.lt] = params[:to] unless params[:to].blank?

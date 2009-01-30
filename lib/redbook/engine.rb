@@ -42,25 +42,25 @@ module RedBook
 		#
 		# <i>Hooks</i>
 		# * <i>:before_insert</i> :attributes => Hash
-		# * <i>:after_insert</i> :attributes => Hash
+		# * <i>:after_insert</i>
 		def log(attributes={})
 			hook :before_insert, :attributes => attributes
 			insert_entry attributes
-			hook :after_insert, :attributes => attributes
+			hook :after_insert
 		end
 		
 		# Selects entries matching specified criteria.
 		#
 		# <i>Hooks</i>
 		# * <i>:before_select</i> :attributes => Hash
-		# * <i>:after_select</i> :attributes => Hash
+		# * <i>:after_select</i> :dataset => Array
 		def select(attributes=nil)
 			attributes = {} if attributes.blank?
 			hook :before_select, :attributes => attributes
 			m_debug ":select attributes:" 
 			m_debug attributes.to_yaml
 			@dataset = select_entries attributes
-			hook :after_select, :attributes => attributes
+			hook :after_select, :dataset => @dataset
 			m_debug "Items in dataset: #{@dataset.length.to_s}"
 			@dataset
 		end
@@ -73,7 +73,7 @@ module RedBook
 		def update(index, attributes={})
 			hook :before_update, :index => index, :attributes => attributes
 			entry = update_entry index, attributes
-			hook :after_update, :index => index, :attributes => attributes
+			hook :after_update
 			entry
 		end
 
@@ -85,7 +85,7 @@ module RedBook
 		def delete(index)
 			hook :before_delete, :index => index
 			delete_entry index
-			hook :after_delete, :index => index
+			hook :after_delete
 		end
 
 		# Saves the dataset's contents to a file
@@ -162,7 +162,18 @@ module RedBook
 		end
 
 		def select_entries(attributes={})
-			Repository::Entry.all(attributes)
+			limit, type = attributes.delete(:first), :first if attributes[:first]
+			limit, type = attributes.delete(:last), :last if attributes[:last]
+			type ||= :select	
+			case type
+			when :select then
+				Repository::Entry.all(attributes)
+			when :first then
+				Repository::Entry.first(limit, attributes)
+			when :last then
+				attributes[:order] = [:timestamp.desc]
+				Repository::Entry.first(limit, attributes).reverse
+			end
 		end
 
 	end

@@ -34,6 +34,11 @@ describe RedBook::Engine do
 		e.select().length.should == 3
 		e.select(:timestamp.gt => t).length.should == 3
 		e.select(:type.like => "%ent%", :text.like => '%d%').length.should == 2
+		e.select(:last => 2).length.should == 2
+		e.select(:first => 1).length.should == 1
+		last2 = e.select.reverse
+		last2.pop
+		e.select(:last => 2).should == last2
 	end
 
 	it "should add selected entries to the dataset" do
