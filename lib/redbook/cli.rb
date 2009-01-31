@@ -17,7 +17,7 @@ module RedBook
 			@editor = RawLine::Editor.new
 			setup_completion
 		end
-		
+
 		def start
 			info "RedBook CLI started."
 			# Main REPL
@@ -51,10 +51,10 @@ module RedBook
 
 		def setup_completion
 			operations = []
-		 	RedBook::Parser.operations.each_pair do |l,v|
+			RedBook::Parser.operations.each_pair do |l,v|
 				operations << ":#{l.to_s}"
 			end
-		 	RedBook::Parser.macros.each_pair do |l,v|
+			RedBook::Parser.macros.each_pair do |l,v|
 				operations << ":#{l.to_s}"
 			end
 			completion_proc = lambda do |str|
@@ -85,7 +85,7 @@ module RedBook
 
 
 		### Operations
-		
+
 		def quit_operation
 			debug "Stopping RedBook CLI..."
 			exit
@@ -121,14 +121,19 @@ module RedBook
 			info "Item #{params[0].to_s} updated successfully."
 		end
 
-		def delete_operation(index)
-			if index < 1 || index > @engine.dataset.length then
-				error "Invalid index."
-				return
-			end
-			if agree(" >> Do you really want to delete item #{index.to_s}? ") then
-				@engine.delete index-1
-				info "Item #{index.to_s} deleted successfully."
+		def delete_operation(indexes=nil)
+			msg = ""
+			case
+			when indexes.blank? then
+				msg = "the whole dataset"
+			when indexes.length == 1 then
+				msg = "this item"
+			else
+				msg = "these items"
+			end	
+			if agree(" >> Do you really want to delete #{msg}? ") then
+				@engine.delete indexes
+				info "Operation successful."
 			else
 				warning "Nothing to do."
 			end
@@ -160,6 +165,6 @@ module RedBook
 			@engine.save params[0], params[1]
 			info "Dataset saved to '#{params[0]}'"
 		end
-			
+
 	end
 end

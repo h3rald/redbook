@@ -77,8 +77,16 @@ module RedBook
 						raise ParserError, "Parameter ':#{self}' is not a float."
 					end	
 				when :list then
-					raise ParserError, "Parameter ':#{self}' is not a list." if value.blank?
-					return value.strip.split(' ')
+					return value.strip.split
+				when :intlist then
+					intlist = value.strip.split
+					result = []
+					intlist.each do |i|
+						item = i.to_i
+						raise ParserError, "Parameter ':#{self}' is not a list of integers." if item == 0 && i != "0"
+						result << item
+					end
+					return result
 				when :bool then 
 					return true 
 				else
@@ -122,7 +130,7 @@ module RedBook
 			debug parameters.to_yaml
 			return operation.name, parameters
 		end
-
+		
 		private
 
 		def parse_macro(str, directives)
@@ -231,7 +239,7 @@ class RedBook::Parser
 	end
 
 	operation(:delete) do |o|
-		o.parameter(:delete) { |p| p.required = true; p.type = :integer }
+		o.parameter(:delete) { |p| p.type = :intlist }
 		o.post_parsing = lambda do |params|
 			return params[:delete]
 		end
@@ -256,9 +264,5 @@ class RedBook::Parser
 			return params[:ruby]
 		end
 	end
-
-	# Macros
-
-	macro :entries, ":select <:entries> :type entry"
 
 end

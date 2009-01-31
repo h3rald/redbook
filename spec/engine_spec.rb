@@ -61,14 +61,16 @@ describe RedBook::Engine do
 		e.select(:text.like => "%#2").length.should == 1
 	end
 
-	it "should delete an entry loaded in the current dataset" do
+	it "should delete entries loaded in the current dataset" do
 		RedBook::Repository.reset
 		e = RedBook::Engine.new db
 		entries.each { |entry| e.log entry }
-		lambda { e.delete 1}.should raise_error
+		lambda { e.delete [1]}.should raise_error
 		e.select
-		lambda { e.delete 1}.should_not raise_error
+		lambda { e.delete [1]}.should_not raise_error
 		e.select.length.should == 2
+		lambda { e.delete }.should_not raise_error
+		e.select.length.should == 0
 	end
 
 	it "should save the dataset to a file" do

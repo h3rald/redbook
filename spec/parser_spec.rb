@@ -90,7 +90,7 @@ describe RedBook::Parser do
 		p = RedBook::Parser.new
 		op = p.parse ":delete 3"
 		op[0].should == :delete
-		op[1].should == 3
+		op[1].should == [3]
 	end
 
 	it "should parse :save operations" do

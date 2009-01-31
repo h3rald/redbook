@@ -77,14 +77,24 @@ module RedBook
 			entry
 		end
 
-		# Deletes an entry loaded into the dataset.
+		# Deletes one or more entries loaded into the dataset.
 		#
 		# <i>Hooks</i>
-		# * <i>:before_delete</i> :index => Integer
-		# * <i>:after_delete</i> :index => Integer
-		def delete(index)
-			hook :before_delete, :index => index
-			delete_entry index
+		# * <i>:before_delete</i> :indexes => Integer
+		# * <i>:after_delete</i>
+		def delete(indexes=nil)
+			hook :before_delete, :indexes => indexes
+			raise EngineError "Empty dataset" if @dataset.blank?
+			if indexes.blank?
+				# Deletes the whole dataset
+				@dataset.each { |e| delete_entry e }
+			else
+				indexes.each do |i| 
+					entry = @dataset[i-1]
+					raise EngineError "Invalid index #{i}" unless entry
+					delete_entry entry
+				end
+			end
 			hook :after_delete
 		end
 
@@ -154,10 +164,7 @@ module RedBook
 			entry.save
 		end
 		
-		def delete_entry(index)
-			raise EngineError, "Empty index" if @dataset.blank?
-			raise EngineError, "Invalid dataset index" unless index >=0 && index < @dataset.length
-			entry = @dataset[index]
+		def delete_entry(entry)
 			entry.destroy
 		end
 
