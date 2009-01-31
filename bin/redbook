@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby
+
+require File.join(File.dirname(__FILE__),'..','lib', 'redbook')
+
+#db = (Pathname(__FILE__).dirname.expand_path/'test.rbk').to_s
+RedBook::Cli.new.start

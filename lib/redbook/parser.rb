@@ -102,6 +102,10 @@ module RedBook
 		@operations = {}
 		@macros = {}
 
+		def self.macro(name, str)
+			self.macros[name] = str
+		end
+
 		def self.operation(name, &block)
 			self.operations[name] = Operation.new(name, &block)
 		end
@@ -118,7 +122,7 @@ module RedBook
 			debug parameters.to_yaml
 			return operation.name, parameters
 		end
-		
+
 		private
 
 		def parse_macro(str, directives)
@@ -252,5 +256,9 @@ class RedBook::Parser
 			return params[:ruby]
 		end
 	end
+
+	# Macros
+
+	macro :entries, ":select <:entries> :type entry"
 
 end
