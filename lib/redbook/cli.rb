@@ -6,6 +6,8 @@ module RedBook
 		include Messaging
 		include Hookable
 
+		attr_reader :engine
+
 		def initialize(repository=nil, prompt=" >> ")
 			@prompt = prompt
 			@parser = Parser.new

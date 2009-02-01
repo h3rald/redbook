@@ -51,11 +51,11 @@ module RedBook
 		include Observable
 		
 		def info(message)
-			notify(:info, message)
+			notify(:info, message) if RedBook.output
 		end
 
 		def warning(message)
-			notify(:warning, message)
+			notify(:warning, message) if RedBook.output
 		end
 		
 		def error(message)

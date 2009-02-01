@@ -8,4 +8,5 @@ require 'message_spec'
 require 'engine_spec'
 require 'emitter_spec'
 require 'parser_spec'
+require 'tagging_plugin_spec'
 

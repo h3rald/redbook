@@ -1,4 +1,4 @@
 [<%= @entry.timestamp.strftime("%a %b %d %Y - %I:%M:%S %p") %>] <%= @entry.text -%>
 <% if @entry.respond_to? :tags then %>
-<% @entry.tags.each { |t| %><%= "@#{t} "-%> <% } %>
+<% @entry.tags.each { |t| %><%= "@#{t.name} "-%> <% } %>
 <% end%>

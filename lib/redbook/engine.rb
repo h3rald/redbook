@@ -42,25 +42,25 @@ module RedBook
 		#
 		# <i>Hooks</i>
 		# * <i>:before_insert</i> :attributes => Hash
-		# * <i>:after_insert</i>
+		# * <i>:after_insert</i> :attributes => Hash, :entry => RedBook::Repository::Entry
 		def log(attributes={})
 			hook :before_insert, :attributes => attributes
-			insert_entry attributes
-			hook :after_insert
+			entry = insert_entry attributes
+			hook :after_insert, :attributes => attributes, :entry => entry
 		end
 		
 		# Selects entries matching specified criteria.
 		#
 		# <i>Hooks</i>
 		# * <i>:before_select</i> :attributes => Hash
-		# * <i>:after_select</i> :dataset => Array
+		# * <i>:after_select</i> :attributes => Hash, :dataset => Array
 		def select(attributes=nil)
 			attributes = {} if attributes.blank?
 			hook :before_select, :attributes => attributes
 			m_debug ":select attributes:" 
 			m_debug attributes.to_yaml
 			@dataset = select_entries attributes
-			hook :after_select, :dataset => @dataset
+			hook :after_select, :attributes => attributes, :dataset => @dataset
 			m_debug "Items in dataset: #{@dataset.length.to_s}"
 			@dataset
 		end
@@ -69,11 +69,11 @@ module RedBook
 		#
 		# <i>Hooks</i>
 		# * <i>:before_update</i> :index => Integer, :attributes => Hash
-		# * <i>:after_update</i> :index => Integer, :attributes => Hash
+		# * <i>:after_update</i> :entry => RedBook::Repository::Entry
 		def update(index, attributes={})
 			hook :before_update, :index => index, :attributes => attributes
 			entry = update_entry index, attributes
-			hook :after_update
+			hook :after_update, :attributes => attributes, :entry => entry
 			entry
 		end
 
@@ -81,6 +81,8 @@ module RedBook
 		#
 		# <i>Hooks</i>
 		# * <i>:before_delete</i> :indexes => Integer
+		# * <i>:before_each_delete</i> :entry => RedBook::Repository::Entry
+		# * <i>:after_each_delete</i> :entry => RedBook::Repository::Entry
 		# * <i>:after_delete</i>
 		def delete(indexes=nil)
 			hook :before_delete, :indexes => indexes
@@ -92,7 +94,9 @@ module RedBook
 				indexes.each do |i| 
 					entry = @dataset[i-1]
 					raise EngineError "Invalid index #{i}" unless entry
+					hook :before_each_delete, :entry => entry
 					delete_entry entry
+					hook :after_each_delete, :entry => entry
 				end
 			end
 			hook :after_delete
@@ -148,38 +152,55 @@ module RedBook
 		end
 
 		def insert_entry(attributes={})
-			entry = Repository::Entry.new attributes
-			raise Exception, "Entry text not specified" unless attributes[:text] 
+			# Delete unknown attributes
+			attrs = attributes.dup
+			attrs.each_pair do |l, v|
+				attrs.delete l unless [:text, :timestamp, :type].include? l
+			end
+			entry = Repository::Entry.new attrs
+			raise Exception, "Entry text not specified" unless attrs[:text] 
 			entry.type = "entry"
-			entry.timestamp = Time.now unless attributes[:timestamp]
+			entry.timestamp = Time.now unless attrs[:timestamp]
 			entry.save
+			entry
 		end
 
 		def update_entry(index, attributes={})
+			# Delete unknown attributes
+			attributes.each_pair do |l, v|
+				attributes.delete l unless [:text, :timestamp, :type].include? l
+			end
 			raise EngineError, "Empty index" if @dataset.blank?
 			raise EngineError, "Invalid dataset index" unless index >=0 && index < @dataset.length
 			raise EngineError, "Nothing to update" if attributes.blank?
 			entry = @dataset[index]
 			entry.attributes = attributes
 			entry.save
+			entry
 		end
 		
 		def delete_entry(entry)
 			entry.destroy
+			entry
 		end
 
 		def select_entries(attributes={})
-			limit, type = attributes.delete(:first), :first if attributes[:first]
-			limit, type = attributes.delete(:last), :last if attributes[:last]
+			attrs = attributes.dup
+			limit, type = attrs.delete(:first), :first if attrs[:first]
+			limit, type = attrs.delete(:last), :last if attrs[:last]
+			# Delete unknown attributes
+			attrs.each_pair do |l, v|
+				attrs.delete l unless [:text, :timestamp, :type].include? l
+			end
 			type ||= :select	
 			case type
 			when :select then
-				Repository::Entry.all(attributes)
+				Repository::Entry.all(attrs)
 			when :first then
-				Repository::Entry.first(limit, attributes)
+				Repository::Entry.first(limit, attrs)
 			when :last then
-				attributes[:order] = [:timestamp.desc]
-				Repository::Entry.first(limit, attributes)
+				attrs[:order] = [:timestamp.desc]
+				Repository::Entry.first(limit, attrs)
 			end
 		end
 

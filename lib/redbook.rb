@@ -36,7 +36,7 @@ module RedBook
 	
 	class << self; attr_accessor :debug, :output, :colors; end
 	
-	@debug = true
+	@debug = false
 	@output = true
 	
 	if RUBY_PLATFORM =~ /win32/i then
