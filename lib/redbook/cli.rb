@@ -11,11 +11,11 @@ module RedBook
 			@parser = Parser.new
 			@emitter = Emitter.new('cli', true)
 			@engine = Engine.new(repository)
-			[@parser, @engine, self].each do |o|
-				o.add_observer self
-			end
+			[@parser, @engine, self].each { |o|	o.add_observer self }
+			RedBook::PluginCollection.plugins.each_pair { |l, v| v.add_observer self; v.setup }
 			@editor = RawLine::Editor.new
 			setup_completion
+			setup_shortcuts
 		end
 
 		def start
@@ -23,11 +23,7 @@ module RedBook
 			# Main REPL
 			loop do
 				begin
-					operation, params = @parser.parse @editor.read(@prompt)
-					name = (operation.to_s+"_operation").to_sym
-					raise CliError, "Operation '#{operation.to_sym.textualize}' is not accessible via this shell." unless respond_to? name
-					m = method(name)
-					(params.blank?) ? m.call : m.call(params)
+					process @editor.read(@prompt)
 				rescue Exception => e
 					if e.class == SystemExit || e.class == Interrupt then
 						info "RedBook CLI stopped."
@@ -39,6 +35,14 @@ module RedBook
 					end	
 				end	
 			end
+		end
+
+		def process(string)
+			operation, params = @parser.parse string
+			name = (operation.to_s+"_operation").to_sym
+			raise CliError, "Operation '#{operation.to_sym.textualize}' is not accessible via this shell." unless respond_to? name
+			m = method(name)
+			(params.blank?) ? m.call : m.call(params)
 		end
 
 		def update(message)
@@ -91,6 +95,16 @@ module RedBook
 			end
 			@editor.completion_proc = completion_proc
 		end
+
+		def setup_shortcuts
+			shortcut "\e\e", ":quit"
+			hook :cli_shortcuts, :cli => self
+		end
+
+		def shortcut(seq, command)
+			@editor.bind(seq) { @editor.write_line command }
+		end
+
 
 
 		### Operations
@@ -174,6 +188,7 @@ module RedBook
 			@engine.save params[0], params[1]
 			info "Dataset saved to '#{params[0]}'"
 		end
+
 
 	end
 end
