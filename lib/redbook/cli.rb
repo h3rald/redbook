@@ -63,18 +63,27 @@ module RedBook
 				else
 					matches = []
 					words = @editor.line.words
-					operation = RedBook::Parser.operations[words[0].symbolize]
-					if operation then
-						operation.parameters.each_pair do |l,v|
-							parameter = v.to_s.symbolize.textualize
-							matches << parameter unless @editor.line.text.match parameter
+					name = words[0].symbolize
+					add_operation_params = lambda do |name, matches|
+						operation = RedBook::Parser.operations[name]
+						if operation then
+							operation.parameters.each_pair do |l,v|
+								parameter = v.to_s.symbolize.textualize
+								matches << parameter unless @editor.line.text.match parameter
+							end
+							return true
 						end
-					else
+						return false
+					end
+					unless add_operation_params.call name, matches then  
 						# Try macros
-						macro = RedBook::Parser.macros[":#{words[0].symbolize}"]
+						macro = RedBook::Parser.macros[name]
 						if macro then
 							macro_params = macro.scan(/:([a-z_]+)/).to_a.flatten
 							macro_params.each { |p| matches << p unless @editor.line.text.match p}
+							add_operation_params.call macro_params[0].to_sym, matches
+							# Remove original operation from parameters
+							matches.delete(macro_params[0].symbolize.textualize)
 						end
 					end
 					return matches.find_all { |e| e.to_s.match(/^#{Regexp.escape(str)}/) }

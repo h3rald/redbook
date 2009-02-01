@@ -124,6 +124,8 @@ describe RedBook::Parser do
 		RedBook::Parser.operations[:log].parameter(:tags) {|p| p.type = :list}
 		p = RedBook::Parser.new
 		p.parse(":test GUI").should == p.parse(":log Testing GUI")
+		# It should inherit the original operation's parameters
+		p.parse(":test GUI :type bugfix").should == p.parse(":log Testing GUI :type bugfix")
 		p.parse(":bugfix A12008 :tags low").should == p.parse(":log Fixing A12008 :tags low bugfix")
 		p.parse(":urgfix A12008").should == p.parse(":log Fixing A12008 :tags urgent bugfix")
 		lambda { p.parse ":wrong This won't work" }.should raise_error

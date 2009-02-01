@@ -120,37 +120,40 @@ module RedBook
 
 		def parse(str)
 			directives = parse_command str
-			operation = Parser.operations[instance_eval(directives[0])]
+			operation = Parser.operations[directives[0].symbolize]
 			return parse(parse_macro(str, directives)) if operation.blank?		
 			parameters = parse_directives operation, directives
 			check_required_parameters operation, parameters
 			parameters = operation.post_parsing.call parameters if operation.post_parsing
 			parameters = nil if parameters.blank?
-			debug "Parameters for operation '#{operation}':"
-			debug parameters.to_yaml
 			return operation.name, parameters
 		end
-		
+	
 		private
 
 		def parse_macro(str, directives)
 			name = directives[0]
-			macro = Parser.macros[instance_eval(name)]
+			macro = Parser.macros[name.symbolize]
 			raise ParserError, "Unknown operation '#{name}'." unless macro	
 			placeholders = macro.scan(/<:([a-z_]+)>/).to_a.flatten
-			i = 0
 			raw_params = {}
+			result = macro.dup
+			i = 0
 			while i < directives.length do
-				key = instance_eval directives[i]
+				key = directives[i].symbolize
 				value = directives[i+1]
-				raw_params[key] = value
+				if placeholders.include? key.to_s then
+					raw_params[key] = value
+				else
+					result << ' '+key.textualize+' '+value
+				end				
 				i = i+2
 			end
-			result = macro.dup
-			placeholders.each do |p|
-				subst = raw_params[p.to_sym] ? raw_params[p.to_sym] : ''
-				result.gsub!(/<:#{p}>/, subst)
+			# Substitute placeholders
+			raw_params.each_pair do |label, value|
+				result.gsub!(/<#{label.textualize}>/, value)
 			end
+			debug "Processed macro: '#{result}'"
 			return result
 		end
 
@@ -166,7 +169,7 @@ module RedBook
 			parameters = {}
 			i = 0
 			while i < directives.length do
-				key = instance_eval directives[i]
+				key = directives[i].symbolize
 				value = directives[i+1]
 				unless operation.parameters[key] # Unknown parameters are ignored
 					i = i+2
@@ -264,5 +267,7 @@ class RedBook::Parser
 			return params[:ruby]
 		end
 	end
+
+	macro :entries, ":select <:entries> :type entry"
 
 end
