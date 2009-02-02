@@ -17,13 +17,21 @@ module RedBook
 			has n, :tagmap
 			has n, :tags, :through => :tagmap, :mutable => true #, :class_name => 'RedBook::Repository::Tag', :child_key => [:tag]
 			
-			def tagged_with(tags=nil)
+			def tagged_with?(tags=nil)
 				return true if tags.blank? && self.tags.blank?
 				return false if self.tags.blank?
 				tags ||= []
+				tags = [tags] unless tags.is_a? Array
 				entry_tags = []
 				self.tags.each { |t| entry_tags << t.name }
 				(entry_tags & tags).length == tags.uniq.length
+			end
+
+			def add_tag(t)
+				tag = Repository::Tag.first(:name => t) || Repository::Tag.create(:name => t)
+				tagmap = Repository::Tagmap.create :tag_id => tag.id, :entry_id => self.id
+				self.tagmap << tagmap
+				tagmap.save
 			end
 				
 		end
@@ -48,14 +56,14 @@ module RedBook
 		operations[:select].parameter(:tags) {|p| p.type = :list}
 		operations[:update].parameter(:tags) {|p| p.type = :list}
 
-		operation(:'tag+') do |o|
+		operation(:addtag) do |o|
 			o.parameter(:to) { |p| p.type = :intlist }
-			o.parameter(:'tag+') { |p| p.type = :list }
+			o.parameter(:addtag) { |p| p.type = :list }
 		end
 
-		operation(:'tag-') do |o|
+		operation(:rmtag) do |o|
 			o.parameter(:from) { |p| p.type = :intlist }
-			o.parameter(:'tag-') { |p| p.type = :list }
+			o.parameter(:rmtag) { |p| p.type = :list }
 		end
 
 		special_attributes << :tags
@@ -64,15 +72,38 @@ module RedBook
 
 	class Engine
 
+		def addtag(tags, indexes=nil)
+			raise EngineError, "Empty dataset." if @dataset.blank?
+			entries = get_selected_entries indexes
+			entries.each do |e|
+				tags.each do |t|
+					unless e.tagged_with? t then
+						e.add_tag t
+					end
+				end
+			end
+		end
+
+		def rmtag(tags, indexes=nil)
+			raise EngineError, "Empty dataset." if @dataset.blank?
+			entries = get_selected_entries indexes
+			entries.each do |e|
+				tags.each do |t|
+					if e.tagged_with? t then
+						tag = Repository::Tagmap.first(:entry_id => e.id, :tag_id => Repository::Tag.first(:name => t).id)
+						tag.destroy
+						e.tags.reload
+					end
+				end
+			end
+		end
+
 		define_hook(:after_insert) do |params|
 			tags = params[:attributes][:tags]
 			entry = params[:entry]
 			if tags then
 				tags.each do |t|
-					tag = Repository::Tag.first(:name => t) || Repository::Tag.create(:name => t)
-					tagmap = Repository::Tagmap.create :tag_id => tag.id, :entry_id => entry.id
-					entry.tagmap << tagmap
-					entry.save
+					entry.add_tag t					
 				end
 			end
 		end
@@ -86,10 +117,7 @@ module RedBook
 				entry_tags.each { |t| t.destroy }
 				entry.tags.reload
 				tags.each do |t|
-					tag = Repository::Tag.first(:name => t) || Repository::Tag.create(:name => t)
-					tagmap = Repository::Tagmap.create :tag_id => tag.id, :entry_id => entry.id
-					entry.tagmap << tagmap
-					entry.tagmap.save
+					entry.add_tag t					
 				end
 			end
 		end		
@@ -106,7 +134,19 @@ module RedBook
 
 		define_hook(:after_select) do |params|
 			tags = params[:attributes][:tags]
-			params[:dataset].each { |e| params[:dataset].delete e unless e.tagged_with tags}
+			params[:dataset].each { |e| params[:dataset].delete e unless e.tagged_with? tags}
+		end
+
+		define_hook(:cleanup) do |params|
+			if params[:tables].blank? || params[:tables].include?('tags') then
+				tags = Repository::Tag.all
+				tags.each do |t|
+					tagmap = Repository::Tagmap.first(:tag_id => t.id)
+					if tagmap.blank? then
+						t.destroy
+					end
+				end
+			end
 		end
 
 	end

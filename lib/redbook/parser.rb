@@ -138,7 +138,7 @@ module RedBook
 			name = directives[0]
 			macro = Parser.macros[name.symbolize]
 			raise ParserError, "Unknown operation '#{name}'." unless macro	
-			placeholders = macro.scan(/<:([a-z0-9:-_+]+)>/).to_a.flatten
+			placeholders = macro.scan(/<:([a-z_]+)>/).to_a.flatten
 			raw_params = {}
 			result = macro.dup
 			i = 0
@@ -161,7 +161,7 @@ module RedBook
 		end
 
 		def parse_command(str)
-			directives = str.split(/(^:[a-z0-9:-_+]+){1}|(\s+:[a-z0-9:-_+]+){1}/)
+			directives = str.split(/(^:[a-z_]+){1}|(\s+:[a-z_]+){1}/)
 			directives.delete_at(0)
 			raise ParserError, "No operation specified." if directives.blank?
 			directives.each { |d| d.strip! }
@@ -270,6 +270,10 @@ class RedBook::Parser
 		o.parameter(:rename) { |p| p.required = true }
 		o.parameter(:from) { |p| p.required = true }
 		o.parameter(:to) { |p| p.required = true }
+	end
+
+	operation(:cleanup) do |o|
+		o.parameter(:cleanup) { |p| p.type = :list }
 	end
 
 	operation :quit

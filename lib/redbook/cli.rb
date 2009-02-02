@@ -140,7 +140,7 @@ module RedBook
 		end
 
 		def update_operation(params)
-			@engine.update params[0]-1, params[1]
+			@engine.update params[0], params[1]
 			info "Item #{params[0].to_s} updated successfully."
 		end
 
@@ -192,6 +192,22 @@ module RedBook
 		def rename_operation(params)
 			@engine.rename params[:rename], params[:from], params[:to]
 			info "#{params[:rename].to_s.camelize} '#{params[:from]}' renamed to '#{params[:to]}'."
+		end
+
+		def cleanup_operation(params=nil)
+			info "Cleaning up unused records..."
+			@engine.cleanup params[:cleanup]
+			info "Cleanup complete."
+		end
+
+		def addtag_operation(params)
+			@engine.addtag params[:addtag], params[:to]
+			info "Done."
+		end
+
+		def rmtag_operation(params)
+			@engine.rmtag params[:rmtag], params[:from]
+			info "Done."
 		end
 
 	end

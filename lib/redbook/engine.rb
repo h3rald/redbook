@@ -66,13 +66,14 @@ module RedBook
 		end
 
 		# Updates an entry loaded into the dataset.
+		# (index is 1-based).
 		#
 		# <i>Hooks</i>
 		# * <i>:before_update</i> :index => Integer, :attributes => Hash
 		# * <i>:after_update</i> :entry => RedBook::Repository::Entry
 		def update(index, attributes={})
 			hook :before_update, :index => index, :attributes => attributes
-			entry = update_entry index, attributes
+			entry = update_entry index-1, attributes
 			hook :after_update, :attributes => attributes, :entry => entry
 			entry
 		end
@@ -162,12 +163,40 @@ module RedBook
 			instance_eval string
 		end	
 
+		# Cleans up unused auxiliary records belonging to specific tables.
+		def cleanup(tables=[])
+			hook :cleanup, :tables => tables
+		end
+
 
 		private
 
 		def create_repository
 			Repository.reset
 		end
+
+		def valid_index?(index)
+			index >=0 && index < @dataset.length
+		end
+
+		def get_selected_entries(indexes=nil)
+			entries = []
+			if indexes.blank?
+				entries = @dataset
+			else
+				# Indexes are 1-based
+				indexes.each do |i|
+					entry = @dataset[i-1]
+					if entry.blank?
+						warning "Invalid index #{i}."
+					else
+						entries << entry
+					end
+				end
+			end
+			entries
+		end
+
 
 		def insert_entry(attributes={})
 			# Delete special attributes
@@ -190,7 +219,7 @@ module RedBook
 				attrs.delete l if Parser.special_attributes.include? l
 			end
 			raise EngineError, "Empty index" if @dataset.blank?
-			raise EngineError, "Invalid dataset index" unless index >=0 && index < @dataset.length
+			raise EngineError, "Invalid dataset index" unless valid_index? index
 			raise EngineError, "Nothing to update" if attributes.blank? # Must check *all* attributes
 			entry = @dataset[index]
 			unless attrs.blank? then
