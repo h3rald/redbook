@@ -18,7 +18,7 @@ module RedBook
 		include Hookable
 		include Messaging
 
-		attr_accessor :repository, :dataset
+		attr_accessor :repository, :dataset, :db, :special_attributes
 		
 		# Sets up the repository. 
 		# If +db+ is not specified, a new SQLite database is created in
@@ -30,11 +30,11 @@ module RedBook
 		# * <i>:after_initialize</i> :repository => String, :dataset => Array 
 		def initialize(db=nil)
 			hook :before_initialize, :db => db
-			db ||= "#{RedBook::HOME_DIR}/log.rbk"
-			@repository = "sqlite3://#{db}"
+			@db = db || RedBook::HOME_DIR/"repository.rbk"
+			@repository = "sqlite3://#{@db}"
 			@dataset = []
 			Repository.setup @repository
-			create_repository unless File.exists? db
+			create_repository unless File.exists? @db
 			hook :after_initialize, :repository => @repository, :dataset => @dataset		
 		end
 
@@ -77,7 +77,8 @@ module RedBook
 			entry
 		end
 
-		# Deletes one or more entries loaded into the dataset.
+		# Deletes one or more entries loaded into the dataset. 
+		# Indexes is an array of dataset indexes (1-based).
 		#
 		# <i>Hooks</i>
 		# * <i>:before_delete</i> :indexes => Integer
@@ -86,14 +87,19 @@ module RedBook
 		# * <i>:after_delete</i>
 		def delete(indexes=nil)
 			hook :before_delete, :indexes => indexes
-			raise EngineError "Empty dataset" if @dataset.blank?
+			raise EngineError, "Empty dataset" if @dataset.blank?
 			if indexes.blank?
 				# Deletes the whole dataset
-				@dataset.each { |e| delete_entry e }
+				@dataset.each do |e| 
+					hook :before_each_delete, :entry => e
+					delete_entry e
+					hook :after_each_delete, :entry => e
+				end
 			else
 				indexes.each do |i| 
 					entry = @dataset[i-1]
-					raise EngineError "Invalid index #{i}" unless entry
+					raise EngineError, "Invalid index #{i}" unless entry
+					puts entry.tags
 					hook :before_each_delete, :entry => entry
 					delete_entry entry
 					hook :after_each_delete, :entry => entry
@@ -125,8 +131,20 @@ module RedBook
 			end
 			hook :after_save, :file => file
 		end
+
+		# 
+		# Renames any record which has a name field
+		def rename(type, from, to)
+			c = RedBook::Repository.const_get "#{type.to_s.camelize}".to_sym
+			raise EngineError, "Unknown table '#{type.to_s.plural}'." unless c
+			raise EngineError, "#{type.to_s.camelize.plural} cannot be renamed." unless c.method_defined? :name
+			item = c.first :name => from
+			raise EngineError, "There is no #{type.to_s} called '#{from}'" unless item
+			item.name = to
+			item.save
+		end
 		
-		# Redefine Messaging::debug
+		# Redefining Messaging::debug
 		alias m_debug debug
 
 		# Toggles debug output.
@@ -152,10 +170,10 @@ module RedBook
 		end
 
 		def insert_entry(attributes={})
-			# Delete unknown attributes
+			# Delete special attributes
 			attrs = attributes.dup
 			attrs.each_pair do |l, v|
-				attrs.delete l unless [:text, :timestamp, :type].include? l
+				attrs.delete l if Parser.special_attributes.include? l
 			end
 			entry = Repository::Entry.new attrs
 			raise Exception, "Entry text not specified" unless attrs[:text] 
@@ -166,16 +184,19 @@ module RedBook
 		end
 
 		def update_entry(index, attributes={})
-			# Delete unknown attributes
-			attributes.each_pair do |l, v|
-				attributes.delete l unless [:text, :timestamp, :type].include? l
+			# Delete special attributes
+			attrs = attributes.dup
+			attrs.each_pair do |l, v|
+				attrs.delete l if Parser.special_attributes.include? l
 			end
 			raise EngineError, "Empty index" if @dataset.blank?
 			raise EngineError, "Invalid dataset index" unless index >=0 && index < @dataset.length
-			raise EngineError, "Nothing to update" if attributes.blank?
+			raise EngineError, "Nothing to update" if attributes.blank? # Must check *all* attributes
 			entry = @dataset[index]
-			entry.attributes = attributes
-			entry.save
+			unless attrs.blank? then
+				entry.attributes = attrs
+				entry.save
+			end
 			entry
 		end
 		
@@ -190,7 +211,7 @@ module RedBook
 			limit, type = attrs.delete(:last), :last if attrs[:last]
 			# Delete unknown attributes
 			attrs.each_pair do |l, v|
-				attrs.delete l unless [:text, :timestamp, :type].include? l
+				attrs.delete l if Parser.special_attributes.include? l
 			end
 			type ||= :select	
 			case type

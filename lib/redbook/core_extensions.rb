@@ -18,6 +18,14 @@ class String
 		end
 	end
 
+	def camelize
+		Extlib::Inflection.camelize self
+	end
+	
+	def plural
+		Extlib::Inflection.plural self
+	end
+
 	# Make the receiver red.
 	def red; colorize(self, "\e[1;31m"); end
 

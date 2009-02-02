@@ -1,5 +1,4 @@
-<%= " #{@index.to_s.cyan} #{@entry.timestamp.strftime("%a %b %d %Y - %I:%M:%S %p").dark_cyan} " %> <%= @entry.text.cyan -%>
-<% if @entry.respond_to? :tags then
+<%= " #{@index.to_s.cyan} #{@entry.timestamp.strftime("%a %b %d %Y - %I:%M:%S %p").dark_cyan}" %> <%= @entry.text.cyan -%><% if @entry.respond_to? :tags then
 @entry.tags.each { |t| %><%= " @".dark_yellow+"#{t.name.yellow}"-%><% } -%> 
 <% end -%>
 

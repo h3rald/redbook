@@ -17,8 +17,10 @@ module RedBook
 			has n, :tagmap
 			has n, :tags, :through => :tagmap, :mutable => true #, :class_name => 'RedBook::Repository::Tag', :child_key => [:tag]
 			
-			def tagged_with(tags)
+			def tagged_with(tags=nil)
+				return true if tags.blank? && self.tags.blank?
 				return false if self.tags.blank?
+				tags ||= []
 				entry_tags = []
 				self.tags.each { |t| entry_tags << t.name }
 				(entry_tags & tags).length == tags.uniq.length
@@ -46,6 +48,18 @@ module RedBook
 		operations[:select].parameter(:tags) {|p| p.type = :list}
 		operations[:update].parameter(:tags) {|p| p.type = :list}
 
+		operation(:'tag+') do |o|
+			o.parameter(:to) { |p| p.type = :intlist }
+			o.parameter(:'tag+') { |p| p.type = :list }
+		end
+
+		operation(:'tag-') do |o|
+			o.parameter(:from) { |p| p.type = :intlist }
+			o.parameter(:'tag-') { |p| p.type = :list }
+		end
+
+		special_attributes << :tags
+
 	end
 
 	class Engine
@@ -55,7 +69,7 @@ module RedBook
 			entry = params[:entry]
 			if tags then
 				tags.each do |t|
-					tag = Repository::Tag.create :name => t
+					tag = Repository::Tag.first(:name => t) || Repository::Tag.create(:name => t)
 					tagmap = Repository::Tagmap.create :tag_id => tag.id, :entry_id => entry.id
 					entry.tagmap << tagmap
 					entry.save
@@ -63,6 +77,32 @@ module RedBook
 			end
 		end
 
+		define_hook(:after_update) do |params|
+			tags = params[:attributes][:tags]
+			entry = params[:entry]
+			if tags then
+				# Destroy all tag associations
+				entry_tags = Repository::Tagmap.all(:entry_id => entry.id)
+				entry_tags.each { |t| t.destroy }
+				entry.tags.reload
+				tags.each do |t|
+					tag = Repository::Tag.first(:name => t) || Repository::Tag.create(:name => t)
+					tagmap = Repository::Tagmap.create :tag_id => tag.id, :entry_id => entry.id
+					entry.tagmap << tagmap
+					entry.tagmap.save
+				end
+			end
+		end		
+
+		define_hook(:before_each_delete) do |params|
+			entry = params[:entry]
+			unless entry.tags.blank? then
+				# Destroy all tag associations
+				entry_tags = Repository::Tagmap.all(:entry_id => entry.id)
+				entry.tagmap.each { |t| t.destroy }
+				entry.tags.reload
+			end
+		end
 
 		define_hook(:after_select) do |params|
 			tags = params[:attributes][:tags]

@@ -77,10 +77,12 @@ module RedBook
 						raise ParserError, "Parameter ':#{self}' is not a float."
 					end	
 				when :list then
+					return [] if value.blank?
 					return value.strip.split
 				when :intlist then
-					intlist = value.strip.split
 					result = []
+					return result if value.blank?
+					intlist = value.strip.split
 					intlist.each do |i|
 						item = i.to_i
 						raise ParserError, "Parameter ':#{self}' is not a list of integers." if item == 0 && i != "0"
@@ -103,12 +105,13 @@ module RedBook
 		include Hookable
 		include Messaging
 
-		class << self; attr_accessor :operations, :macros, :time_context, :now; end
+		class << self; attr_accessor :operations, :macros, :time_context, :now, :special_attributes; end
 
 		@now = nil
 		@time_context = :past
 		@operations = {}
 		@macros = {}
+		@special_attributes = []
 
 		def self.macro(name, str)
 			self.macros[name] = str
@@ -135,7 +138,7 @@ module RedBook
 			name = directives[0]
 			macro = Parser.macros[name.symbolize]
 			raise ParserError, "Unknown operation '#{name}'." unless macro	
-			placeholders = macro.scan(/<:([a-z_]+)>/).to_a.flatten
+			placeholders = macro.scan(/<:([a-z0-9:-_+]+)>/).to_a.flatten
 			raw_params = {}
 			result = macro.dup
 			i = 0
@@ -158,7 +161,7 @@ module RedBook
 		end
 
 		def parse_command(str)
-			directives = str.split(/(^:[a-z_]+){1}|(\s+:[a-z_]+){1}/)
+			directives = str.split(/(^:[a-z0-9:-_+]+){1}|(\s+:[a-z0-9:-_+]+){1}/)
 			directives.delete_at(0)
 			raise ParserError, "No operation specified." if directives.blank?
 			directives.each { |d| d.strip! }
@@ -256,17 +259,24 @@ class RedBook::Parser
 		end
 	end
 
-	operation :quit
-	operation :debug
-	operation :output
-	operation :dataset
-
 	operation(:ruby) do |o|
 		o.parameter(:ruby) { |p| p.required = true }
 		o.post_parsing = lambda do |params|
 			return params[:ruby]
 		end
 	end
+
+	operation(:rename) do |o|
+		o.parameter(:rename) { |p| p.required = true }
+		o.parameter(:from) { |p| p.required = true }
+		o.parameter(:to) { |p| p.required = true }
+	end
+
+	operation :quit
+	operation :debug
+	operation :output
+	operation :dataset
+
 
 	macro :entries, ":select <:entries> :type entry"
 

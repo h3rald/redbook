@@ -107,8 +107,6 @@ module RedBook
 			@editor.bind(seq) { @editor.write_line command }
 		end
 
-
-
 		### Operations
 
 		def quit_operation
@@ -191,6 +189,10 @@ module RedBook
 			info "Dataset saved to '#{params[0]}'"
 		end
 
+		def rename_operation(params)
+			@engine.rename params[:rename], params[:from], params[:to]
+			info "#{params[:rename].to_s.camelize} '#{params[:from]}' renamed to '#{params[:to]}'."
+		end
 
 	end
 end
