@@ -1,12 +1,44 @@
 #!/usr/bin/env ruby
 
 module RedBook
+
+	inventory_tables << :tags
+
+	class TaggingPlugin < Plugin
+
+		def setup_actions
+			begin
+				Repository::Tagmap.first
+			rescue
+				Repository::Tagmap.auto_migrate!
+				debug " -> Created tagmap table."
+			end
+			begin
+				Repository::Tag.first
+			rescue
+				Repository::Tag.auto_migrate!
+				debug " -> Created tags table."
+			end
+		end
+	end
+
+	class Cli
+
+		define_hook(:setup_completion) do |params|
+			c = params[:cli]
+			matches = params[:matches]
+			if c.editor.line.text.match /:tags (([a-zA-Z0-9+_-]+)\s?)*$/ then
+				c.engine.get_inventory[:tags].each { |t| matches << t unless c.editor.line.text.match t}
+			end
+		end
+	end
+
 	class Repository 
-		
+
 		class Tag
 			include DataMapper::Resource
 			has n, :tagmap
-			has n, :entries, :through => :tagmap, :mutable => true#, :class_name => 'RedBook::Repository::Entry', :child_key => [:entry_id], :mutable => true
+			has n, :entries, :through => :tagmap, :mutable => true
 			property :id, Serial
 			property :name, String, :nullable => false, :unique => true
 			storage_names[:default] = 'tags'
@@ -15,16 +47,14 @@ module RedBook
 
 		class Entry
 			has n, :tagmap
-			has n, :tags, :through => :tagmap, :mutable => true #, :class_name => 'RedBook::Repository::Tag', :child_key => [:tag]
-			
+			has n, :tags, :through => :tagmap, :mutable => true 
+
 			def tagged_with?(tags=nil)
-				return true if tags.blank? && self.tags.blank?
-				return false if self.tags.blank?
-				tags ||= []
+				tags = [] unless tags
 				tags = [tags] unless tags.is_a? Array
 				entry_tags = []
 				self.tags.each { |t| entry_tags << t.name }
-				(entry_tags & tags).length == tags.uniq.length
+				(entry_tags & tags).sort == tags.uniq.sort
 			end
 
 			def add_tag(t)
@@ -33,7 +63,7 @@ module RedBook
 				self.tagmap << tagmap
 				tagmap.save
 			end
-				
+
 		end
 
 		class Tagmap
@@ -70,7 +100,7 @@ module RedBook
 
 	end
 
-	class Engine
+	class Engine	
 
 		def addtag(tags, indexes=nil)
 			raise EngineError, "Empty dataset." if @dataset.blank?
@@ -134,7 +164,13 @@ module RedBook
 
 		define_hook(:after_select) do |params|
 			tags = params[:attributes][:tags]
-			params[:dataset].each { |e| params[:dataset].delete e unless e.tagged_with? tags}
+			i = 0
+			dataset = params[:dataset]
+			while i < dataset.length
+				dataset[i] = nil unless dataset[i].tagged_with?(tags) 
+				i = i+1
+			end
+			dataset.compact!
 		end
 
 		define_hook(:cleanup) do |params|
@@ -146,27 +182,6 @@ module RedBook
 						t.destroy
 					end
 				end
-			end
-		end
-
-	end
-
-	### Plugin Class
-
-	class TaggingPlugin < Plugin
-
-		def setup_actions
-			begin
-				Repository::Tagmap.first
-			rescue
-				Repository::Tagmap.auto_migrate!
-				debug " -> Created tagmap table."
-			end
-			begin
-				Repository::Tag.first
-			rescue
-				Repository::Tag.auto_migrate!
-				debug " -> Created tags table."
 			end
 		end
 

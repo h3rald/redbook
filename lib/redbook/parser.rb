@@ -276,6 +276,10 @@ class RedBook::Parser
 		o.parameter(:cleanup) { |p| p.type = :list }
 	end
 
+	operation(:inventory) do |o|
+		o.parameter(:inventory) { |p| p.type = :list }
+	end
+
 	operation :quit
 	operation :debug
 	operation :output

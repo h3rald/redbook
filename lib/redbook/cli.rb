@@ -6,7 +6,7 @@ module RedBook
 		include Messaging
 		include Hookable
 
-		attr_reader :engine
+		attr_reader :engine, :editor
 
 		def initialize(repository=nil, prompt=" >> ")
 			@prompt = prompt
@@ -18,6 +18,7 @@ module RedBook
 			@editor = RawLine::Editor.new
 			setup_completion
 			setup_shortcuts
+			@engine.inventory
 		end
 
 		def start
@@ -63,7 +64,7 @@ module RedBook
 			RedBook::Parser.macros.each_pair do |l,v|
 				operations << ":#{l.to_s}"
 			end
-			completion_proc = lambda do |str|
+			@editor.completion_proc = lambda do |str|
 				if @editor.line.text.strip == str.strip then
 					return operations.find_all { |e| e.to_s.match(/^#{Regexp.escape(str)}/) }
 				else
@@ -92,10 +93,10 @@ module RedBook
 							matches.delete(macro_params[0].symbolize.textualize)
 						end
 					end
+					hook :setup_completion, :cli => self, :matches => matches
 					return matches.find_all { |e| e.to_s.match(/^#{Regexp.escape(str)}/) }
 				end
 			end
-			@editor.completion_proc = completion_proc
 		end
 
 		def setup_shortcuts
@@ -198,6 +199,11 @@ module RedBook
 			info "Cleaning up unused records..."
 			@engine.cleanup params[:cleanup]
 			info "Cleanup complete."
+		end
+
+		def inventory_operation(params=nil)
+			@engine.inventory params[:inventory]
+			info "Inventory loaded."
 		end
 
 		def addtag_operation(params)

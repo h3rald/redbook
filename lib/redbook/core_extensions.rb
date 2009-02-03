@@ -2,6 +2,7 @@
 
 class Symbol
 
+	# Converts the receiver to a string (:select becomes ":select").
 	def textualize
 		":#{self.to_s}"
 	end
@@ -10,6 +11,8 @@ end
 # The String class has been extended with some methods mainly for colorizing and encoding output.
 class String
 
+	# Converts the receiver to a symbol. It works like <tt>to_sym</tt>,
+	# but ":select" becomes :select instead of :":select". 
 	def symbolize
 		if self.match /^:[a-z]+/ then
 			self.sub(':', '').to_sym
@@ -18,54 +21,61 @@ class String
 		end
 	end
 
+	# Converts the receiver to camel case.
 	def camelize
 		Extlib::Inflection.camelize self
 	end
 	
+	# Makes the receiver plural
 	def plural
 		Extlib::Inflection.plural self
 	end
 
-	# Make the receiver red.
+	# Makes the receiver singular
+	def syngular
+		Extlib::Inflection.singular self
+	end
+
+	# Makes the receiver red.
 	def red; colorize(self, "\e[1;31m"); end
 
-	# Make the receiver dark red.
+	# Makes the receiver dark red.
 	def dark_red; colorize(self, "\e[0;31m"); end
 
-	# Make the receiver green.
+	# Makes the receiver green.
 	def green; colorize(self, "\e[1;32m"); end
 	
-	# Make the receiver dark green.
+	# Makes the receiver dark green.
 	def dark_green; colorize(self, "\e[0;32m"); end
 
-	# Make the receiver yellow.
+	# Makes the receiver yellow.
 	def yellow; colorize(self, "\e[1;33m"); end
 
-	# Make the receiver dark yellow.
+	# Makes the receiver dark yellow.
 	def dark_yellow; colorize(self, "\e[0;33m"); end
 
-	# Make the receiver blue.
+	# Makes the receiver blue.
 	def blue; colorize(self, "\e[1;34m"); end
 
-	# Make the receiver dark blue.
+	# Makes the receiver dark blue.
 	def dark_blue; colorize(self, "\e[0;34m"); end
 
-	# Make the receiver magenta.
+	# Makes the receiver magenta.
 	def magenta; colorize(self, "\e[1;35m"); end
 
-	# Make the receiver magenta.
+	# Makes the receiver magenta.
 	def dark_magenta; colorize(self, "\e[0;35m"); end
 
-	# Make the receiver cyan.
+	# Makes the receiver cyan.
 	def cyan; colorize(self, "\e[1;36m"); end
 
-	# Make the receiver dark cyan.
+	# Makes the receiver dark cyan.
 	def dark_cyan; colorize(self, "\e[0;36m"); end
 
-	# Uncolorize string.
+	# Uncolorizes string.
 	def uncolorize;	self.gsub!(/\e\[\d[;0-9]*m/, '') end
 
-	# Colorize the receiver according the given ASCII escape character sequence.
+	# Colorizes the receiver according the given ASCII escape character sequence.
 	# Thanks to: http://kpumuk.info/ruby-on-rails/colorizing-console-ruby-script-output/
 	def colorize(text, color_code) 
 		RedBook.colors ? "#{color_code}#{text}\e[0m" : text

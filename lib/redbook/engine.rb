@@ -22,7 +22,7 @@ module RedBook
 		
 		# Sets up the repository. 
 		# If +db+ is not specified, a new SQLite database is created in
-		# <tt>$HOME/log.rbk</tt> (*nix, Mac) or <tt>%HOMEPATH%/log.rbk</tt>
+		# <tt>$HOME/repository.rbk</tt> (*nix, Mac) or <tt>C:/repository.rbk</tt>
 		# (Windows).
 		#
 		# <i>Hooks</i>
@@ -33,9 +33,15 @@ module RedBook
 			@db = db || RedBook::HOME_DIR/"repository.rbk"
 			@repository = "sqlite3://#{@db}"
 			@dataset = []
+			@inventory = {}
 			Repository.setup @repository
 			create_repository unless File.exists? @db
 			hook :after_initialize, :repository => @repository, :dataset => @dataset		
+		end
+
+		# Returns the contents of the inventory.
+		def get_inventory
+			@inventory
 		end
 
 		# Logs an entry to the repository. 
@@ -158,6 +164,31 @@ module RedBook
 			RedBook.output = !RedBook.output
 		end
 
+		# Retrieves and saves the name of all the records of a given table.
+		# (currently used for completion purposes only).
+		#
+		# <i>Hooks</i>
+		# * <i>:before_inventory</i> :tables => Array [Symbol] 
+		# * <i>:after_inventory</i> :inventory => Array [Hash][Object] 
+		# * <i>:before_inventory_table</i> :table => Symbol 
+		# * <i>:after_inventory_table</i> :tables => Hash [Object] 
+		def inventory(tables=[])
+			hook :before_inventory, :tables => tables
+			inv_tables = (tables.blank?) ? RedBook.inventory_tables : tables
+			inv_tables.each do |t|
+				hook :before_inventory_table, :table => t.to_s
+				model = Repository.const_get(:"#{t.to_s.camelize.singular}")
+				raise EngineError, "Table '#{t.to_s}' not found." unless model
+				raise EngineError, "#{t.to_s.camelize} cannot be added to the inventory." unless model.method_defined? :name
+				@inventory[t.to_sym] = []
+				model.all.each do |i|
+					@inventory[t.to_sym] << i.name
+				end
+				hook :after_inventory_table, :inventory_table => @inventory[t.to_sym]
+			end
+			hook :after_inventory, :inventory => @inventory
+		end
+
 		# Evaluates a string as Ruby code.
 		def ruby(string)
 			instance_eval string
@@ -172,6 +203,7 @@ module RedBook
 		private
 
 		def create_repository
+			puts "reset!!!"
 			Repository.reset
 		end
 

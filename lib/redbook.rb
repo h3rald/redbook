@@ -32,12 +32,13 @@ module RedBook
 	class CliError < RuntimeError; {} end;
 	
 	LIB_DIR = Pathname(__FILE__).dirname.expand_path
-	HOME_DIR = RUBY_PLATFORM =~ /win32/i ? 'C:' : ENV['HOME']
+	HOME_DIR = RUBY_PLATFORM =~ /win32/i ? '' : ENV['HOME']
 	
-	class << self; attr_accessor :debug, :output, :colors; end
+	class << self; attr_accessor :debug, :output, :colors, :inventory_tables; end
 	
 	@debug = false
 	@output = true
+	@inventory_tables = []
 	
 	if RUBY_PLATFORM =~ /win32/i then
 		begin 
