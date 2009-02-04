@@ -6,19 +6,9 @@ module RedBook
 
 	class TaggingPlugin < Plugin
 
-		def setup_actions
-			begin
-				Repository::Tagmap.first
-			rescue
-				Repository::Tagmap.auto_migrate!
-				debug " -> Created tagmap table."
-			end
-			begin
-				Repository::Tag.first
-			rescue
-				Repository::Tag.auto_migrate!
-				debug " -> Created tags table."
-			end
+		def setup
+			create_table :tagmap
+			create_table :tags
 		end
 	end
 
@@ -27,8 +17,11 @@ module RedBook
 		define_hook(:setup_completion) do |params|
 			c = params[:cli]
 			matches = params[:matches]
-			if c.editor.line.text.match /:tags (([a-zA-Z0-9+_-]+)\s?)*$/ then
-				c.engine.get_inventory[:tags].each { |t| matches << t unless c.editor.line.text.match t}
+			regexps = {}
+			regexps[:tags] = /:(tags|addtag|rmtag) (([a-zA-Z0-9+_-]+)\s?)*$/
+			regexps[:rename_tags] = /:rename tags :from (([a-zA-Z0-9+_-]+)\s?)*$/
+			if c.editor.line.text.match(regexps[:tags]) || c.editor.line.text.match(regexps[:rename_tags])   then
+				c.engine.inventory[:tags].each { |t| matches << t unless c.editor.line.text.match t} if c.engine.inventory[:tags]
 			end
 		end
 	end

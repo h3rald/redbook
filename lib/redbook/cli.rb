@@ -14,11 +14,11 @@ module RedBook
 			@emitter = Emitter.new('cli', true)
 			@engine = Engine.new(repository)
 			[@parser, @engine, self].each { |o|	o.add_observer self }
-			RedBook::PluginCollection.plugins.each_pair { |l, v| v.add_observer self; v.setup }
+			RedBook::PluginCollection.plugins.each_pair { |l, v| v.add_observer self; v.init }
 			@editor = RawLine::Editor.new
 			setup_completion
 			setup_shortcuts
-			@engine.inventory
+			@engine.refresh
 		end
 
 		def start
@@ -92,6 +92,9 @@ module RedBook
 							# Remove original operation from parameters
 							matches.delete(macro_params[0].symbolize.textualize)
 						end
+					end
+					if @editor.line.text.match /:rename\s[a-z]+$/ then
+						RedBook.inventory_tables.each { |t| matches << t.to_s }
 					end
 					hook :setup_completion, :cli => self, :matches => matches
 					return matches.find_all { |e| e.to_s.match(/^#{Regexp.escape(str)}/) }
@@ -201,8 +204,8 @@ module RedBook
 			info "Cleanup complete."
 		end
 
-		def inventory_operation(params=nil)
-			@engine.inventory params[:inventory]
+		def refresh_operation(params=nil)
+			@engine.refresh params[:inventory]
 			info "Inventory loaded."
 		end
 

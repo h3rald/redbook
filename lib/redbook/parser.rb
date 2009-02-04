@@ -276,8 +276,8 @@ class RedBook::Parser
 		o.parameter(:cleanup) { |p| p.type = :list }
 	end
 
-	operation(:inventory) do |o|
-		o.parameter(:inventory) { |p| p.type = :list }
+	operation(:refresh) do |o|
+		o.parameter(:refresh) { |p| p.type = :list }
 	end
 
 	operation :quit

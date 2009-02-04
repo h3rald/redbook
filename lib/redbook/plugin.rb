@@ -14,15 +14,29 @@ module RedBook
 			debug "#@name plugin loaded."
 		end
 
-		def setup
+		def init
 			debug "Setting up #@name plugin..."	
-			setup_actions
+			setup
 			debug "Done."
 		end
 
 		def setup_actions
 			nil
 		end
+
+		protected
+
+		def create_table(table)
+			model = table.to_s.singularize.camelize.to_sym
+			name = table.to_s	
+			begin
+				Repository.const_get(model).first
+			rescue
+				Repository.const_get(model).auto_migrate!
+				debug " -> Created #{name} table."
+			end
+		end
+
 
 	end
 

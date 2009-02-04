@@ -78,8 +78,8 @@ describe RedBook::TaggingPlugin do
 	end
 
 	it "should add tags to the inventory" do
-		@c.process ":inventory tags"
-		@c.engine.get_inventory[:tags].length.should == RedBook::Repository::Tag.all.length
+		@c.process ":refresh tags"
+		@c.engine.inventory[:tags].length.should == RedBook::Repository::Tag.all.length
 	end
 
 end

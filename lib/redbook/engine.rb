@@ -18,7 +18,7 @@ module RedBook
 		include Hookable
 		include Messaging
 
-		attr_accessor :repository, :dataset, :db, :special_attributes
+		attr_accessor :repository, :dataset, :db, :special_attributes, :inventory
 		
 		# Sets up the repository. 
 		# If +db+ is not specified, a new SQLite database is created in
@@ -37,11 +37,6 @@ module RedBook
 			Repository.setup @repository
 			create_repository unless File.exists? @db
 			hook :after_initialize, :repository => @repository, :dataset => @dataset		
-		end
-
-		# Returns the contents of the inventory.
-		def get_inventory
-			@inventory
 		end
 
 		# Logs an entry to the repository. 
@@ -168,15 +163,15 @@ module RedBook
 		# (currently used for completion purposes only).
 		#
 		# <i>Hooks</i>
-		# * <i>:before_inventory</i> :tables => Array [Symbol] 
-		# * <i>:after_inventory</i> :inventory => Array [Hash][Object] 
-		# * <i>:before_inventory_table</i> :table => Symbol 
-		# * <i>:after_inventory_table</i> :tables => Hash [Object] 
-		def inventory(tables=[])
-			hook :before_inventory, :tables => tables
+		# * <i>:before_refresh</i> :tables => Array [Symbol] 
+		# * <i>:after_refresh</i> :inventory => Array [Hash][Object] 
+		# * <i>:before_refresh_table</i> :table => Symbol 
+		# * <i>:after_refresh_table</i> :tables => Hash [Object] 
+		def refresh(tables=[])
+			hook :before_refresh, :tables => tables
 			inv_tables = (tables.blank?) ? RedBook.inventory_tables : tables
 			inv_tables.each do |t|
-				hook :before_inventory_table, :table => t.to_s
+				hook :before_refresh_table, :table => t.to_s
 				model = Repository.const_get(:"#{t.to_s.camelize.singular}")
 				raise EngineError, "Table '#{t.to_s}' not found." unless model
 				raise EngineError, "#{t.to_s.camelize} cannot be added to the inventory." unless model.method_defined? :name
@@ -184,9 +179,9 @@ module RedBook
 				model.all.each do |i|
 					@inventory[t.to_sym] << i.name
 				end
-				hook :after_inventory_table, :inventory_table => @inventory[t.to_sym]
+				hook :after_refresh_table, :inventory_table => @inventory[t.to_sym]
 			end
-			hook :after_inventory, :inventory => @inventory
+			hook :after_refresh, :inventory => @inventory
 		end
 
 		# Evaluates a string as Ruby code.
