@@ -35,7 +35,6 @@ module RedBook
 			property :id, Serial
 			property :name, String, :nullable => false, :unique => true
 			storage_names[:default] = 'tags'
-
 		end
 
 		class Entry

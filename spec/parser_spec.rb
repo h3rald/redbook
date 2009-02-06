@@ -81,24 +81,24 @@ describe RedBook::Parser do
 		p = RedBook::Parser.new
 		op = p.parse ":update 4 :text something"
 		op[0].should == :update
-		op[1][0].should == 4
-		op[1][1][:text].should == "something"
-		op[1][1][:timestamp].should == nil
+		op[1][:update].should == 4
+		op[1][:text].should == "something"
+		op[1][:timestamp].should == nil
 	end
 
 	it "should parse :delete operations" do
 		p = RedBook::Parser.new
 		op = p.parse ":delete 3"
 		op[0].should == :delete
-		op[1].should == [3]
+		op[1][:delete].should == [3]
 	end
 
 	it "should parse :save operations" do
 		p = RedBook::Parser.new
 		op = p.parse ":save /home/h3rald/test.txt :format txt"
 		op[0].should == :save
-		op[1][0].should == "/home/h3rald/test.txt"
-		op[1][1].should == :txt
+		op[1][:save].should == "/home/h3rald/test.txt"
+		op[1][:format].should == :txt
 	end
 
 	it "should allow operations to be modified at runtime" do

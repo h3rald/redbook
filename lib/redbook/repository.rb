@@ -27,8 +27,15 @@ module RedBook
 			property :timestamp, DateTime, :nullable => false
 
 			default_scope(:default).update(:order => [:timestamp.asc]) # set default order
+		
+			def resource(type, name)
+				klass = Repository.const_get(type.to_s.camelize.to_sym)
+				item = klass.first(:name => name) || klass.create(:name => name)
+				item
+			end
 
 		end
+
 
 		resources << Entry
 

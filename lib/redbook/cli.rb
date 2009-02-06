@@ -144,22 +144,23 @@ module RedBook
 		end
 
 		def update_operation(params)
-			@engine.update params[0], params[1]
+			indexes = params.delete :update
+			@engine.update indexes, params
 			info "Item #{params[0].to_s} updated successfully."
 		end
 
-		def delete_operation(indexes=nil)
+		def delete_operation(params=nil)
 			msg = ""
 			case
-			when indexes.blank? then
+			when params[:delete].blank? then
 				msg = "the whole dataset"
-			when indexes.length == 1 then
+			when params[:delete].length == 1 then
 				msg = "this item"
 			else
 				msg = "these items"
 			end	
 			if agree(" >> Do you really want to delete #{msg}? ") then
-				@engine.delete indexes
+				@engine.delete params[:delete]
 				info "Operation successful."
 			else
 				warning "Nothing to do."
@@ -189,7 +190,7 @@ module RedBook
 		end	
 
 		def save_operation(params)
-			@engine.save params[0], params[1]
+			@engine.save params[:save], params[:format]
 			info "Dataset saved to '#{params[0]}'"
 		end
 

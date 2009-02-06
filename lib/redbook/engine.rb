@@ -233,7 +233,7 @@ module RedBook
 			end
 			entry = Repository::Entry.new attrs
 			raise Exception, "Entry text not specified" unless attrs[:text] 
-			entry.type = "entry"
+			entry.type = "entry" unless attrs[:type]
 			entry.timestamp = Time.now unless attrs[:timestamp]
 			entry.save
 			entry
@@ -245,7 +245,7 @@ module RedBook
 			attrs.each_pair do |l, v|
 				attrs.delete l if Parser.special_attributes.include? l
 			end
-			raise EngineError, "Empty index" if @dataset.blank?
+			raise EngineError, "Empty dataset" if @dataset.blank?
 			raise EngineError, "Invalid dataset index" unless valid_index? index
 			raise EngineError, "Nothing to update" if attributes.blank? # Must check *all* attributes
 			entry = @dataset[index]

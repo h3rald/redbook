@@ -18,7 +18,7 @@ module RedBook
 			def initialize(name)
 				@name = name
 				@parameters = {}
-				@post_parsing = nil
+				@post_parsing = []
 				yield self if block_given?
 			end
 
@@ -127,7 +127,7 @@ module RedBook
 			return parse(parse_macro(str, directives)) if operation.blank?		
 			parameters = parse_directives operation, directives
 			check_required_parameters operation, parameters
-			parameters = operation.post_parsing.call parameters if operation.post_parsing
+			operation.post_parsing.each{ |p| p.call parameters }
 			parameters = nil if parameters.blank?
 			return operation.name, parameters
 		end
@@ -204,11 +204,10 @@ class RedBook::Parser
 	operation(:log) do |o|
 		o.parameter(:log) { |p| p.required = true }
 		o.parameter(:timestamp) { |p| p.type = :time }
-		o.parameter :type
-		o.post_parsing = lambda do |params|
+		o.parameter :type 
+		o.post_parsing << lambda do |params|
 			params[:text] = params[:log]
 			params.delete(:log)
-			return params
 		end
 	end
 
@@ -216,10 +215,10 @@ class RedBook::Parser
 		o.parameter :select
 		o.parameter(:from) { |p| p.type = :time }
 		o.parameter(:to) { |p| p.type = :time }
-		o.parameter :type  
+		o.parameter(:type)  { |p| p.type = :list}
 		o.parameter(:first) { |p| p.type = :integer }
 		o.parameter(:last) { |p| p.type = :integer }
-		o.post_parsing = lambda do |params|
+		o.post_parsing << lambda do |params|
 			result = {}
 			result[:timestamp.lt] = params[:to] unless params[:to].blank?
 			result[:timestamp.gt] = params[:from] unless params[:from].blank?
@@ -230,7 +229,6 @@ class RedBook::Parser
 			params.delete(:to)
 			params.delete(:type)
 			params.merge! result
-			return params
 		end	
 	end
 
@@ -239,31 +237,22 @@ class RedBook::Parser
 		o.parameter :text
 		o.parameter(:timestamp) { |p| p.type = :time }
 		o.parameter :type
-		o.post_parsing = lambda do |params|
-			return params.delete(:update), params
-		end
 	end
 
 	operation(:delete) do |o|
 		o.parameter(:delete) { |p| p.type = :intlist }
-		o.post_parsing = lambda do |params|
-			return params[:delete]
-		end
 	end
 
 	operation(:save) do |o|
 		o.parameter(:save) { |p| p.required = true }
 		o.parameter(:format) { |p| p.required = true }
-		o.post_parsing = lambda do |params|
-			return params[:save], params[:format].to_sym
+		o.post_parsing << lambda do |params|
+			params[:format] = params[:format].to_sym
 		end
 	end
 
 	operation(:ruby) do |o|
 		o.parameter(:ruby) { |p| p.required = true }
-		o.post_parsing = lambda do |params|
-			return params[:ruby]
-		end
 	end
 
 	operation(:rename) do |o|
