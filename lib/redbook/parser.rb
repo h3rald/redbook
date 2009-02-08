@@ -25,6 +25,10 @@ module RedBook
 			def parameter(name, &block)
 				@parameters[name] = Parameter.new(name, &block)
 			end
+			
+			def modify
+				yield self if block_given?
+			end
 		end
 
 
@@ -90,7 +94,8 @@ module RedBook
 					end
 					return result
 				when :bool then 
-					return true 
+					return true if value.match(/yes|on|true/i)
+					return false	
 				else
 					return_value = nil
 					hook :parse_custom_type, :value => value, :return => return_value

@@ -100,8 +100,10 @@ module RedBook
 			else
 				indexes.each do |i| 
 					entry = @dataset[i-1]
-					raise EngineError, "Invalid index #{i}" unless entry
-					puts entry.tags
+					unless entry
+						warning "Invalid index #{i}"
+						next
+					end
 					hook :before_each_delete, :entry => entry
 					delete_entry entry
 					hook :after_each_delete, :entry => entry
