@@ -43,7 +43,7 @@ module RedBook
 		def process(string)
 			operation, params = @parser.parse string
 			name = (operation.to_s+"_operation").to_sym
-			raise CliError, "Operation '#{operation.to_sym.textualize}' is not accessible via this shell." unless respond_to? name
+			raise CliError, "Operation '#{operation.to_sym.textualize}' is not accessible from this shell." unless respond_to? name
 			m = method(name)
 			(params.blank?) ? m.call : m.call(params)
 		end
@@ -208,17 +208,6 @@ module RedBook
 		def refresh_operation(params=nil)
 			@engine.refresh params[:inventory]
 			info "Inventory loaded."
-		end
-
-		def addtag_operation(params)
-			@engine.addtag params[:addtag], params[:to]
-			info "Done."
-		end
-
-		def rmtag_operation(params)
-			@engine.rmtag params[:rmtag], params[:from]
-			info "Done."
-		end
-
+		end	
 	end
 end

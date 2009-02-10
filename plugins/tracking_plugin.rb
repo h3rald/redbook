@@ -6,16 +6,32 @@ module RedBook
 	inventory_tables << :projects
 
 	class TrackingPlugin < Plugin
-
-
 		class << self; attr_accessor :add_resources; end
 
 		def setup
 			create_table :activities
 			create_table :projects
 			create_table :versions
+			create_table :records
+		end
+	end
+
+	class Cli
+		
+		def start_operation(params)
+			entry = @engine.start params[:start]
+			info "#{entry.type.camelize} started."
 		end
 
+		def finish_operation(params)
+			entry = @engine.finish params[:finish]
+			info "#{entry.type.camelize} stopped."
+		end
+
+		def pause_operation(params)
+			entry = @engine.pause params[:pause]
+			info "#{entry.type.camelize} paused."
+		end
 
 	end
 
@@ -26,7 +42,6 @@ module RedBook
 			belongs_to :entry 
 			belongs_to :version
 			belongs_to :project
-			has n, :records
 			property :entry_id, Integer, :key => true
 			property :ref, String
 			property :completion, Time
@@ -36,9 +51,9 @@ module RedBook
 
 			def track
 				return if tracking == 'disabled'
-				records = Repository::Record.all(:activity_id => id)
-				duration = 0
-				records.each { |r| duration+= r.duration }
+				records = Repository::Record.all(:entry_id => entry_id)
+				self.duration = 0
+				records.each { |r| self.duration+= r.duration }
 			end
 
 			def paused?
@@ -62,24 +77,26 @@ module RedBook
 		class Record
 			include DataMapper::Resource
 			storage_names[:default] = 'records'
-			belongs_to :activity
+			belongs_to :entry
+			property :id, Serial
 			property :start, Time, :nullable => false
 			property :end, Time
 
 			def duration
 				end_time = self.end || Time.now
-				(end_time - self.start)*3600
+				(end_time - self.start)/60.0
 			end
 
 		end
 
 		class Entry
 			has 1, :activity
+			has n, :records
 		end
 
 		class Project
 			include DataMapper::Resource
-			has n, :entries
+			has n, :activities
 			property :id, Serial
 			property :name, String, :unique => true, :nullable => false
 			storage_names[:default] = 'projects'
@@ -96,6 +113,7 @@ module RedBook
 		resources << Project
 		resources << Version
 		resources << Activity
+		resources << Record
 
 	end
 
@@ -164,15 +182,15 @@ module RedBook
 		end
 
 		operation(:track) do |o|
-			o.parameter(:track) { |p| p.type => :integer; p.required = true}
-			o.parameter(:from) { |p| p.type => :time; p.required = true}
-			o.parameter(:to) { |p| p.type => :time; p.required = true}
+			o.parameter(:track) { |p| p.type = :integer; p.required = true}
+			o.parameter(:from) { |p| p.type = :time; p.required = true}
+			o.parameter(:to) { |p| p.type = :time }
 		end
 
 		operation(:untrack) do |o|
-			o.parameter(:track) { |p| p.type => :integer; p.required = true}
-			o.parameter(:from) { |p| p.type => :time}
-			o.parameter(:to) { |p| p.type => :time}
+			o.parameter(:track) { |p| p.type = :integer; p.required = true}
+			o.parameter(:from) { |p| p.type = :time}
+			o.parameter(:to) { |p| p.type = :time}
 		end
 
 		special_attributes << :project
@@ -188,77 +206,100 @@ module RedBook
 
 		def start(index)
 			raise EngineError, "Empty dataset" if @dataset.blank?
-			entry = @dataset[i-1]
+			entry = @dataset[index-1]
 			raise EngineError, "Invalid index #{i}" unless entry
 			raise EngineError, "Selected entry is not an activity, break or process" unless ['activity', 'break', 'process'].include? entry.type
-			raise EngineError, "Tracking is disabled for selected #{entry.type.to_s}." if entry.activity.disabled?
-			raise EngineError, "Selected #{entry.type.to_s} is already started." if entry.activity.started?
-			Repository::Tracking.create(:activity_id => entry.activity_id, :start => Time.now) 
+			entry.activity.reload
+			entry.records.reload
+			raise EngineError, "Selected #{entry.type} is already started." if entry.activity.started?
+			raise EngineError, "Selected #{entry.type} has been completed." if entry.activity.completed?
+			started = Repository::Entry.first('activity.tracking' => 'started', :type => ['activity', 'break'])
+			pause_activity started if started && entry.type != 'process'
+			entry.activity.tracking = 'started'
+			Repository::Record.create(:entry_id => entry.id, :start => Time.now) 	
+			entry.save
+			entry
 		end
 
 		def finish(index=nil)
 			raise EngineError, "Empty dataset" if @dataset.blank?
-			entry = @dataset[i-1] if index
+			entry = @dataset[index-1] if index
 			raise EngineError, "Invalid index #{i}" unless entry
 			# if no index specified, get the first (and only) started activity or break.
-			entry = Repositor::Entry.first('activity.tracking' => 'started', :type => ['activity', 'break']) 
+			entry = Repository::Entry.first('activity.tracking' => 'started', :type => ['activity', 'break']) unless entry 
 			raise EngineError, "No activity/break started." unless entry
 			raise EngineError, "Selected entry is not an activity, break or process" unless ['activity', 'break', 'process'].include? entry.type
+			entry.activity.reload
+			entry.records.reload
 			raise EngineError, "Tracking is disabled for selected #{entry.type.to_s}." if entry.activity.disabled?
-			raise EngineError, "Selected #{entry.type.to_s} is already #{entry.activity.tracking}." unless entry.activity.started?
+			raise EngineError, "Selected #{entry.type.to_s} is already completed." if entry.activity.completed?
 			# Verify if there's any open record
-			open = Repository::Record.first(:activity_id => entry.activity_id, :end => nil)
+			open = Repository::Record.first(:entry_id => entry.id, :end => nil)
 			if open then
 				open.end = Time.now
 				open.save
 			end
 			entry.activity.track
+			entry.activity.tracking = 'completed'
 			entry.activity.completion = Time.now
-			entry.activity.save
+			entry.save
+			entry
 		end
 
 		def pause(index)
 			raise EngineError, "Empty dataset" if @dataset.blank?
-			entry = @dataset[i-1]
+			entry = @dataset[index-1]
 			raise EngineError, "Invalid index #{i}" unless entry
 			raise EngineError, "Selected entry is not an activity, break or process" unless ['activity', 'break', 'process'].include? entry.type
+			entry.activity.reload
+			entry.records.reload
 			raise EngineError, "Tracking is disabled for selected #{entry.type.to_s}." if entry.activity.disabled?
 			raise EngineError, "Selected #{entry.type.to_s} is already #{entry.activity.tracking}." unless entry.activity.started?
-			open = Repository::Record.first(:activity_id => entry.activity_id, :end => nil)
-			open.end = Time.now
-			open.save
-			entry.activity.track
-			entry.activity.save
+			pause_activity entry
+			entry
 		end
 
-		def track(index, from, to)
+		def track(index, from, to=nil)
 			raise EngineError, "Empty dataset" if @dataset.blank?
-			entry = @dataset[i-1]
+			entry = @dataset[index-1]
 			raise EngineError, "Invalid index #{i}" unless entry
 			raise EngineError, "Selected entry is not an activity, break or process" unless ['activity', 'break', 'process'].include? entry.type
+			entry.activity.reload
+			entry.records.reload
 			raise EngineError, "Tracking is disabled for selected #{entry.type.to_s}." if entry.activity.disabled?
 			started = Repository::Record.all(:activity_id => entry.activity_id, :start.gt => from)
 			ended = Repository::Record.all(:activity_id => entry.activity_id, :end.lt => to)
 			raise EngineError, "Operation not allowed (overlapping records)." unless started.blank? && ended.blank?
-			Repository::Record.create :activity_id => entry.activity_id, :start => from, :end => to
+			Repository::Record.create :entry_id => entry.id, :start => from, :end => to
+			if !to then
+				entry.activity.tracking  = 'started'
+				entry.save
+			end
+			entry
 		end
 
-		def untrack
+		def untrack(index, from=nil, to=nil)
 			raise EngineError, "Empty dataset" if @dataset.blank?
-			entry = @dataset[i-1]
+			entry = @dataset[index-1]
 			raise EngineError, "Invalid index #{i}" unless entry
 			raise EngineError, "Selected entry is not an activity, break or process" unless ['activity', 'break', 'process'].include? entry.type
+			entry.activity.reload
+			entry.records.reload
 			raise EngineError, "Tracking is disabled for selected #{entry.type.to_s}." if entry.activity.disabled?
-			records = Repository::Record.all(:activity_id => entry.activity_id, :start.gt => from, :end.lt => to)
-			raise EngineError, "No tracking records in the specified interval." records.blank?
+			attributes = {:entry_id => entry.id}
+			attributes.merge! :start.gt => from, :end.lt => to  if from || to
+			records = Repository::Record.all(attributes)
+			raise EngineError, "No tracking records in the specified interval." if records.blank?
 			records.each { |r| r.destroy }
+			entry.records.reload
+			entry
 		end
 
 		define_hook(:after_update) do |params|
 			project = params[:attributes][:project]
 			version = params[:attributes][:version]
 			ref = params[:attributes][:ref]
-			track = params[:attributes][:tracking]
+			tracking = params[:attributes][:tracking]
 			completion = params[:attributes][:completion]
 			duration = params[:attributes][:duration]
 			entry = params[:entry]
@@ -270,7 +311,8 @@ module RedBook
 				activity.tracking = tracking
 				activity.completion = completion
 				activity.duration = duration
-				activity.save
+				entry.activity = activity
+				entry.save
 			end
 		end
 
@@ -278,7 +320,7 @@ module RedBook
 			project = params[:attributes][:project]
 			version = params[:attributes][:version]
 			ref = params[:attributes][:ref]
-			track = params[:attributes][:tracking]
+			tracking = params[:attributes][:tracking] || 'disabled'
 			completion = params[:attributes][:completion]
 			duration = params[:attributes][:duration]
 			entry = params[:entry]
@@ -290,8 +332,20 @@ module RedBook
 				activity.tracking = tracking
 				activity.completion = completion
 				activity.duration = duration
-				activity.save
+				entry.activity = activity
+				entry.save
 			end
+		end
+
+		private
+
+		def pause_activity(entry)
+			open = Repository::Record.first(:entry_id => entry.id, :end => nil)
+			open.end = Time.now
+			open.save
+			entry.activity.tracking = 'paused'
+			entry.activity.track
+			entry.save
 		end
 
 

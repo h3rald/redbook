@@ -36,7 +36,6 @@ module RedBook
 
 		end
 
-
 		resources << Entry
 
 	end

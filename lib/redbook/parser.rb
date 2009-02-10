@@ -33,7 +33,7 @@ module RedBook
 
 
 		class Parameter 
-			attr_accessor :name, :type, :required
+			attr_accessor :name, :type, :required, :values
 
 			def to_s
 				@name.to_s

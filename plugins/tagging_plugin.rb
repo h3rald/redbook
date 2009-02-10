@@ -24,6 +24,17 @@ module RedBook
 				c.engine.inventory[:tags].each { |t| matches << t unless c.editor.line.text.match t} if c.engine.inventory[:tags]
 			end
 		end
+		
+		def addtag_operation(params)
+			@engine.addtag params[:addtag], params[:to]
+			info "Done."
+		end
+
+		def rmtag_operation(params)
+			@engine.rmtag params[:rmtag], params[:from]
+			info "Done."
+		end
+
 	end
 
 	class Repository 
