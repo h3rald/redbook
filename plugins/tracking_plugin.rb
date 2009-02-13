@@ -19,20 +19,32 @@ module RedBook
 	class Cli
 
 		def start_operation(params)
-			entry = @engine.start params[:start]
+			@engine.start params[:start]
 			info "Activity started."
 		end
 
 		def finish_operation(params)
-			entry = @engine.finish params[:finish]
+			@engine.finish params[:finish]
 			info "Activity stopped."
 		end
 
 		def pause_operation(params)
-			entry = @engine.pause params[:pause]
+			@engine.pause params[:pause]
 			info "Activity paused."
 		end
 
+		def track_operation(params)
+			@engine.track params[:track], params[:from], params[:to]
+			info "Done."
+		end
+
+		def untrack_operation(params)
+			if params[:from].blank? && params[:to].blank? then
+				return unless agree "Do you really want to disable tracking for this activity? "
+			end
+			@engine.untrack params[:untrack], params[:from], params[:to]
+			info "Done."
+		end
 	end
 
 	class Repository
@@ -73,6 +85,10 @@ module RedBook
 				tracking == 'disabled'
 			end
 
+			def valid_time?(time=nil)
+				entry = Repository::Entry.first(:id => entry_id)
+				entry.timestamp.to_time < time && (completion.to_time > time || completion.blank?) 
+			end
 		end
 
 		class Record
@@ -191,7 +207,7 @@ module RedBook
 		end
 
 		operation(:untrack) do |o|
-			o.parameter(:track) { |p| p.type = :integer; p.required = true}
+			o.parameter(:untrack) { |p| p.type = :integer; p.required = true}
 			o.parameter(:from) { |p| p.type = :time}
 			o.parameter(:to) { |p| p.type = :time}
 		end
@@ -265,22 +281,31 @@ module RedBook
 		end
 
 		def track(index, from, to=nil)
+			raise EngineError, "Start time earlier than end time" if !to.blank? && from > to
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			entry = @dataset[index-1]
 			raise EngineError, "Invalid index #{i}" unless entry
 			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
 			entry.activity.reload
 			entry.records.reload
-			raise EngineError, "Tracking is disabled for selected activity." if entry.activity.disabled?
-			started = Repository::Record.all(:activity_id => entry.activity_id, :start.gt => from)
-			ended = Repository::Record.all(:activity_id => entry.activity_id, :end.lt => to)
+			started = Repository::Record.all(:entry_id => entry.id, :start.lt => from, :end.gt => from)
+			ended = Repository::Record.all(:entry_id => entry.id, :end.gt => to)
+			if !ended.blank? then
+				puts "from: #{from.to_s}"
+				puts "to: #{to.to_s}"
+				puts "end: #{ended[0].end.to_s}"
+			end
 			raise EngineError, "Operation not allowed (overlapping records)." unless started.blank? && ended.blank?
+			raise EngineError, "Invalid start time." unless entry.activity.valid_time? from
+			raise EngineError, "Invalid end time." unless entry.activity.valid_time?(to) || to.blank? 
 			Repository::Record.create :entry_id => entry.id, :start => from, :end => to
+			entry.activity.track
 			if !to then
 				entry.activity.tracking  = 'started'
-				entry.save
+			elsif entry.activity.tracking != 'completed'
+				entry.activity.tracking  = 'paused'
 			end
-			entry
+			entry.save
 		end
 
 		def untrack(index, from=nil, to=nil)
@@ -292,12 +317,16 @@ module RedBook
 			entry.records.reload
 			raise EngineError, "Tracking is disabled for selected activity." if entry.activity.disabled?
 			attributes = {:entry_id => entry.id}
-			attributes.merge! :start.gt => from, :end.lt => to  if from || to
+			attributes.merge!(:start.gt => from, :end.lt => to)  if from || to
 			records = Repository::Record.all(attributes)
 			raise EngineError, "No tracking records in the specified interval." if records.blank?
 			records.each { |r| r.destroy }
-			entry.records.reload
-			entry
+			if from.blank? && to.blank? then
+				entry.activity.tracking = 'disabled'
+			else
+				entry.activity.track
+			end
+			entry.save
 		end
 
 		define_hook(:after_update) do |params|

@@ -101,6 +101,25 @@ describe RedBook::TrackingPlugin do
 		b.records.length.should == 2
 	end
 
-
-	
+	it "should be possible to update tracking records" do
+		@c.process ":select"
+		@c.process ":update 1 :timestamp 2 hours ago :completion 30 minutes ago"
+		lambda {@c.process ":track 1 :from 3 hours ago" }.should raise_error
+		lambda {@c.process ":track 1 :from 3 hours ago :to now" }.should raise_error
+		lambda {@c.process ":track 1" }.should raise_error
+		lambda {@c.process ":track 1 :from 1 hour ago :to 55 minutes ago" }.should_not raise_error
+		lambda {@c.process ":track 1 :from 54 minutes ago :to 52 minutes ago" }.should_not raise_error
+		lambda {@c.process ":track 1 :from 40 minutes ago :to 34 minutes ago" }.should_not raise_error
+		lambda {@c.process ":track 1 :from 35 minutes ago :to 29  minutes ago" }.should raise_error
+		lambda {@c.process ":track 1 :from 31 minutes ago :to 25  minutes ago" }.should raise_error
+		a = @c.engine.dataset[0]
+		a.activity.duration.to_i.should == 13
+		a.activity.tracking.should == 'paused'
+		lambda {@c.process ":untrack 1 :from 61 minutes ago :to 54 minutes ago" }.should_not raise_error
+		lambda {@c.process ":track 1 :from 35 minutes ago :to 29  minutes ago" }.should raise_error
+		a.activity.duration.to_i.should == 8
+		lambda {@c.engine.untrack(1) }.should_not raise_error
+		RedBook::Repository::Record.all(:entry_id => a.id).length.should == 0
+		a.activity.tracking.should == 'disabled'
+	end
 end
