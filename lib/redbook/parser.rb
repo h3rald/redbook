@@ -278,11 +278,15 @@ class RedBook::Parser
 		o.parameter(:refresh) { |p| p.type = :list }
 	end
 
+	operation(:detail) do |o|
+		o.parameter(:detail) { |p| p.type = :intlist }
+	end
+
 	operation :quit
 	operation :debug
 	operation :output
 	operation :dataset
-
+	operation :clear
 
 	macro :entries, ":select <:entries> :type entry"
 

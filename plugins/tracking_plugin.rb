@@ -210,6 +210,9 @@ module RedBook
 		special_attributes << :duration
 		special_attributes << :foreground
 
+		macro :activity, "log <:activity> :type activity"
+		macro :activities, "select :type activity"
+
 	end
 
 	class Engine

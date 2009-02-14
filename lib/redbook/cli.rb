@@ -113,6 +113,17 @@ module RedBook
 
 		### Operations
 
+		def detail_operation(params)
+			result = []
+			params[:detail].each { |i| result << @engine.dataset[i-1] }
+			result.each { |e| display e.type.symbolize, e.type.symbolize => e, detail => true if RedBook.output }
+		end
+
+		def clear_operation(params)
+			command = RUBY_PLATFORM.match(/win/i) ? "cls" : "clear"
+			exec command
+		end
+
 		def quit_operation
 			debug "Stopping RedBook CLI..."
 			exit
