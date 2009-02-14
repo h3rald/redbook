@@ -20,20 +20,38 @@ module RedBook
 			debug "Done."
 		end
 
-		def setup_actions
+		def setup
 			nil
 		end
 
 		protected
 
-		def create_table(table)
+		def create_resource(table, options={})
 			model = table.to_s.singularize.camelize.to_sym
 			name = table.to_s	
 			begin
-				Repository.const_get(model).first
+				klass = Repository.const_get(model)
+				RedBook::Repository.resources << klass
+				klass.first
 			rescue
 				Repository.const_get(model).auto_migrate!
 				debug " -> Created #{name} table."
+			end
+			RedBook.inventory_tables << table if options[:inventory] == true 
+			completion_for table, options[:completion_for] unless options[:completion_for].blank?
+		end
+
+		def completion_for(table, operations=[])
+			RedBook::Cli.define_hook(:setup_completion) do |params|
+				c = params[:cli]
+				matches = params[:matches]
+				regexps = {}
+				ops = operations.map{ |o| o.to_s }.join('|')
+				regexps[:operations] = /:(#{ops}) (([a-zA-Z0-9+_-]+)\s?)*$/
+					regexps[:rename] = /:rename #{table} :from (([a-zA-Z0-9+_-]+)\s?)*$/
+					if c.editor.line.text.match(regexps[:operations]) || c.editor.line.text.match(regexps[:rename])   then
+						c.engine.inventory[table].each { |t| matches << t unless c.editor.line.text.match t} if c.engine.inventory[table]
+					end
 			end
 		end
 

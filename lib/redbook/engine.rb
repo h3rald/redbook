@@ -136,7 +136,6 @@ module RedBook
 			hook :after_save, :file => file
 		end
 
-		# 
 		# Renames any record which has a name field
 		def rename(type, from, to)
 			c = RedBook::Repository.const_get "#{type.to_s.camelize}".to_sym

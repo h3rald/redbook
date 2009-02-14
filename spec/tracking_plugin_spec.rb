@@ -111,13 +111,12 @@ describe RedBook::TrackingPlugin do
 		lambda {@c.process ":track 1 :from 54 minutes ago :to 52 minutes ago" }.should_not raise_error
 		lambda {@c.process ":track 1 :from 40 minutes ago :to 34 minutes ago" }.should_not raise_error
 		lambda {@c.process ":track 1 :from 35 minutes ago :to 29  minutes ago" }.should raise_error
-		lambda {@c.process ":track 1 :from 31 minutes ago :to 25  minutes ago" }.should raise_error
+		lambda {@c.process ":track 1 :from 31 minutes ago :to 25  minutes ago" }.should_not raise_error
 		a = @c.engine.dataset[0]
-		a.activity.duration.to_i.should == 13
-		a.activity.tracking.should == 'paused'
+		a.activity.duration.to_i.should == 19
+		a.activity.tracking.should == 'completed'
 		lambda {@c.process ":untrack 1 :from 61 minutes ago :to 54 minutes ago" }.should_not raise_error
-		lambda {@c.process ":track 1 :from 35 minutes ago :to 29  minutes ago" }.should raise_error
-		a.activity.duration.to_i.should == 8
+		a.activity.duration.to_i.should == 14
 		lambda {@c.engine.untrack(1) }.should_not raise_error
 		RedBook::Repository::Record.all(:entry_id => a.id).length.should == 0
 		a.activity.tracking.should == 'disabled'

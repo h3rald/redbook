@@ -2,17 +2,14 @@
 
 module RedBook
 
-	inventory_tables << :versions
-	inventory_tables << :projects
-
 	class TrackingPlugin < Plugin
 		class << self; attr_accessor :add_resources; end
 
 		def setup
-			create_table :activities
-			create_table :projects
-			create_table :versions
-			create_table :records
+			create_resource :activities
+			create_resource :projects, :inventory => true, :completion_for => [:project]
+			create_resource :versions, :inventory => true, :completion_for => [:version]
+			create_resource :records
 		end
 	end
 
@@ -126,12 +123,6 @@ module RedBook
 			property :name, String, :unique => true, :nullable => false
 			storage_names[:default] = 'versions'
 		end
-
-		resources << Project
-		resources << Version
-		resources << Activity
-		resources << Record
-
 	end
 
 	class Parser
@@ -235,7 +226,7 @@ module RedBook
 			raise EngineError, "Selected activity has been completed." if entry.activity.completed?
 			started = Repository::Entry.all('activity.tracking' => 'started', 'activity.foreground' => true) 
 			# There should only be one started foreground activity at a time, but it's better to be safe than sorry...
-			started.each { |a| pause_activity a if entry.activity.foreground == true }
+			started.each { |a| Engine.pause_activity a if entry.activity.foreground == true }
 			entry.activity.tracking = 'started'
 			Repository::Record.create(:entry_id => entry.id, :start => Time.now) 	
 			entry.save
@@ -276,7 +267,7 @@ module RedBook
 			entry.records.reload
 			raise EngineError, "Tracking is disabled for selected activity." if entry.activity.disabled?
 			raise EngineError, "Selected activity is already #{entry.activity.tracking}." unless entry.activity.started?
-			pause_activity entry
+			Engine.pause_activity entry
 			entry
 		end
 
@@ -343,8 +334,15 @@ module RedBook
 				activity.version = entry.resource :version, version unless version.blank?
 				activity.ref = ref
 				activity.foreground = foreground
-				activity.completion = completion
-				activity.duration = duration
+				if completion == "" then
+					activity.completion = completion
+					pause_activity(entry) unless activity.tracking == 'disabled'
+				end
+				complete_activity(entry) if !completion.blank? 
+				unless duration.blank? then
+					activity.duration = duration
+					activity.tracking = 'disabled'
+				end
 				entry.activity = activity
 				entry.save
 			end
@@ -354,12 +352,13 @@ module RedBook
 			project = params[:attributes][:project]
 			version = params[:attributes][:version]
 			ref = params[:attributes][:ref]
-			tracking = params[:attributes][:tracking] || 'disabled'
+			tracking = params[:attributes][:tracking]
 			completion = params[:attributes][:completion]
 			foreground = params[:attributes][:foreground]
 			duration = params[:attributes][:duration]
 			entry = params[:entry]
-			if foreground || tracking || project || version || ref || completion || duration then	
+			if foreground || project || tracking || version || ref || completion || duration then	
+				tracking ||= 'disabled'
 				activity =  Repository::Activity.create(:entry_id => entry.id)	
 				activity.project = entry.resource :project, project unless project.blank?
 				activity.version = entry.resource :version, version unless version.blank?
@@ -373,9 +372,7 @@ module RedBook
 			end
 		end
 
-		private
-
-		def pause_activity(entry, time=nil)
+		def Engine.pause_activity(entry, time=nil)
 			raise EngineError, "Activity already paused" if entry.activity.paused?
 			open = Repository::Record.first(:entry_id => entry.id, :end => nil)
 			if open then
@@ -387,7 +384,7 @@ module RedBook
 			entry.save
 		end
 
-		def complete_activity(entry, time=nil)
+		def Engine.complete_activity(entry, time=nil)
 			raise EngineError, "Activity already completed" if entry.activity.completed?
 			open = Repository::Record.first(:entry_id => entry.id, :end => nil)
 			if open then
@@ -399,7 +396,7 @@ module RedBook
 			entry.save
 		end
 
-		def start_activity(entry, time=nil)
+		def Engine.start_activity(entry, time=nil)
 			raise EngineError, "Activity already started" if entry.activity.started?
 			Repository::Record.create(:entry_id => entry.id, :start => time || Time.now)
 			entry.activity.tracking = 'started'

@@ -2,29 +2,16 @@
 
 module RedBook
 
-	inventory_tables << :tags
-
 	class TaggingPlugin < Plugin
 
 		def setup
-			create_table :tagmap
-			create_table :tags
+			create_resource :tagmap
+			create_resource :tags, :inventory => true, :completion_for => [:addtag, :rmtag, :tags]
 		end
 	end
 
 	class Cli
 
-		define_hook(:setup_completion) do |params|
-			c = params[:cli]
-			matches = params[:matches]
-			regexps = {}
-			regexps[:tags] = /:(tags|addtag|rmtag) (([a-zA-Z0-9+_-]+)\s?)*$/
-			regexps[:rename_tags] = /:rename tags :from (([a-zA-Z0-9+_-]+)\s?)*$/
-			if c.editor.line.text.match(regexps[:tags]) || c.editor.line.text.match(regexps[:rename_tags])   then
-				c.engine.inventory[:tags].each { |t| matches << t unless c.editor.line.text.match t} if c.engine.inventory[:tags]
-			end
-		end
-		
 		def addtag_operation(params)
 			@engine.addtag params[:addtag], params[:to]
 			info "Done."
@@ -77,10 +64,6 @@ module RedBook
 			property :tag_id, Integer, :key => true
 			storage_names[:default] = "tagmap"
 		end
-
-		resources << Tagmap
-		resources << Tag
-
 	end
 
 	class Parser
