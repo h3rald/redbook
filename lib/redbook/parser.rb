@@ -220,6 +220,11 @@ class RedBook::Parser
 		end
 	end
 
+	operation(:relog) do |o|
+		o.parameter(:log) { |p| p.required = true, p.type = :integer}
+		o.parameter :as
+	end
+
 	operation(:select) do |o|
 		o.parameter :select
 		o.parameter(:from) { |p| p.type = :time }

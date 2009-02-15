@@ -139,9 +139,19 @@ module RedBook
 			info "Output #{RedBook.output ? 'on' : 'off'}."
 		end
 
+		def color_operation
+			RedBook.colors = RedBook.colors ? false : true
+			info "Colors #{RedBook.colors ? 'on' : 'off'}."
+		end
+
 		def log_operation(params)
 			@engine.log params
 			info "Entry logged."
+		end
+
+		def relog_operation(params)
+			@engine.log params[:relog], params[:as]
+			info "Entry relogged."
 		end
 
 		def select_operation(params=nil)

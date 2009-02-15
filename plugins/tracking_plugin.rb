@@ -385,6 +385,20 @@ module RedBook
 			{:value => nil, :stop => false}
 		end
 
+		define_hook(:after_relog) do |params|
+			entry = params[:entry]
+			attributes = params[:attributes]
+			add_attribute = lambda do |field, attributes|
+				if entry.respond_to? field
+					m = entry.method field
+					attributes[field] = m.call
+				end
+			end
+			fields = [:project, :version, :ref, :notes, :tracking, :completion, :foreground, :duration]
+			fields.each { |f| add_attribute.call f, attributes}
+			{:value => nil, :stop => false}
+		end
+
 		define_hook(:after_each_delete) do |params|
 			entry = params[:entry]
 			a = Repository::Activity.first(:entry_id => entry.id)

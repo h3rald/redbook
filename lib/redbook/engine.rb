@@ -48,6 +48,25 @@ module RedBook
 			hook :before_insert, :attributes => attributes
 			entry = insert_entry attributes
 			hook :after_insert, :attributes => attributes, :entry => entry
+			entry
+		end
+
+		# Relogs a previouly logged entry.
+		#
+		# <i>Hooks</i>
+		# * <i>:before_relog</i> :attributes => Hash, :entry => RedBook::Repository::Entry
+		# * <i>:after_relog</i> :attributes => Hash, :entry => RedBook::Repository::Entry
+		def relog(index, type=nil)
+			raise EngineError, "Empty dataset." if @dataset.blank?
+			entry = @dataset[index-1]
+			raise EngineError, "Invalid index #{index}." unless entry
+			attributes = {}
+			attributes[:timestamp] = Time.now
+			attributes[:text] = entry.text
+			attributes[:type] = type || entry.type
+			hook :before_relog, :entry => entry, :attributes => attributes
+			new_entry = log(attributes)
+			hook :after_relog, :attributes => attributes, :entry => new_entry
 		end
 		
 		# Selects entries matching specified criteria.
@@ -89,7 +108,7 @@ module RedBook
 		# * <i>:after_delete</i>
 		def delete(indexes=nil)
 			hook :before_delete, :indexes => indexes
-			raise EngineError, "Empty dataset" if @dataset.blank?
+			raise EngineError, "Empty dataset." if @dataset.blank?
 			if indexes.blank?
 				# Deletes the whole dataset
 				@dataset.each do |e| 
@@ -101,7 +120,7 @@ module RedBook
 				indexes.each do |i| 
 					entry = @dataset[i-1]
 					unless entry
-						warning "Invalid index #{i}"
+						warning "Invalid index #{i}."
 						next
 					end
 					hook :before_each_delete, :entry => entry
@@ -194,7 +213,6 @@ module RedBook
 		def cleanup(tables=[])
 			hook :cleanup, :tables => tables
 		end
-
 
 		private
 
