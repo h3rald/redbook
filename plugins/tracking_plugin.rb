@@ -54,6 +54,7 @@ module RedBook
 			property :entry_id, Integer, :key => true
 			property :foreground, Boolean
 			property :ref, String
+			property :notes, String
 			property :completion, Time
 			property :duration, Float
 			property :tracking, String
@@ -143,6 +144,7 @@ module RedBook
 			o.parameter(:project)
 			o.parameter(:version)
 			o.parameter(:ref)
+			o.parameter(:notes)
 			o.parameter(:foreground) { |p| p.type = :bool } 
 			o.parameter(:tracking) { |p| p.type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
 			o.parameter(:completion) { |p| p.type = :time } 
@@ -153,6 +155,7 @@ module RedBook
 			o.parameter(:project)
 			o.parameter(:version)
 			o.parameter(:ref)
+			o.parameter(:notes)
 			o.parameter(:foreground) { |p| p.type = :bool } 
 			o.parameter(:tracking) { |p| p.type = :list; p.values = ['started', 'disabled', 'paused', 'completed'] }
 			o.parameter(:before) { |p| p.type = :time } 
@@ -168,6 +171,7 @@ module RedBook
 				result['activity.project.name'] = params[:project] unless params[:project].blank? 
 				result['activity.version.name'] = params[:version] unless params[:version].blank? 
 				result['activity.ref'] = params[:ref] unless params[:ref].blank? 
+				result['activity.notes'] = params[:notes] unless params[:notes].blank? 
 				result['activity.tracking'] = params[:tracking] unless params[:tracking].blank? 
 				result['activity.foreground'] = params[:foreground] unless params[:foreground] == nil 
 				params.delete(:shorterthan)
@@ -177,6 +181,7 @@ module RedBook
 				params.delete(:project)
 				params.delete(:version)
 				params.delete(:ref)
+				params.delete(:notes)
 				params.delete(:tracking)
 				params.delete(:foreground)
 				params.merge! result
@@ -187,6 +192,7 @@ module RedBook
 			o.parameter(:project)
 			o.parameter(:version)
 			o.parameter(:ref)
+			o.parameter(:notes)
 			o.parameter(:foreground) { |p| p.type = :bool } 
 			o.parameter(:tracking) { |p| p.type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
 			o.parameter(:completion) { |p| p.type = :time } 
@@ -222,6 +228,7 @@ module RedBook
 		special_attributes << :project
 		special_attributes << :version
 		special_attributes << :ref
+		special_attributes << :notes
 		special_attributes << :completion
 		special_attributes << :duration
 		special_attributes << :foreground
@@ -324,15 +331,17 @@ module RedBook
 			project = params[:attributes][:project]
 			version = params[:attributes][:version]
 			ref = params[:attributes][:ref]
+			notes = params[:attributes][:notes]
 			foreground = params[:attributes][:foreground]
 			completion = params[:attributes][:completion]
 			duration = params[:attributes][:duration]
 			entry = params[:entry]
-			if foreground != nil || project || version || ref || completion || duration then	
+			if foreground != nil || project || version || ref || notes || completion || duration then	
 				activity =  Repository::Activity.first(:entry_id => entry.id) || Repository::Activity.create(:entry_id => entry.id)  
 				activity.project = entry.resource :project, project unless project.blank?
 				activity.version = entry.resource :version, version unless version.blank?
 				activity.ref = ref
+				activity.notes = notes
 				activity.foreground = foreground unless foreground == nil
 				if completion == "" then
 					activity.completion = completion
@@ -346,23 +355,26 @@ module RedBook
 				entry.activity = activity
 				entry.save
 			end
+			{:value => nil, :stop => false}
 		end
 
 		define_hook(:after_insert) do |params|
 			project = params[:attributes][:project]
 			version = params[:attributes][:version]
 			ref = params[:attributes][:ref]
+			notes = params[:attributes][:notes]
 			tracking = params[:attributes][:tracking]
 			completion = params[:attributes][:completion]
 			foreground = params[:attributes][:foreground]
 			duration = params[:attributes][:duration]
 			entry = params[:entry]
-			if foreground || project || tracking || version || ref || completion || duration then	
+			if notes || foreground || project || tracking || version || ref || completion || duration then	
 				tracking ||= 'disabled'
 				activity =  Repository::Activity.create(:entry_id => entry.id)	
 				activity.project = entry.resource :project, project unless project.blank?
 				activity.version = entry.resource :version, version unless version.blank?
 				activity.ref = ref
+				activity.notes = notes
 				activity.tracking = tracking
 				activity.completion = completion
 				activity.foreground = (foreground == false) ? false : true
@@ -370,6 +382,7 @@ module RedBook
 				entry.activity = activity
 				entry.save
 			end
+			{:value => nil, :stop => false}
 		end
 
 		define_hook(:after_each_delete) do |params|
@@ -378,6 +391,7 @@ module RedBook
 			a.destroy unless a.blank?
 			rs = Repository::Record.all(:entry_id => entry.id)
 			rs.each { |r| r.destroy }
+			{:value => nil, :stop => false}
 		end
 
 		def Engine.pause_activity(entry, time=nil)
@@ -390,6 +404,7 @@ module RedBook
 			entry.activity.tracking = 'paused'
 			entry.activity.track
 			entry.save
+			{:value => nil, :stop => false}
 		end
 
 		def Engine.complete_activity(entry, time=nil)

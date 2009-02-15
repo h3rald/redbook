@@ -63,7 +63,9 @@ describe RedBook::Engine do
 		entries.each { |entry| @e.log entry }
 		lambda { @e.delete [1]}.should raise_error
 		@e.select
-		lambda { @e.delete [1]}.should_not raise_error
+		#lambda { 
+		@e.delete [1]
+		#}.should_not raise_error
 		@e.select.length.should == 2
 		lambda { @e.delete }.should_not raise_error
 		@e.select.length.should == 0

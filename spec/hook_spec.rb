@@ -4,7 +4,7 @@ require File.join(File.dirname(__FILE__),'..','lib', 'redbook')
 
 defining_hook = lambda do
 	RedBook::HookTest.define_hook(:test) do |params|
-		params[:a]+params[:b]
+		{:value => params[:a]+params[:b], :stop => false}
 	end
 end
 
@@ -13,7 +13,7 @@ using_hook = lambda do
 		include RedBook::Hookable
 		attr_reader :result
 		def do_something
-			@result = hook :test, :a => 2, :b => 10
+			@result = hook(:test, :a => 2, :b => 10)
 		end
 	end
 end
@@ -46,8 +46,8 @@ describe RedBook::Hook do
 	it "should stop execution of hooks if necessary" do
 		using_hook.call
 		defining_hook.call
-		RedBook::HookTest.define_hook(:test, true) do |params|
-			params[:a]*params[:b]
+		RedBook::HookTest.define_hook(:test) do |params|
+			{:value => params[:a]*params[:b], :stop => true }
 		end
 		defining_hook.call
 		test = RedBook::HookTest.new

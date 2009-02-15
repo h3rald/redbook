@@ -52,6 +52,7 @@ module RedBook
 					if c.editor.line.text.match(regexps[:operations]) || c.editor.line.text.match(regexps[:rename])   then
 						c.engine.inventory[table].each { |t| matches << t unless c.editor.line.text.match t} if c.engine.inventory[table]
 					end
+				{:value => matches, :stop => matches.blank? ? false : true}
 			end
 		end
 
@@ -63,7 +64,7 @@ module RedBook
 		class << self; attr_accessor :plugins; end
 
 		@plugins = {}	
-			
+
 
 		def self.load_all
 			dirs = []

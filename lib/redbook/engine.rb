@@ -301,7 +301,7 @@ RedBook::Engine.define_hook :saved_file_header do |params|
 		result << "<h1>RedBook Dataset</h1>\n"
 		result << "<div id=\"dataset\">\n"
 	end
-	result
+	{ :value => result, :stop => result ? true : false }
 end
 
 RedBook::Engine.define_hook :saved_file_footer do |params|
@@ -313,7 +313,7 @@ RedBook::Engine.define_hook :saved_file_footer do |params|
 		result << "\n</div>\n"
 		result << "</body>\n"
 	end
-	result
+	{ :value => result, :stop => result ? true : false }
 end
 
 		

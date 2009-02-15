@@ -8,15 +8,17 @@ module RedBook
 	class Hook
 
 		# Defines a new hook.
-		def initialize(id, stop=false,&block)
+		def initialize(id, &block)
 			block_given? ? @block = block :	raise(ArgumentError, "No action specified for '#{id.to_s}' hook")
 			@id = id
-			@stop = stop
 		end
 
-		# Executes the hook.
+		# Executes the hook. The hook process should return a hash:
+		# {:value => (hook result), :stop => (stop processing hooks)}
 		def execute(params={})
-			{:value => @block.call(params), :stop => @stop}
+			result = @block.call(params)
+			raise EngineError, "Invalid hook definition (hash not returned)." unless result.is_a? Hash
+			result
 		end
 
 	end
@@ -78,8 +80,8 @@ module RedBook
 				class << mod;	attr_reader :hooks;	end
 
 				# Defines a new hook for the hookable class.
-				def define_hook(id, stop=false, &block)
-					h = Hook.new id, stop, &block
+				def define_hook(id, &block)
+					h = Hook.new id, &block
 					@hooks[id] = [] unless @hooks[id]
 					@hooks[id] << h
 				end

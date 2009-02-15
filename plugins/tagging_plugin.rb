@@ -122,6 +122,7 @@ module RedBook
 					entry.add_tag t					
 				end
 			end
+			{:value => nil, :stop => false}
 		end
 
 		define_hook(:after_update) do |params|
@@ -136,6 +137,7 @@ module RedBook
 					entry.add_tag t					
 				end
 			end
+			{:value => nil, :stop => false}
 		end		
 
 		define_hook(:before_each_delete) do |params|
@@ -146,6 +148,7 @@ module RedBook
 				entry.tagmap.each { |t| t.destroy }
 				entry.tags.reload
 			end
+			{:value => nil, :stop => false}
 		end
 
 		define_hook(:after_select) do |params|
@@ -157,6 +160,7 @@ module RedBook
 				i = i+1
 			end
 			dataset.compact!
+			{:value => nil, :stop => false}
 		end
 
 		define_hook(:cleanup) do |params|
@@ -169,6 +173,7 @@ module RedBook
 					end
 				end
 			end
+			{:value => nil, :stop => false}
 		end
 
 	end

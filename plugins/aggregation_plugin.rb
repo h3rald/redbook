@@ -56,13 +56,15 @@ module RedBook
 		end
 
 		define_hook(:get_calculation_field) do |params|
+			result = nil
 			if params[:field] == 'duration' then
 				begin
-					params[:entry].activity.duration
+					result = params[:entry].activity.duration
 				rescue
 					nil
 				end
 			end
+			{:value => result, :stop => result ? true : false}
 		end
 
 	end
