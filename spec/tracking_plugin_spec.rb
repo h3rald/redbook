@@ -21,16 +21,37 @@ describe RedBook::TrackingPlugin do
 	end
 
 	it "should allow updating of activities" do
-		@c.process ":select :type activity"
+		@c.process ":select"
 		@c.process ":update 1 :project Test2 :version 2.0 :ref 2000 :completion 2 seconds ago"
+		lambda { @c.process ":update 1 :tracking disabled" }.should raise_error
+		lambda {@c.process ":foreground 3" }.should_not raise_error
+		@c.process ":select :foreground true"
+		@c.engine.dataset.length.should == 3
+		lambda {@c.process ":background 2" }.should_not raise_error
+		@c.process ":select :foreground true"
+		@c.engine.dataset.length.should == 2
+	end
+
+	it "should allow deletion of activities" do
+		@c.process ":select"
+		@c.process ":update 1 :timestamp 1 hour ago"
+		@c.process ":track 1 :from 20 minutes ago :to 10 minutes ago"
+		@c.process ":track 1 :from 9 minutes ago :to 7 minutes ago"
+		@c.process ":track 1 :from 6 minutes ago :to 3 minutes ago"
+		@c.engine.dataset[0].activity.tracked_duration.to_i.should == 15
+		id = @c.engine.dataset[0].id 
+		@c.engine.delete([1])
+		RedBook::Repository::Entry.first(:id => id).should ==  nil
+		RedBook::Repository::Activity.first(:entry_id => id).should ==  nil
+		RedBook::Repository::Record.all(:entry_id => id).should ==  []
 	end
 	
 	it "should allow selection of activities" do
 		@c.process ":log Testing :timestamp 2 days ago :completion 10 minutes ago :type process"
-		@c.process ":select :foreground no :before 3 minutes ago"
+		@c.process ":select :foreground no"
 		@c.engine.dataset.length.should == 1
-		@c.process ":select :type activity"
-		@c.engine.dataset.length.should == 3
+		@c.process ":select :longerthan 119"
+		@c.engine.dataset.length.should == 1
 		@c.process ":update 1 :type activity :version 3.0 :project Test 3"
 		@c.process ":select :type activity :version 3.0 :project Test 3"
 		@c.engine.dataset.length.should == 1
