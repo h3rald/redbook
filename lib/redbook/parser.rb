@@ -95,7 +95,7 @@ module RedBook
 					end
 					return result
 				when :enum
-					raise ParserError, "Parameter':#{self}' must be set to one of the following values:#{@values.each {|v| print " '#{v}'." } }" unless @values.include? value.strip
+					raise ParserError, "Parameter':#{self}' must be set to one of the following values: #{@values.join(', ')}" unless @values.include? value.strip
 					return value.strip
 				when :bool then 
 					return true if value.match(/yes|on|true/i)

@@ -2,8 +2,6 @@
 
 require File.join(File.dirname(__FILE__),'..','lib', 'redbook')
 
-
-
 describe RedBook::TrackingPlugin do
 
 	before(:each) do

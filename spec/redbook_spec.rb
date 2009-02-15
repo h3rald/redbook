@@ -10,4 +10,4 @@ require 'emitter_spec'
 require 'parser_spec'
 require 'tagging_plugin_spec'
 require 'tracking_plugin_spec'
-
+require 'aggregation_plugin_spec'

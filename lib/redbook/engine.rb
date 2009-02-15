@@ -199,7 +199,6 @@ module RedBook
 		private
 
 		def create_repository
-			puts "reset!!!"
 			Repository.reset
 		end
 
