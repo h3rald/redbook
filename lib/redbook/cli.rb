@@ -115,8 +115,12 @@ module RedBook
 
 		def detail_operation(params)
 			result = []
+			count = 0
 			params[:detail].each { |i| result << @engine.dataset[i-1] }
-			result.each { |e| display e.type.symbolize, e.type.symbolize => e, detail => true if RedBook.output }
+			result.each do |e| 
+				count += 1
+				display e.type.symbolize, :entry => e, :details => true, :index => count if RedBook.output 
+			end
 		end
 
 		def clear_operation(params)
@@ -158,7 +162,7 @@ module RedBook
 			result = @engine.select params
 			count = 1
 			result.each do |e| 
-				display :entry, :entry => e, :index => count if RedBook.output
+				display e.type.symbolize, :entry => e, :index => count if RedBook.output
 				count = count+1
 			end
 			info "#{result.length} item#{result.length == 1 ? '' : 's'} loaded into dataset."

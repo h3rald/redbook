@@ -1,0 +1,22 @@
+<%
+time_format = "%a %b %d %Y - %I:%M:%S %p"
+tracking = ""
+case @entry.activity.tracking
+when 'started'
+	tracking = ">"
+when 'paused'
+	tracking = "="
+when 'completed'
+	tracking = "#"
+else
+	tracking = "*"
+end
+completion = @entry.activity.completion
+completion = completion.blank? ? "n/a" : completion.strftime(time_format)
+icon = (@entry.activity.foreground.blank?) ? "[#{tracking}]" : "(#{tracking})"
+-%><%= " #{@index.to_s.cyan} #{@entry.timestamp.strftime(time_format).dark_cyan}" %> <%= icon -%> <%= @entry.text.cyan -%> - <%= (@entry.activity.duration.to_f*100).round/100.0 -%> min. <% if @entry.respond_to? :tags then
+@entry.tags.each { |t| %><%= " @".dark_yellow+"#{t.name.yellow}"-%><% } -%> 
+<% end -%><% if @details then %>  Project: <%= @entry.activity.project || "n/a" %> | Version: <%= @entry.activity.version || "n/a" %> | Ref: <%= @entry.activity.ref || "n/a" %> 
+  Completion Time: <%= completion %> | Tracked duration: <%= (@entry.activity.tracked_duration.to_f*100).round/100.0 || "n/a" %>
+  Notes: <%= @entry.activity.notes || "n/a" %>
+<% end -%>

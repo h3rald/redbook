@@ -52,6 +52,8 @@ module RedBook
 			belongs_to :version
 			belongs_to :project
 			property :entry_id, Integer, :key => true
+			property :project_id, Integer, :nullable => true
+			property :version_id, Integer, :nullable => true
 			property :foreground, Boolean
 			property :ref, String
 			property :notes, String
@@ -336,7 +338,7 @@ module RedBook
 			completion = params[:attributes][:completion]
 			duration = params[:attributes][:duration]
 			entry = params[:entry]
-			if foreground != nil || project || version || ref || notes || completion || duration then	
+			if entry.type == 'activity' || foreground != nil || project || version || ref || notes || completion || duration then	
 				activity =  Repository::Activity.first(:entry_id => entry.id) || Repository::Activity.create(:entry_id => entry.id)  
 				activity.project = entry.resource :project, project unless project.blank?
 				activity.version = entry.resource :version, version unless version.blank?
@@ -368,7 +370,7 @@ module RedBook
 			foreground = params[:attributes][:foreground]
 			duration = params[:attributes][:duration]
 			entry = params[:entry]
-			if notes || foreground || project || tracking || version || ref || completion || duration then	
+			if entry.type == 'activity' || notes || foreground || project || tracking || version || ref || completion || duration then	
 				tracking ||= 'disabled'
 				activity =  Repository::Activity.create(:entry_id => entry.id)	
 				activity.project = entry.resource :project, project unless project.blank?
@@ -428,6 +430,7 @@ module RedBook
 				open.end = time || Time.now
 				open.save
 			end
+			entry.activity.completion = time || Time.now
 			entry.activity.tracking = 'completed'
 			entry.activity.track
 			entry.save

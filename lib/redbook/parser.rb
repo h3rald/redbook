@@ -290,6 +290,7 @@ class RedBook::Parser
 	operation :quit
 	operation :debug
 	operation :output
+	operation :color
 	operation :dataset
 	operation :clear
 

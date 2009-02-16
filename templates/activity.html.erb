@@ -1,0 +1,19 @@
+	<div class="activity">
+		<span class="start_time"><%= @entry.timestamp.strftime("%a %b %d %Y - %I:%M:%S %p") -%>: </span>
+		<span class="end_time"><%= @entry.activity.completion.strftime("%a %b %d %Y - %I:%M:%S %p") -%>: </span>
+		<span class="text"><%= @entry.text -%></span><% if @entry.respond_to? :tags then -%>
+			<ul class="tags"><% @entry.tags.each do |t| -%>
+			<li class="tag"><%= t.name -%></li><% end -%>
+		</ul><% end -%>
+		<ul>
+			<li>Project: <em><%= @entry.activity.project -%></em></li>
+			<li>Version: <em><%= @entry.activity.version -%></em></li>
+			<li>Ref: <em><%= @entry.activity.ref -%></em></li>
+			<li>Tracking: <em><%= @entry.activity.tracking -%></em></li>
+			<li>Duration: <em><%= @entry.activity.duration.to_s -%> minutes</em></li>
+			<li>Tracked Duration: <em><%= @entry.activity.tracked_duration.to_s -%> minutes</em></li>
+		</ul>
+		<p class="notes">
+		<%= @entry.activity.notes -%>
+		</p>
+	</div>
