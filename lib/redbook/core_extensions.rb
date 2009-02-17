@@ -8,6 +8,13 @@ class Symbol
 	end
 end
 
+class Hash
+
+	def null_key?(attr)
+		self.has_key?(attr) && self[attr] == nil
+	end
+end
+
 # The String class has been extended with some methods mainly for colorizing and encoding output.
 class String
 

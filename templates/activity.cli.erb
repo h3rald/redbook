@@ -14,9 +14,16 @@ end
 completion = @entry.activity.completion
 completion = completion.blank? ? "n/a" : completion.strftime(time_format)
 icon = (@entry.activity.foreground.blank?) ? "[#{tracking}]" : "(#{tracking})"
--%><%= " #{@index.to_s.cyan} #{@entry.timestamp.strftime(time_format).dark_cyan}" %> <%= icon -%> <%= @entry.text.cyan -%> - <%= (@entry.activity.duration.to_f*100).round/100.0 -%> min. <% if @entry.respond_to? :tags then
+project = @entry.activity.project ? @entry.activity.project.name : "n/a"
+version = @entry.activity.version ? @entry.activity.version.name : "n/a"
+ref = @entry.activity.ref || "n/a"
+notes = @entry.activity.notes || "n/a"
+timestamp = @entry.timestamp.strftime(time_format)
+tracked_duration = ((@entry.activity.tracked_duration.to_f*100).round/100.0).to_s
+duration = ((@entry.activity.duration.to_f*100).round/100.0).to_s 
+-%><%= " #{@index.to_s.cyan} #{timestamp.dark_cyan}" %> <%= icon -%> <%= "#{@entry.text.cyan}"%> - <%= "#{duration} min.".cyan -%> <% if @entry.respond_to? :tags then
 @entry.tags.each { |t| %><%= " @".dark_yellow+"#{t.name.yellow}"-%><% } -%> 
-<% end -%><% if @details then %>  Project: <%= @entry.activity.project || "n/a" %> | Version: <%= @entry.activity.version || "n/a" %> | Ref: <%= @entry.activity.ref || "n/a" %> 
-  Completion Time: <%= completion %> | Tracked duration: <%= (@entry.activity.tracked_duration.to_f*100).round/100.0 || "n/a" %>
-  Notes: <%= @entry.activity.notes || "n/a" %>
+<% end -%><% if @details then %>	<%= "Project: #{project.cyan}".dark_cyan %> | <%= "Version: #{version.cyan}".dark_cyan %>  | <%= "Ref: #{ref.cyan}".dark_cyan %>
+	<%= "Completion Time: #{completion.cyan}".dark_cyan %> | <%= "Tracked Duration: #{(tracked_duration+" min.").cyan}".dark_cyan %>
+	<%= "Notes: #{notes.cyan}".dark_cyan %>
 <% end -%>

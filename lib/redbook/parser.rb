@@ -52,7 +52,10 @@ module RedBook
 			end
 
 			def parse(value="")
-				raise ParserError, "Please specify a value for the ':#{self}' directive." if value.blank? && @required
+				if value.blank? then
+					raise ParserError, "Please specify a value for the ':#{self}' directive." if @required
+					return nil
+				end
 				case @type
 				when :string then
 					return value

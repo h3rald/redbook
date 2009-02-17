@@ -22,7 +22,7 @@ module RedBook
 
 		def finish_operation(params)
 			@engine.finish params[:finish]
-			info "Activity stopped."
+			info "Activity completed."
 		end
 
 		def pause_operation(params)
@@ -262,10 +262,7 @@ module RedBook
 		def finish(index=nil)
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			entry = @dataset[index-1] if index
-			raise EngineError, "Invalid index #{i}" unless entry
-			# if no index specified, get the first (and only) started activity.
-			entry = Repository::Entry.first('activity.tracking' => 'started', :foreground => true) unless entry 
-			raise EngineError, "No activities started." unless entry
+			raise EngineError, "Invalid activity or no activity specified." unless entry
 			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
 			raise EngineError, "Tracking is disabled for selected activity." if entry.activity.disabled?
 			raise EngineError, "Selected activity is already completed." if entry.activity.completed?
@@ -330,26 +327,29 @@ module RedBook
 		end
 
 		define_hook(:after_update) do |params|
-			project = params[:attributes][:project]
-			version = params[:attributes][:version]
-			ref = params[:attributes][:ref]
-			notes = params[:attributes][:notes]
-			foreground = params[:attributes][:foreground]
-			completion = params[:attributes][:completion]
-			duration = params[:attributes][:duration]
+			attributes = params[:attributes]
+			project = attributes[:project]
+			version = attributes[:version]
+			ref = attributes[:ref]
+			notes = attributes[:notes]
+			foreground = attributes[:foreground]
+			completion = attributes[:completion]
+			duration = attributes[:duration]
 			entry = params[:entry]
 			if entry.type == 'activity' || foreground != nil || project || version || ref || notes || completion || duration then	
 				activity =  Repository::Activity.first(:entry_id => entry.id) || Repository::Activity.create(:entry_id => entry.id)  
-				activity.project = entry.resource :project, project unless project.blank?
-				activity.version = entry.resource :version, version unless version.blank?
+				activity.project = entry.resource :project, project
+				activity.version = entry.resource :version, version
 				activity.ref = ref
 				activity.notes = notes
 				activity.foreground = foreground unless foreground == nil
-				if completion == "" then
+				if attributes.null_key?(:completion) then
+					puts "null completion!"
 					activity.completion = completion
 					pause_activity(entry) unless activity.tracking == 'disabled'
+				elsif !completion.blank?
+					complete_activity entry
 				end
-				complete_activity(entry) if !completion.blank? 
 				unless duration.blank? then
 					activity.duration = duration
 					activity.tracking = 'disabled'
@@ -373,8 +373,8 @@ module RedBook
 			if entry.type == 'activity' || notes || foreground || project || tracking || version || ref || completion || duration then	
 				tracking ||= 'disabled'
 				activity =  Repository::Activity.create(:entry_id => entry.id)	
-				activity.project = entry.resource :project, project unless project.blank?
-				activity.version = entry.resource :version, version unless version.blank?
+				activity.project = entry.resource :project, project
+				activity.version = entry.resource :version, version
 				activity.ref = ref
 				activity.notes = notes
 				activity.tracking = tracking

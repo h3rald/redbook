@@ -1,14 +1,14 @@
 	<activity>
 		<text><%= @entry.text -%></text>
 		<start_time><%= @entry.timestamp.to_s -%></start_time><% if @entry.respond_to? :tags then -%>
-			<tags><% @entry.tags.each do |t| -%>
+		<tags><% @entry.tags.each do |t| -%>
 			<tag><%= t.name -%></tag><% end -%>
 		</tags><% end -%>
-		<end_time><%= @entry.activity.completion.to_s -%></end_time>
-		<project><%= @entry.activity.project.to_s -%></project>
-		<version><%= @entry.activity.version.to_s -%></version>
-		<ref><%= @entry.activity.ref.to_s -%></ref>
-		<tracking><%= @entry.activity.tracking.to_s -%></tracking>
-		<duration tracked="<%= @entry.activity.tracked_duration.to_s -%>"><%= @entry.activity.duration.to_s -%></duration>
-		<notes><%= @entry.activity.notes.to_s -%></notes>
+		<end_time><%= @entry.activity.completion.to_s if @entry.activity.completion -%></end_time>
+		<project><%= @entry.activity.project.name if @entry.activity.project -%></project>
+		<version><%= @entry.activity.version.name if @entry.activity.version -%></version>
+		<ref><%= @entry.activity.ref -%></ref>
+		<tracking><%= @entry.activity.tracking -%></tracking>
+		<duration tracked="<%= @entry.activity.tracked_duration -%>"><%= @entry.activity.duration -%></duration>
+		<notes><%= @entry.activity.notes -%></notes>
 	</activity>
