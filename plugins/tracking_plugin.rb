@@ -7,8 +7,6 @@ module RedBook
 
 		def setup
 			create_resource :activities
-			create_resource :projects, :inventory => true, :completion_for => [:project]
-			create_resource :versions, :inventory => true, :completion_for => [:version]
 			create_resource :records
 		end
 	end
@@ -49,21 +47,16 @@ module RedBook
 		class Activity
 			include DataMapper::Resource
 			belongs_to :entry 
-			belongs_to :version
-			belongs_to :project
 			property :entry_id, Integer, :key => true
-			property :project_id, Integer, :nullable => true
-			property :version_id, Integer, :nullable => true
 			property :foreground, Boolean
-			property :ref, String
-			property :notes, String
-			property :completion, Time
+			property :start, Time
+			property :end, Time
 			property :duration, Float
 			property :tracking, String
 			storage_names[:default] = 'activities'
 
 			def track
-				return if tracking == 'disabled'
+				return if disabled?
 				self.duration = track_time
 			end
 
@@ -89,7 +82,8 @@ module RedBook
 
 			def valid_time?(time=nil)
 				entry = Repository::Entry.first(:id => entry_id)
-				entry.timestamp.to_time < time && (completion.to_time > time || completion.blank?) 
+				return true if entry.activity.start.blank? && entry.activity.end.blank?
+				entry.activity.start.to_time < time && (entry.activity.end.blank? || entry.activity.end.to_time > time)  
 			end
 
 			private
@@ -98,6 +92,7 @@ module RedBook
 				records = Repository::Record.all(:entry_id => entry_id)
 				result = 0
 				records.each { |r| result += r.duration }
+				result = (self.end - self.start)/60.0 if result == 0 && !self.start.blank? && !self.end.blank? # Simple tracking: end - start
 				result
 			end
 
@@ -123,67 +118,43 @@ module RedBook
 			has n, :records
 		end
 
-		class Project
-			include DataMapper::Resource
-			has n, :activities
-			property :id, Serial
-			property :name, String, :unique => true, :nullable => false
-			storage_names[:default] = 'projects'
-		end
-
-		class Version
-			include DataMapper::Resource
-			has n, :activities
-			property :id, Serial
-			property :name, String, :unique => true, :nullable => false
-			storage_names[:default] = 'versions'
-		end
 	end
 
 	class Parser
 
 		operations[:log].modify do |o|
-			o.parameter(:project)
-			o.parameter(:version)
-			o.parameter(:ref)
-			o.parameter(:notes)
 			o.parameter(:foreground) { |p| p.type = :bool } 
 			o.parameter(:tracking) { |p| p.type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
-			o.parameter(:completion) { |p| p.type = :time } 
+			o.parameter(:start) { |p| p.type = :time } 
+			o.parameter(:end) { |p| p.type = :time } 
 			o.parameter(:duration) { |p| p.type = :float }
 		end
 
 		operations[:select].modify do |o|
-			o.parameter(:project)
-			o.parameter(:version)
-			o.parameter(:ref)
-			o.parameter(:notes)
 			o.parameter(:foreground) { |p| p.type = :bool } 
 			o.parameter(:tracking) { |p| p.type = :list; p.values = ['started', 'disabled', 'paused', 'completed'] }
-			o.parameter(:before) { |p| p.type = :time } 
-			o.parameter(:after) { |p| p.type = :time } 
-			o.parameter(:longerthan) { |p| p.type = :float }
-			o.parameter(:shorterthan) { |p| p.type = :float }
+			o.parameter(:started_before) { |p| p.type = :time } 
+			o.parameter(:started_after) { |p| p.type = :time } 
+			o.parameter(:ended_before) { |p| p.type = :time } 
+			o.parameter(:ended_after) { |p| p.type = :time } 
+			o.parameter(:longer_than) { |p| p.type = :float }
+			o.parameter(:shorter_than) { |p| p.type = :float }
 			o.post_parsing << lambda do |params| 
 				result = {}
-				result['activity.duration.lt'] = params[:shorterthan] unless params[:shorterthan].blank?
-				result['activity.duration.gt'] = params[:longerthan] unless params[:longerthan].blank?
-				result['activity.completion.lt'] = params[:before] unless params[:before].blank?
-				result['activity.completion.gt'] = params[:after] unless params[:after].blank?
-				result['activity.project.name'] = params[:project] unless params[:project].blank? 
-				result['activity.version.name'] = params[:version] unless params[:version].blank? 
-				result['activity.ref'] = params[:ref] unless params[:ref].blank? 
-				result['activity.notes'] = params[:notes] unless params[:notes].blank? 
+				result['activity.duration.lt'] = params[:shorter_than] unless params[:shorter_than].blank?
+				result['activity.duration.gt'] = params[:longer_than] unless params[:longer_than].blank?
+				result['activity.end.lt'] = params[:ended_before] unless params[:ended_before].blank?
+				result['activity.end.gt'] = params[:ended_after] unless params[:ended_after].blank?
+				result['activity.start.lt'] = params[:started_before] unless params[:started_before].blank?
+				result['activity.start.gt'] = params[:started_after] unless params[:started_after].blank?
 				result['activity.tracking'] = params[:tracking] unless params[:tracking].blank? 
 				result['activity.foreground'] = params[:foreground] unless params[:foreground] == nil 
-				params.delete(:shorterthan)
-				params.delete(:longerthan)
-				params.delete(:before)
-				params.delete(:after)
-				params.delete(:project)
-				params.delete(:version)
-				params.delete(:ref)
-				params.delete(:notes)
+				params.delete(:shorter_than)
+				params.delete(:longer_than)
+				params.delete(:started_before)
+				params.delete(:started_after)
+				params.delete(:ended_before)
+				params.delete(:ended_after)
 				params.delete(:tracking)
 				params.delete(:foreground)
 				params.merge! result
@@ -191,13 +162,10 @@ module RedBook
 		end
 
 		operations[:update].modify do |o|
-			o.parameter(:project)
-			o.parameter(:version)
-			o.parameter(:ref)
-			o.parameter(:notes)
 			o.parameter(:foreground) { |p| p.type = :bool } 
 			o.parameter(:tracking) { |p| p.type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
-			o.parameter(:completion) { |p| p.type = :time } 
+			o.parameter(:start) { |p| p.type = :time } 
+			o.parameter(:end) { |p| p.type = :time } 
 			o.parameter(:duration) { |p| p.type = :float }
 		end
 
@@ -227,11 +195,8 @@ module RedBook
 			o.parameter(:to) { |p| p.type = :time}
 		end
 
-		special_attributes << :project
-		special_attributes << :version
-		special_attributes << :ref
-		special_attributes << :notes
-		special_attributes << :completion
+		special_attributes << :start
+		special_attributes << :end
 		special_attributes << :duration
 		special_attributes << :foreground
 
@@ -298,7 +263,7 @@ module RedBook
 			Repository::Record.create :entry_id => entry.id, :start => from, :end => to
 			entry.activity.track
 			if !to then
-				entry.activity.tracking  = 'started'
+				start_activity entry
 			elsif entry.activity.tracking != 'completed'
 				entry.activity.tracking  = 'paused'
 			end
@@ -328,32 +293,27 @@ module RedBook
 
 		define_hook(:after_update) do |params|
 			attributes = params[:attributes]
-			project = attributes[:project]
-			version = attributes[:version]
-			ref = attributes[:ref]
-			notes = attributes[:notes]
 			foreground = attributes[:foreground]
-			completion = attributes[:completion]
+			a_end = attributes[:end]
+			a_start = attributes[:start]
 			duration = attributes[:duration]
 			entry = params[:entry]
-			if entry.type == 'activity' || foreground != nil || project || version || ref || notes || completion || duration then	
+			if entry.type == 'activity' || foreground != nil || a_end || a_start || duration then	
 				activity =  Repository::Activity.first(:entry_id => entry.id) || Repository::Activity.create(:entry_id => entry.id)  
-				activity.project = entry.resource :project, project
-				activity.version = entry.resource :version, version
-				activity.ref = ref
-				activity.notes = notes
 				activity.foreground = foreground unless foreground == nil
-				if attributes.null_key?(:completion) then
-					puts "null completion!"
-					activity.completion = completion
-					pause_activity(entry) unless activity.tracking == 'disabled'
-				elsif !completion.blank?
+				activity.end = a_end unless attributes.null_key? :end
+				activity.start = a_start unless attributes.null_key? :start
+				raise EngineError, "Start time is later than end time." if !activity.end.blank? && !activity.start.blank? && activity.start > activity.end
+				if activity.end == nil then
+					pause_activity(entry) if activity.started?
+				elsif !a_end.blank?
 					complete_activity entry
 				end
 				unless duration.blank? then
 					activity.duration = duration
 					activity.tracking = 'disabled'
 				end
+				activity.track 
 				entry.activity = activity
 				entry.save
 			end
@@ -361,24 +321,19 @@ module RedBook
 		end
 
 		define_hook(:after_insert) do |params|
-			project = params[:attributes][:project]
-			version = params[:attributes][:version]
-			ref = params[:attributes][:ref]
-			notes = params[:attributes][:notes]
 			tracking = params[:attributes][:tracking]
-			completion = params[:attributes][:completion]
+			a_end = params[:attributes][:end]
+			a_start = params[:attributes][:start]
 			foreground = params[:attributes][:foreground]
 			duration = params[:attributes][:duration]
 			entry = params[:entry]
-			if entry.type == 'activity' || notes || foreground || project || tracking || version || ref || completion || duration then	
+			if entry.type == 'activity' || foreground || tracking || a_end || a_start || duration then	
 				tracking ||= 'disabled'
 				activity =  Repository::Activity.create(:entry_id => entry.id)	
-				activity.project = entry.resource :project, project
-				activity.version = entry.resource :version, version
-				activity.ref = ref
-				activity.notes = notes
 				activity.tracking = tracking
-				activity.completion = completion
+				activity.end = a_end
+				activity.start = a_start
+				raise EngineError, "Start time is later than end time."  if !activity.end.blank? && !activity.start.blank? && activity.start > activity.end
 				activity.foreground = (foreground == false) ? false : true
 				activity.duration = duration
 				entry.activity = activity
@@ -396,7 +351,7 @@ module RedBook
 					attributes[field] = m.call
 				end
 			end
-			fields = [:project, :version, :ref, :notes, :tracking, :completion, :foreground, :duration]
+			fields = [:start, :tracking, :end, :foreground, :duration]
 			fields.each { |f| add_attribute.call f, attributes}
 			{:value => nil, :stop => false}
 		end
@@ -430,7 +385,8 @@ module RedBook
 				open.end = time || Time.now
 				open.save
 			end
-			entry.activity.completion = time || Time.now
+			time ||= Time.now
+			entry.activity.end = time 
 			entry.activity.tracking = 'completed'
 			entry.activity.track
 			entry.save
@@ -438,7 +394,9 @@ module RedBook
 
 		def Engine.start_activity(entry, time=nil)
 			raise EngineError, "Activity already started" if entry.activity.started?
-			Repository::Record.create(:entry_id => entry.id, :start => time || Time.now)
+			time ||= Time.now
+			Repository::Record.create(:entry_id => entry.id, :start => time)
+			entry.activity.start = time
 			entry.activity.tracking = 'started'
 			entry.save
 		end

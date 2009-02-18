@@ -10,9 +10,9 @@ describe RedBook::TrackingPlugin do
 		@db = (Pathname(__FILE__).dirname.expand_path/'test.rbk').to_s
 		@c = RedBook::Cli.new @db
 		RedBook::Repository.reset
-		@a = lambda { @c.process ":log Current activity :type activity :project Test :version 1.0 :ref #001" }
-		@p = lambda { @c.process ":log Background activity :type activity :project Test :version 1.0 :foreground no :ref #001 :duration 120" }
-		@b = lambda { @c.process ":log Old activity :type activity :timestamp 30 seconds ago :completion now" }
+		@a = lambda { @c.process ":log Current activity :type activity" }
+		@p = lambda { @c.process ":log Background activity :type activity :foreground no :duration 120" }
+		@b = lambda { @c.process ":log Old activity :type activity :timestamp 30 seconds ago :start 30 seconds ago :end now" }
 		@a.should_not raise_error
 		@p.should_not raise_error
 		@b.should_not raise_error
@@ -20,7 +20,8 @@ describe RedBook::TrackingPlugin do
 
 	it "should allow updating of activities" do
 		@c.process ":select"
-		@c.process ":update 1 :project Test2 :version 2.0 :ref 2000 :completion 2 seconds ago"
+		lambda {@c.process ":update 1 :start now :end 2 minutes ago"}.should raise_error
+		lambda {@c.process ":update 1 :start 4 minutes ago :end 2 minutes ago"}.should_not raise_error
 		lambda { @c.process ":update 1 :tracking disabled" }.should raise_error
 		lambda {@c.process ":foreground 3" }.should_not raise_error
 		@c.process ":select :foreground true"
@@ -45,19 +46,21 @@ describe RedBook::TrackingPlugin do
 	end
 	
 	it "should allow selection of activities" do
-		@c.process ":log Testing :timestamp 2 days ago :completion 10 minutes ago :type process"
+		@c.process ":log Testing :start 2 days ago :end 10 minutes ago :type process"
 		@c.process ":select :foreground no"
+		@c.process ":select :longer_than 119"
 		@c.engine.dataset.length.should == 1
-		@c.process ":select :longerthan 119"
+		@c.process ":update 1 :type activity :start 6 minutes ago :end 2 minutes ago"
+		@c.process ":select :type activity :shorter_than 5" 
 		@c.engine.dataset.length.should == 1
-		@c.process ":update 1 :type activity :version 3.0 :project Test 3"
-		@c.process ":select :type activity :version 3.0 :project Test 3"
+		@c.process ":select :type activity :started_before 5 minutes ago" 
 		@c.engine.dataset.length.should == 1
 	end
 
 	it "should start tracking time spent on an activity" do 
 		lambda { @c.process ":start 1" }.should raise_error
 		@c.engine.select
+		@c.process ":update 1 :end" # remove end time
 		@c.process ":start 1"
 		a = @c.engine.dataset[0]
 		p = @c.engine.dataset[1]
@@ -91,6 +94,7 @@ describe RedBook::TrackingPlugin do
 		a = @c.engine.dataset[1] # activity
 		p = @c.engine.dataset[2] # bkg activity
 		b = @c.engine.dataset[0] # old activity
+		@c.process ":update 1 :end" # remove end time
 		@c.process ":start 1" # old activity
 		@c.process ":start 2" # activity
 		sleep 1
@@ -122,20 +126,19 @@ describe RedBook::TrackingPlugin do
 
 	it "should be possible to update tracking records" do
 		@c.process ":select"
-		@c.process ":update 1 :timestamp 2 hours ago :completion 30 minutes ago"
+		@c.process ":update 1 :start 2 hours ago :end 30 minutes ago"
 		lambda {@c.process ":track 1 :from 3 hours ago" }.should raise_error
 		lambda {@c.process ":track 1 :from 3 hours ago :to now" }.should raise_error
 		lambda {@c.process ":track 1" }.should raise_error
 		lambda {@c.process ":track 1 :from 1 hour ago :to 55 minutes ago" }.should_not raise_error
 		lambda {@c.process ":track 1 :from 54 minutes ago :to 52 minutes ago" }.should_not raise_error
 		lambda {@c.process ":track 1 :from 40 minutes ago :to 34 minutes ago" }.should_not raise_error
-		lambda {@c.process ":track 1 :from 35 minutes ago :to 29  minutes ago" }.should raise_error
-		lambda {@c.process ":track 1 :from 31 minutes ago :to 25  minutes ago" }.should_not raise_error
+		lambda {@c.process ":track 1 :from 35 minutes ago :to 29 minutes ago" }.should raise_error
 		a = @c.engine.dataset[0]
-		a.activity.duration.to_i.should == 19
+		a.activity.duration.to_i.should == 13
 		a.activity.tracking.should == 'completed'
-		lambda {@c.process ":untrack 1 :from 61 minutes ago :to 54 minutes ago" }.should_not raise_error
-		a.activity.duration.to_i.should == 14
+		lambda {@c.process ":untrack 1 :from 41 minutes ago :to 33 minutes ago" }.should_not raise_error
+		a.activity.duration.to_i.should == 7
 		lambda {@c.engine.untrack(1) }.should_not raise_error
 		RedBook::Repository::Record.all(:entry_id => a.id).length.should == 0
 		a.activity.tracking.should == 'disabled'
