@@ -30,7 +30,7 @@ module RedBook
 		# * <i>:after_initialize</i> :repository => String, :dataset => Array 
 		def initialize(db=nil)
 			hook :before_initialize, :db => db
-			@db = db || RedBook::HOME_DIR/"repository.rbk"
+			@db = db || RedBook.config.repositories.default 
 			@repository = "sqlite3://#{@db}"
 			@dataset = []
 			@inventory = {}

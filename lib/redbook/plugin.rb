@@ -67,10 +67,7 @@ module RedBook
 
 
 		def self.load_all
-			dirs = []
-			dirs << RedBook::LIB_DIR/'../plugins'
-			dirs << RedBook::HOME_DIR/'.redbook-plugins'
-			dirs << RedBook::HOME_DIR/'redbook-plugins'
+			dirs = RedBook.config.plugins.directories
 			dirs.each do |d|
 				if File.exists?(d) && File.directory?(d) then
 					Pathname.new(d).each_entry do |f|
@@ -88,9 +85,11 @@ module RedBook
 			if file.to_s =~ /\_plugin.rb$/ then
 				if require(file.to_s) then
 					name = file.basename.to_s.gsub!(/\_plugin.rb$/, '')
-					plugin = {:name => name.camel_case, :file => file, :label => name.to_sym}
-					@plugins[name.to_sym] = RedBook.const_get(:"#{plugin[:name]}Plugin").new plugin
-					return @plugins[name.to_sym]
+					if RedBook.config.plugins.list.include? name.symbolize then
+						plugin = {:name => name.camel_case, :file => file, :label => name.to_sym}
+						@plugins[name.to_sym] = RedBook.const_get(:"#{plugin[:name]}Plugin").new plugin
+						return @plugins[name.to_sym]
+					end
 				end
 			end
 			return false

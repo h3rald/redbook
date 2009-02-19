@@ -15,9 +15,11 @@ module RedBook
 			@engine = Engine.new(repository)
 			[@parser, @engine, self].each { |o|	o.add_observer self }
 			RedBook::PluginCollection.plugins.each_pair { |l, v| v.add_observer self; v.init }
-			@editor = RawLine::Editor.new
-			setup_completion
-			setup_shortcuts
+			if RedBook.config.completion then
+				@editor = RawLine::Editor.new
+				setup_completion
+				setup_shortcuts	
+			end
 			@engine.refresh
 		end
 
@@ -26,7 +28,12 @@ module RedBook
 			# Main REPL
 			loop do
 				begin
-					process @editor.read(@prompt)
+					if RedBook.config.completion then
+						process @editor.read(@prompt)
+					else
+						print @prompt
+						process gets
+					end
 				rescue Exception => e
 					if e.class == SystemExit || e.class == Interrupt then
 						info "RedBook CLI stopped."

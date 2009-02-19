@@ -12,16 +12,15 @@ require 'pathname'
 require 'extlib'
 require 'yaml'
 require 'dm-core'
+require 'configatron'
 require 'observer'
 require 'erubis/tiny'
 require 'chronic'
 require 'highline/system_extensions'
 require 'highline/import'
-require 'rawline'
 
 lib = Pathname(__FILE__).dirname.expand_path
 core = lib/'redbook'
-
 
 module RedBook
 	
@@ -35,10 +34,22 @@ module RedBook
 	LIB_DIR = Pathname(__FILE__).dirname.expand_path
 	HOME_DIR = RUBY_PLATFORM =~ /win32/i ? '' : ENV['HOME']
 	
-	class << self; attr_accessor :debug, :output, :colors, :inventory_tables; end
+	class << self; attr_accessor :debug, :output, :colors, :inventory_tables, :config; end
+
+	@config = configatron
+end
+
+require lib/'../config'
+require RedBook::HOME_DIR/'../redbook_config' if File.exists? RedBook::HOME_DIR/'../redbook_config'
+
+require 'rawline' if RedBook::config.completion
+
+module RedBook
 	
-	@debug = false
-	@output = true
+	class << self; attr_accessor :debug, :output, :colors, :inventory_tables, :config; end
+	
+	@debug = @config.debug
+	@output = @config.output
 	@inventory_tables = []
 	
 	if RUBY_PLATFORM =~ /win32/i then
@@ -51,8 +62,12 @@ module RedBook
 	else
 		@colors = true
 	end
+
+	@colors = (@colors == true && @config.colors)
 	
 end
+
+
 
 require core/'core_extensions'
 require core/'hook'
