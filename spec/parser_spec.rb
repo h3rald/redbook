@@ -12,7 +12,6 @@ describe RedBook::Parser do
 		op= RedBook::Parser.operations[:log]
 		op.should_not == nil
 		op.name.should == :log
-		op.post_parsing.should_not == nil
 		op.parameters[:log].should_not == nil
 		op.parameters[:timestamp].should_not == nil
 		op.parameters[:type].should_not == nil
@@ -22,7 +21,6 @@ describe RedBook::Parser do
 		op = RedBook::Parser.operations[:select]
 		op.should_not == nil
 		op.name.should == :select
-		op.post_parsing.should_not == nil
 		op.parameters[:select].should_not == nil
 		op.parameters[:from].should_not == nil
 		op.parameters[:to].should_not == nil
@@ -33,7 +31,6 @@ describe RedBook::Parser do
 		op= RedBook::Parser.operations[:update]
 		op.should_not == nil
 		op.name.should == :update
-		op.post_parsing.should_not == nil
 		op.parameters[:update].should_not == nil
 		op.parameters[:timestamp].should_not == nil
 		op.parameters[:text].should_not == nil
@@ -44,7 +41,6 @@ describe RedBook::Parser do
 		op= RedBook::Parser.operations[:delete]
 		op.should_not == nil
 		op.name.should == :delete
-		op.post_parsing.should_not == nil
 		op.parameters[:delete].should_not == nil
 	end
 
@@ -52,7 +48,6 @@ describe RedBook::Parser do
 		op= RedBook::Parser.operations[:save]
 		op.should_not == nil
 		op.name.should == :save
-		op.post_parsing.should_not == nil
 		op.parameters[:save].should_not == nil
 		op.parameters[:format].should_not == nil
 	end
@@ -68,14 +63,16 @@ describe RedBook::Parser do
 		op = @p.parse ":select something :from today at 8 am :to today at 10 am"
 		op[0].should == :select
 		op[1].each_pair do |key, value|
-			case key.target
-			when :text then
-				value.should == "%something%"
-				key.operator.should == :like
-			when :timestamp then
-				value.class.should == Time
-				(key.operator == :lt || key.operator == :gt).should == true
-			end	
+			if key.class == Symbol # it could also be a string/other, but it doesn't matter here. 
+				case key.target
+				when :text then
+					value.should == "%something%"
+					key.operator.should == :like
+				when :timestamp then
+					value.class.should == Time
+					(key.operator == :lt || key.operator == :gt).should == true
+				end	
+			end
 		end
 	end
 

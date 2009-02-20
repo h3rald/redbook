@@ -5,7 +5,7 @@ module RedBook
 	class Parser
 
 		class Operation
-			attr_accessor :parameters, :name, :post_parsing
+			attr_accessor :parameters, :name
 
 			def to_s
 				@name.to_s
@@ -18,7 +18,6 @@ module RedBook
 			def initialize(name)
 				@name = name
 				@parameters = {}
-				@post_parsing = []
 				yield self if block_given?
 			end
 
@@ -33,7 +32,8 @@ module RedBook
 
 
 		class Parameter 
-			attr_accessor :name, :type, :required, :values
+			include Hookable
+			attr_accessor :name, :type, :required, :values, :rewrite
 
 			def to_s
 				@name.to_s
@@ -49,6 +49,20 @@ module RedBook
 				@required = false
 				@values = []
 				yield self if block_given?
+			end
+
+			def rewrite_as(key, &block)
+				@rewrite = key
+				@rewrite_block = block if block_given?
+			end
+
+			def rewrite_value(params)
+				if @rewrite_block
+					params[@rewrite] =@rewrite_block.call(params[@name])
+				else
+					params[@rewrite] = params[@name]
+				end
+				params.delete @name unless @name == @rewrite
 			end
 
 			def parse(value="")
@@ -106,7 +120,7 @@ module RedBook
 				else
 					return_value = nil
 					hook :parse_custom_type, :value => value, :return => return_value
-					raise ParserError, "Unknown type ':#{@type.to_s}' for parameter ':#{self}'." unless return_value
+					raise ParserError, "Unknown type '#{@type.textualize}' for parameter ':#{self}'." unless return_value
 					return return_value
 				end
 			end
@@ -139,7 +153,7 @@ module RedBook
 			return parse(parse_macro(str, directives)) if operation.blank?		
 			parameters = parse_directives operation, directives
 			check_required_parameters operation, parameters
-			operation.post_parsing.each{ |p| p.call parameters }
+			operation.parameters.each_value { |v| v.rewrite_value(parameters) if v.rewrite }
 			parameters = nil if parameters.blank?
 			return operation.name, parameters
 		end
@@ -231,13 +245,9 @@ end
 class RedBook::Parser
 
 	operation(:log) do |o|
-		o.parameter(:log) { |p| p.required = true }
+		o.parameter(:log) { |p| p.required = true; p.rewrite_as :text }
 		o.parameter(:timestamp) { |p| p.type = :time }
 		o.parameter :type 
-		o.post_parsing << lambda do |params|
-			params[:text] = params[:log]
-			params.delete(:log)
-		end
 	end
 
 	operation(:relog) do |o|
@@ -246,24 +256,12 @@ class RedBook::Parser
 	end
 
 	operation(:select) do |o|
-		o.parameter :select
-		o.parameter(:from) { |p| p.type = :time }
-		o.parameter(:to) { |p| p.type = :time }
+		o.parameter(:select) { |p| p.rewrite_as(:text.like){|v| "%#{v}%" }}
+		o.parameter(:from) { |p| p.type = :time; p.rewrite_as(:timestamp.gt) }
+		o.parameter(:to) { |p| p.type = :time; p.rewrite_as(:timestamp.lt)}
 		o.parameter(:type)  { |p| p.type = :list}
 		o.parameter(:first) { |p| p.type = :integer }
 		o.parameter(:last) { |p| p.type = :integer }
-		o.post_parsing << lambda do |params|
-			result = {}
-			result[:timestamp.lt] = params[:to] unless params[:to].blank?
-			result[:timestamp.gt] = params[:from] unless params[:from].blank?
-			result[:text.like] = "%#{params[:select]}%" unless params[:select].blank?
-			result[:type] = params[:type] unless params[:type].blank?
-			params.delete(:select)
-			params.delete(:from)
-			params.delete(:to)
-			params.delete(:type)
-			params.merge! result
-		end	
 	end
 
 	operation(:update) do |o|
@@ -279,10 +277,7 @@ class RedBook::Parser
 
 	operation(:save) do |o|
 		o.parameter(:save) { |p| p.required = true }
-		o.parameter(:format) { |p| p.required = true }
-		o.post_parsing << lambda do |params|
-			params[:format] = params[:format].to_sym
-		end
+		o.parameter(:format) { |p| p.required = true; p.rewrite_as(:format){|v| v.to_sym} }
 	end
 
 	operation(:ruby) do |o|

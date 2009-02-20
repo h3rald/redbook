@@ -133,32 +133,12 @@ module RedBook
 		operations[:select].modify do |o|
 			o.parameter(:foreground) { |p| p.type = :bool } 
 			o.parameter(:tracking) { |p| p.type = :list; p.values = ['started', 'disabled', 'paused', 'completed'] }
-			o.parameter(:started_before) { |p| p.type = :time } 
-			o.parameter(:started_after) { |p| p.type = :time } 
-			o.parameter(:ended_before) { |p| p.type = :time } 
-			o.parameter(:ended_after) { |p| p.type = :time } 
-			o.parameter(:longer_than) { |p| p.type = :float }
-			o.parameter(:shorter_than) { |p| p.type = :float }
-			o.post_parsing << lambda do |params| 
-				result = {}
-				result['activity.duration.lt'] = params[:shorter_than] unless params[:shorter_than].blank?
-				result['activity.duration.gt'] = params[:longer_than] unless params[:longer_than].blank?
-				result['activity.end.lt'] = params[:ended_before] unless params[:ended_before].blank?
-				result['activity.end.gt'] = params[:ended_after] unless params[:ended_after].blank?
-				result['activity.start.lt'] = params[:started_before] unless params[:started_before].blank?
-				result['activity.start.gt'] = params[:started_after] unless params[:started_after].blank?
-				result['activity.tracking'] = params[:tracking] unless params[:tracking].blank? 
-				result['activity.foreground'] = params[:foreground] unless params[:foreground] == nil 
-				params.delete(:shorter_than)
-				params.delete(:longer_than)
-				params.delete(:started_before)
-				params.delete(:started_after)
-				params.delete(:ended_before)
-				params.delete(:ended_after)
-				params.delete(:tracking)
-				params.delete(:foreground)
-				params.merge! result
-			end
+			o.parameter(:started_before) { |p| p.type = :time; p.rewrite_as 'activity.start.lt'} 
+			o.parameter(:started_after) { |p| p.type = :time; p.rewrite_as 'activity.start.gt'} 
+			o.parameter(:ended_before) { |p| p.type = :time; p.rewrite_as 'activity.end.lt'} 
+			o.parameter(:ended_after) { |p| p.type = :time; p.rewrite_as 'activity.end.gt'} 
+			o.parameter(:longer_than) { |p| p.type = :float; p.rewrite_as 'activity.duration.gt'}
+			o.parameter(:shorter_than) { |p| p.type = :float; p.rewrite_as 'activity.duration.lt'}
 		end
 
 		operations[:update].modify do |o|
