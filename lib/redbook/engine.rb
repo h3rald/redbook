@@ -206,7 +206,11 @@ module RedBook
 
 		# Evaluates a string as Ruby code.
 		def ruby(string)
-			instance_eval string
+			begin
+				Kernel.instance_eval string
+			rescue
+				raise EngineError, "Error evaluating '#{string}'"
+			end
 		end	
 
 		# Cleans up unused auxiliary records belonging to specific tables.

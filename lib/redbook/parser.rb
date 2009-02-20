@@ -134,7 +134,7 @@ module RedBook
 		end
 
 		def parse(str)
-			directives = parse_command str
+			directives = parse_ruby_code(parse_command(str))
 			operation = Parser.operations[directives[0].symbolize]
 			return parse(parse_macro(str, directives)) if operation.blank?		
 			parameters = parse_directives operation, directives
@@ -172,6 +172,24 @@ module RedBook
 			return result
 		end
 
+		def parse_ruby_code(directives)
+			regex = /%=(.+?)=%/
+			directives.each do |v|
+				code = v.scan(regex).to_a.flatten
+				unless code.blank? then
+					code.each do |c|
+						#begin
+							e = Kernel.instance_eval c
+							v.sub! regex, e.to_s
+						#rescue
+						#	raise ParserError, "Error evaluating '#{c}'."
+						#end
+					end
+				end
+			end
+			directives
+		end
+
 		def parse_command(str)
 			directives = str.split(/(^:[a-z_]+){1}|(\s+:[a-z_]+){1}/)
 			directives.delete_at(0)
@@ -195,7 +213,6 @@ module RedBook
 			end
 			parameters
 		end
-
 
 		def check_required_parameters(operation, parameters)
 			operation.parameters.each_pair do |label, p|
@@ -296,7 +313,4 @@ class RedBook::Parser
 	operation :color
 	operation :dataset
 	operation :clear
-
-	macro :entries, ":select <:entries> :type entry"
-
 end

@@ -3,6 +3,10 @@
 require File.join(File.dirname(__FILE__),'..','lib', 'redbook')
 
 describe RedBook::Parser do
+
+	before(:each) do
+		@p = RedBook::Parser.new
+	end
 	
 	it "should define :log operation" do
 		op= RedBook::Parser.operations[:log]
@@ -54,16 +58,14 @@ describe RedBook::Parser do
 	end
 
 	it "should parse :log operations" do
-		p = RedBook::Parser.new
-		op = p.parse ":log Something :timestamp 3 minutes ago"
+		op = @p.parse ":log Something :timestamp 3 minutes ago"
 		op[0].should == :log
 		op[1][:text].should == "Something"
 		op[1][:timestamp].class.should == Time
 	end
 
 	it "should parse :select operations" do
-		p = RedBook::Parser.new
-		op = p.parse ":select something :from today at 8 am :to today at 10 am"
+		op = @p.parse ":select something :from today at 8 am :to today at 10 am"
 		op[0].should == :select
 		op[1].each_pair do |key, value|
 			case key.target
@@ -78,8 +80,7 @@ describe RedBook::Parser do
 	end
 
 	it "should parse :update operations" do
-		p = RedBook::Parser.new
-		op = p.parse ":update 4 :text something"
+		op = @p.parse ":update 4 :text something"
 		op[0].should == :update
 		op[1][:update].should == 4
 		op[1][:text].should == "something"
@@ -87,15 +88,13 @@ describe RedBook::Parser do
 	end
 
 	it "should parse :delete operations" do
-		p = RedBook::Parser.new
-		op = p.parse ":delete 3"
+		op = @p.parse ":delete 3"
 		op[0].should == :delete
 		op[1][:delete].should == [3]
 	end
 
 	it "should parse :save operations" do
-		p = RedBook::Parser.new
-		op = p.parse ":save /home/h3rald/test.txt :format txt"
+		op = @p.parse ":save /home/h3rald/test.txt :format txt"
 		op[0].should == :save
 		op[1][:save].should == "/home/h3rald/test.txt"
 		op[1][:format].should == :txt
@@ -103,8 +102,7 @@ describe RedBook::Parser do
 
 	it "should allow operations to be modified at runtime" do
 		RedBook::Parser.operations[:log].parameter(:tags) {|p| p.type = :list}
-		p = RedBook::Parser.new
-		op = p.parse ":log test :tags tag1 tag2 tag3"
+		op = @p.parse ":log test :tags tag1 tag2 tag3"
 		op[1][:text].should == "test"
 		op[1][:tags].should == ['tag1', 'tag2', 'tag3']
 	end
@@ -116,20 +114,24 @@ describe RedBook::Parser do
 		lambda { p.parse ":update 1 :timestamp This won't work" }.should raise_error
 	end
 
-	it "can parse macros" do
+	it "should parse macros" do
 		RedBook::Parser.macros[:test] = ":log Testing <:test>" 
 		RedBook::Parser.macros[:bugfix] = ":log Fixing <:bugfix> :tags <:tags> bugfix"
 		# Macros can be recursive
 	 	RedBook::Parser.macros[:urgfix]	= ":bugfix <:urgfix> :tags urgent"
 		RedBook::Parser.operations[:log].parameter(:tags) {|p| p.type = :list}
-		p = RedBook::Parser.new
-		p.parse(":test GUI").should == p.parse(":log Testing GUI")
+		@p.parse(":test GUI").should == @p.parse(":log Testing GUI")
 		# It should inherit the original operation's parameters
-		p.parse(":test GUI :type bugfix").should == p.parse(":log Testing GUI :type bugfix")
-		p.parse(":bugfix A12008 :tags low").should == p.parse(":log Fixing A12008 :tags low bugfix")
-		p.parse(":urgfix A12008").should == p.parse(":log Fixing A12008 :tags urgent bugfix")
+		@p.parse(":test GUI :type bugfix").should == @p.parse(":log Testing GUI :type bugfix")
+		@p.parse(":bugfix A12008 :tags low").should == @p.parse(":log Fixing A12008 :tags low bugfix")
+		@p.parse(":urgfix A12008").should == @p.parse(":log Fixing A12008 :tags urgent bugfix")
 		lambda { p.parse ":wrong This won't work" }.should raise_error
 	end
 
+	it "should evaluate Ruby code" do
+		@p.parse(":log Test: %= 10*5 =%").should == @p.parse(":log Test: 50")
+		lambda {@p.parse(":log %= @engine.dataset[0].text =%")}.should raise_error
+		@p.parse(":log Test: %= 60 *24*3=% and %=60*24=%").should == @p.parse(":log Test: 4320 and 1440")
+	end
 end
 

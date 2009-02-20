@@ -200,10 +200,6 @@ module RedBook
 		special_attributes << :duration
 		special_attributes << :foreground
 
-		macro :activity, ":log <:activity> :type activity"
-		macro :activities, ":select :type activity"
-		macro :foreground, ":update <:foreground> :foreground true"
-		macro :background, ":update <:background> :foreground false"
 
 	end
 
@@ -346,10 +342,7 @@ module RedBook
 			entry = params[:entry]
 			attributes = params[:attributes]
 			add_attribute = lambda do |field, attributes|
-				if entry.respond_to? field
-					m = entry.method field
-					attributes[field] = m.call
-				end
+				attributes[field] = entry.send field if entry.respond_to? field
 			end
 			fields = [:start, :tracking, :end, :foreground, :duration]
 			fields.each { |f| add_attribute.call f, attributes}

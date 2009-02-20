@@ -17,6 +17,7 @@ module RedBook
 		def init
 			debug "Setting up #@name plugin..."	
 			setup
+			load_macros
 			debug "Done."
 		end
 
@@ -25,6 +26,11 @@ module RedBook
 		end
 
 		protected
+		
+		def load_macros
+			macros = RedBook.config.plugins.send(@label).macros || {}
+			macros.each_pair { |k, v| RedBook::Parser.macro k, v }
+		end
 
 		def create_resource(table, options={})
 			model = table.to_s.singularize.camelize.to_sym

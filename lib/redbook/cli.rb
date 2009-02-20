@@ -51,8 +51,7 @@ module RedBook
 			operation, params = @parser.parse string
 			name = (operation.to_s+"_operation").to_sym
 			raise CliError, "Operation '#{operation.to_sym.textualize}' is not accessible from this shell." unless respond_to? name
-			m = method(name)
-			(params.blank?) ? m.call : m.call(params)
+			self.send name, params
 		end
 
 		def update(message)
