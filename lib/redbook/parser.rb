@@ -178,12 +178,12 @@ module RedBook
 				code = v.scan(regex).to_a.flatten
 				unless code.blank? then
 					code.each do |c|
-						#begin
+						begin
 							e = Kernel.instance_eval c
 							v.sub! regex, e.to_s
-						#rescue
-						#	raise ParserError, "Error evaluating '#{c}'."
-						#end
+						rescue
+							raise ParserError, "Error evaluating '#{c}'."
+						end
 					end
 				end
 			end
