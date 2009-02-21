@@ -86,6 +86,16 @@ module RedBook
 					@hooks[id] << h
 				end
 
+				# Continue hook execution.
+				def continue(value=nil)
+					{:value => value, :stop => false}
+				end
+
+				# Stop hook execution.
+				def stop(value=nil)
+					{:value => value, :stop => true}
+				end
+
 			end
 
 			# Triggers the execution of a particular hook at instance level.

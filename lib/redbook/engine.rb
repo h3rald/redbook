@@ -251,7 +251,8 @@ module RedBook
 			# Delete special attributes
 			attrs = attributes.dup
 			attrs.each_pair do |l, v|
-				attrs.delete l if Parser.special_attributes.include? l
+				param = Parser.operations[:log].parameters[l]
+				attrs.delete l if param && param.special
 			end
 			entry = Repository::Entry.new attrs
 			raise Exception, "Entry text not specified" unless attrs[:text] 
@@ -265,7 +266,8 @@ module RedBook
 			# Delete special attributes
 			attrs = attributes.dup
 			attrs.each_pair do |l, v|
-				attrs.delete l if Parser.special_attributes.include? l
+				param = Parser.operations[:update].parameters[l]
+				attrs.delete l if param && param.special
 			end
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			raise EngineError, "Invalid dataset index" unless valid_index? index
@@ -289,7 +291,8 @@ module RedBook
 			limit, type = attrs.delete(:last), :last if attrs[:last]
 			# Delete unknown attributes
 			attrs.each_pair do |l, v|
-				attrs.delete l if Parser.special_attributes.include? l
+				param = Parser.operations[:select].parameters[l]
+				attrs.delete l if param && param.special
 			end
 			type ||= :select	
 			case type

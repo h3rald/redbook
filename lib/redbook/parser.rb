@@ -33,7 +33,7 @@ module RedBook
 
 		class Parameter 
 			include Hookable
-			attr_accessor :name, :type, :required, :values, :rewrite
+			attr_accessor :name, :type, :required, :values, :special, :rewrite
 
 			def to_s
 				@name.to_s
@@ -47,6 +47,7 @@ module RedBook
 				@name = name
 				@type = :string
 				@required = false
+				@special = nil
 				@values = []
 				yield self if block_given?
 			end
@@ -57,12 +58,14 @@ module RedBook
 			end
 
 			def rewrite_value(params)
-				if @rewrite_block
-					params[@rewrite] =@rewrite_block.call(params[@name])
-				else
-					params[@rewrite] = params[@name]
+				if params.has_key? @name then
+					if @rewrite_block
+						params[@rewrite] =@rewrite_block.call(params[@name])
+					else
+						params[@rewrite] = params[@name]
+					end
+					params.delete @name unless @name == @rewrite
 				end
-				params.delete @name unless @name == @rewrite
 			end
 
 			def parse(value="")
@@ -131,13 +134,12 @@ module RedBook
 		include Hookable
 		include Messaging
 
-		class << self; attr_accessor :operations, :macros, :time_context, :now, :special_attributes; end
+		class << self; attr_accessor :operations, :macros, :time_context, :now end
 
 		@now = nil
 		@time_context = :past
 		@operations = {}
 		@macros = {}
-		@special_attributes = []
 
 		def self.macro(name, str)
 			self.macros[name] = str

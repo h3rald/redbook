@@ -123,16 +123,16 @@ module RedBook
 	class Parser
 
 		operations[:log].modify do |o|
-			o.parameter(:foreground) { |p| p.type = :bool } 
+			o.parameter(:foreground) { |p| p.type = :bool; p.special = true } 
 			o.parameter(:tracking) { |p| p.type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
-			o.parameter(:start) { |p| p.type = :time } 
-			o.parameter(:end) { |p| p.type = :time } 
-			o.parameter(:duration) { |p| p.type = :float }
+			o.parameter(:start) { |p| p.type = :time; p.special = true } 
+			o.parameter(:end) { |p| p.type = :time; p.special = true } 
+			o.parameter(:duration) { |p| p.type = :float; p.special = true }
 		end
-
+		
 		operations[:select].modify do |o|
-			o.parameter(:foreground) { |p| p.type = :bool } 
-			o.parameter(:tracking) { |p| p.type = :list; p.values = ['started', 'disabled', 'paused', 'completed'] }
+			o.parameter(:foreground) { |p| p.type = :bool; p.rewrite_as 'activity.foreground'; p.special = true } 
+			o.parameter(:tracking) { |p| p.type = :list; p.values = ['started', 'disabled', 'paused', 'completed']; p.rewrite_as 'activity.tracking.in' }
 			o.parameter(:started_before) { |p| p.type = :time; p.rewrite_as 'activity.start.lt'} 
 			o.parameter(:started_after) { |p| p.type = :time; p.rewrite_as 'activity.start.gt'} 
 			o.parameter(:ended_before) { |p| p.type = :time; p.rewrite_as 'activity.end.lt'} 
@@ -142,17 +142,17 @@ module RedBook
 		end
 
 		operations[:update].modify do |o|
-			o.parameter(:foreground) { |p| p.type = :bool } 
+			o.parameter(:foreground) { |p| p.type = :bool; p.special = true } 
 			o.parameter(:tracking) { |p| p.type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
-			o.parameter(:start) { |p| p.type = :time } 
-			o.parameter(:end) { |p| p.type = :time } 
-			o.parameter(:duration) { |p| p.type = :float }
+			o.parameter(:start) { |p| p.type = :time; p.special = true} 
+			o.parameter(:end) { |p| p.type = :time; p.special = true} 
+			o.parameter(:duration) { |p| p.type = :float; p.special = true }
 		end
 
 		# New Operations
 
 		operation(:start) do |o|
-			o.parameter(:start) { |p| p.type = :integer; p.required = true}
+			o.parameter(:start) { |p| p.type = :integer; p.required = true; p.special=true}
 		end
 
 		operation(:finish) do |o|
@@ -174,12 +174,6 @@ module RedBook
 			o.parameter(:from) { |p| p.type = :time}
 			o.parameter(:to) { |p| p.type = :time}
 		end
-
-		special_attributes << :start
-		special_attributes << :end
-		special_attributes << :duration
-		special_attributes << :foreground
-
 
 	end
 
@@ -293,7 +287,7 @@ module RedBook
 				entry.activity = activity
 				entry.save
 			end
-			{:value => nil, :stop => false}
+			continue
 		end
 
 		define_hook(:after_insert) do |params|
@@ -315,7 +309,7 @@ module RedBook
 				entry.activity = activity
 				entry.save
 			end
-			{:value => nil, :stop => false}
+			continue
 		end
 
 		define_hook(:after_relog) do |params|
@@ -326,7 +320,7 @@ module RedBook
 			end
 			fields = [:start, :tracking, :end, :foreground, :duration]
 			fields.each { |f| add_attribute.call f, attributes}
-			{:value => nil, :stop => false}
+			continue
 		end
 
 		define_hook(:after_each_delete) do |params|
@@ -335,7 +329,7 @@ module RedBook
 			a.destroy unless a.blank?
 			rs = Repository::Record.all(:entry_id => entry.id)
 			rs.each { |r| r.destroy }
-			{:value => nil, :stop => false}
+			continue
 		end
 
 		def Engine.pause_activity(entry, time=nil)
@@ -348,7 +342,6 @@ module RedBook
 			entry.activity.tracking = 'paused'
 			entry.activity.track
 			entry.save
-			{:value => nil, :stop => false}
 		end
 
 		def Engine.complete_activity(entry, time=nil)

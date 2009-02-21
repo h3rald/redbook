@@ -68,10 +68,10 @@ module RedBook
 
 	class Parser
 
-		operations[:log].parameter(:tags) {|p| p.type = :list}
-		operations[:select].parameter(:tags) {|p| p.type = :list}
-		operations[:update].parameter(:tags) {|p| p.type = :list}
-
+		operations[:log].parameter(:tags) {|p| p.type = :list; p.special = true}
+		operations[:select].parameter(:tags) {|p| p.type = :list; p.special = true}
+		operations[:update].parameter(:tags) {|p| p.type = :list; p.special = true}
+		
 		operation(:addtag) do |o|
 			o.parameter(:to) { |p| p.type = :intlist }
 			o.parameter(:addtag) { |p| p.type = :list }
@@ -81,8 +81,6 @@ module RedBook
 			o.parameter(:from) { |p| p.type = :intlist }
 			o.parameter(:rmtag) { |p| p.type = :list }
 		end
-
-		special_attributes << :tags
 
 	end
 
@@ -122,14 +120,14 @@ module RedBook
 					entry.add_tag t					
 				end
 			end
-			{:value => nil, :stop => false}
+			continue
 		end
 
 		define_hook(:after_relog) do |params|
 			entry = params[:entry]
 			attributes = params[:attributes]
 			attributes[:tags] = entry.tags if entry.respond_to? :tags 
-			{:value => nil, :stop => false}
+			continue
 		end
 
 		define_hook(:after_update) do |params|
@@ -144,7 +142,7 @@ module RedBook
 					entry.add_tag t					
 				end
 			end
-			{:value => nil, :stop => false}
+			continue
 		end		
 
 		define_hook(:before_each_delete) do |params|
@@ -155,7 +153,7 @@ module RedBook
 				entry.tagmap.each { |t| t.destroy }
 				entry.tags.reload
 			end
-			{:value => nil, :stop => false}
+			continue
 		end
 
 		define_hook(:after_select) do |params|
@@ -167,7 +165,7 @@ module RedBook
 				i = i+1
 			end
 			dataset.compact!
-			{:value => nil, :stop => false}
+			continue
 		end
 
 		define_hook(:cleanup) do |params|
@@ -180,7 +178,7 @@ module RedBook
 					end
 				end
 			end
-			{:value => nil, :stop => false}
+			continue
 		end
 
 	end

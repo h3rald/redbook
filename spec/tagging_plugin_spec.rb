@@ -18,6 +18,7 @@ describe RedBook::TaggingPlugin do
 		RedBook::Repository::Tag.all.length.should == 3
 		RedBook::Repository::Tagmap.all.length.should == 4
 	end
+
 	it "should allow tagged entries to be retrieved" do
 		@c.process ":log Testing tags :tags tag1 tag2"
 		@c.process ":log Testing tags #2 :tags tag1"

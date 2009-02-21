@@ -98,10 +98,11 @@ describe RedBook::Parser do
 	end
 
 	it "should allow operations to be modified at runtime" do
-		RedBook::Parser.operations[:log].parameter(:tags) {|p| p.type = :list}
-		op = @p.parse ":log test :tags tag1 tag2 tag3"
+		RedBook::Parser.operations[:log].parameter(:test_tags) {|p| p.type = :list}
+		op = @p.parse ":log test :test_tags tag1 tag2 tag3"
 		op[1][:text].should == "test"
-		op[1][:tags].should == ['tag1', 'tag2', 'tag3']
+		op[1][:test_tags].should == ['tag1', 'tag2', 'tag3']
+		RedBook::Parser.operations[:log].parameters.delete :test_tags
 	end
 
 	it "should detect invalid operations" do
@@ -113,16 +114,17 @@ describe RedBook::Parser do
 
 	it "should parse macros" do
 		RedBook::Parser.macros[:test] = ":log Testing <:test>" 
-		RedBook::Parser.macros[:bugfix] = ":log Fixing <:bugfix> :tags <:tags> bugfix"
+		RedBook::Parser.macros[:bugfix] = ":log Fixing <:bugfix> :test_tags <:test_tags> bugfix"
 		# Macros can be recursive
-	 	RedBook::Parser.macros[:urgfix]	= ":bugfix <:urgfix> :tags urgent"
-		RedBook::Parser.operations[:log].parameter(:tags) {|p| p.type = :list}
+	 	RedBook::Parser.macros[:urgfix]	= ":bugfix <:urgfix> :test_tags urgent"
+		RedBook::Parser.operations[:log].parameter(:test_tags) {|p| p.type = :list}
 		@p.parse(":test GUI").should == @p.parse(":log Testing GUI")
 		# It should inherit the original operation's parameters
 		@p.parse(":test GUI :type bugfix").should == @p.parse(":log Testing GUI :type bugfix")
-		@p.parse(":bugfix A12008 :tags low").should == @p.parse(":log Fixing A12008 :tags low bugfix")
-		@p.parse(":urgfix A12008").should == @p.parse(":log Fixing A12008 :tags urgent bugfix")
+		@p.parse(":bugfix A12008 :test_tags low").should == @p.parse(":log Fixing A12008 :test_tags low bugfix")
+		@p.parse(":urgfix A12008").should == @p.parse(":log Fixing A12008 :test_tags urgent bugfix")
 		lambda { p.parse ":wrong This won't work" }.should raise_error
+		RedBook::Parser.operations[:log].parameters.delete :test_tags
 	end
 
 	it "should evaluate Ruby code" do
