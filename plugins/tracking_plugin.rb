@@ -3,8 +3,6 @@
 module RedBook
 
 	class TrackingPlugin < Plugin
-		class << self; attr_accessor :add_resources; end
-
 		def setup
 			create_resource :activities
 			create_resource :records

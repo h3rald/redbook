@@ -1,5 +1,14 @@
 <%
-padding = ' '*Math.log10(@total).round
-%><%= "#{padding}#{@index.to_s.cyan} #{@entry.timestamp.textualize.dark_cyan}" %> <%= @entry.text.cyan -%><%= 
-@partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags %>
+	
+	padding = ' '*(Math.log10(@total).floor-Math.log10(@index).floor + 1)
 
+	timestamp = @entry.timestamp.textualize.dark_cyan
+
+	text = @entry.text.cyan
+
+	index =	padding+@index.to_s.cyan
+	
+	entry = [index, timestamp, text].join ' '
+
+##### TEMPLATE #####	
+	%><%= entry %><%= @partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags %>

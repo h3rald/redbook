@@ -1,7 +1,7 @@
 	<div class="activity, <%= (@entry.activity.foreground) ? 'foreground' : 'background' %>">
 		<span class="timestamp"><%= @entry.timestamp.textualize -%>: </span>
-		<span class="start_time"><%= @entry.activity.end.textualize if @entry.end -%>: </span>
-		<span class="end_time"><%= @entry.activity.end.textualize if @entry.end -%>: </span>
+		<span class="start_time"><%= @entry.activity.start.textualize if @entry.activity.start -%>: </span>
+		<span class="end_time"><%= @entry.activity.end.textualize if @entry.activity.end -%>: </span>
 		<span class="text"><%= @entry.text -%></span><% @partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags -%>
 		<ul>
 			<li>Tracking: <em><%= @entry.activity.tracking -%></em></li>
@@ -9,3 +9,4 @@
 			<li>Tracked Duration: <em><%= @entry.activity.tracked_duration.in_minutes -%> minutes</em></li>
 		</ul>
 	</div>
+

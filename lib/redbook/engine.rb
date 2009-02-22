@@ -146,8 +146,10 @@ module RedBook
 			File.open(file, 'w+')	do |f|
 				header = hook :saved_file_header, :format => format
 				f.write header unless header.blank?
+				count = 0
 				@dataset.each do |entry|
-					f.write em.render(entry.type.to_sym, :entry => entry, :total => @dataset.length)
+					count +=1
+					f.write em.render(entry.type.to_sym, :entry => entry, :index => count, :total => @dataset.length)
 				end
 				footer = hook :saved_file_footer , :format => format
 				f.write footer unless footer.blank?
@@ -157,9 +159,9 @@ module RedBook
 
 		# Renames any record which has a name field
 		def rename(type, from, to)
-			c = RedBook::Repository.const_get "#{type.to_s.camelize}".to_sym
+			c = RedBook::Repository.const_get "#{type.to_s.camel_case}".to_sym
 			raise EngineError, "Unknown table '#{type.to_s.plural}'." unless c
-			raise EngineError, "#{type.to_s.camelize.plural} cannot be renamed." unless c.method_defined? :name
+			raise EngineError, "#{type.to_s.camel_case.plural} cannot be renamed." unless c.method_defined? :name
 			item = c.first :name => from
 			raise EngineError, "There is no #{type.to_s} called '#{from}'" unless item
 			item.name = to
@@ -192,9 +194,9 @@ module RedBook
 			inv_tables = (tables.blank?) ? RedBook.inventory_tables : tables
 			inv_tables.each do |t|
 				hook :before_refresh_table, :table => t.to_s
-				model = Repository.const_get(:"#{t.to_s.camelize.singular}")
+				model = Repository.const_get(:"#{t.to_s.camel_case.singular}")
 				raise EngineError, "Table '#{t.to_s}' not found." unless model
-				raise EngineError, "#{t.to_s.camelize} cannot be added to the inventory." unless model.method_defined? :name
+				raise EngineError, "#{t.to_s.camel_case} cannot be added to the inventory." unless model.method_defined? :name
 				@inventory[t.to_sym] = []
 				model.all.each do |i|
 					@inventory[t.to_sym] << i.name

@@ -15,29 +15,36 @@ class Hash
 end
 
 class DateTime
-	def textualize
-		strftime(RedBook.config.time_format)
+	def textualize(format=RedBook.config.time_format)
+		strftime(format)
 	end
 end
 
 class Time
-	def textualize
-		strftime(RedBook.config.time_format)
+	def textualize(format=RedBook.config.time_format)
+		strftime(format)
 	end
 end
 
 class Numeric
-	def textualize
-		((self*100).round/100.0).to_s
-	end
-
-	def in_minutes
-		(((self/60)*100).round/100.0).to_s
+	def textualize(format=nil)
+		mult = 1
+		case format
+		when :minutes
+			mult=60
+		when :hours
+			mult=3600
+		when :days
+			mult=3600*24
+		else
+			mult=1
+		end
+		(((self/mult)*100).round/100.0).to_s
 	end
 end
 
 class NilClass
-	def textualize
+	def textualize(format=nil)
 		"n/a"
 	end
 end
@@ -55,18 +62,13 @@ class String
 		end
 	end
 
-	# Converts the receiver to camel case.
-	def camelize
-		Extlib::Inflection.camelize self
-	end
-	
 	# Makes the receiver plural
 	def plural
 		Extlib::Inflection.plural self
 	end
 
 	# Makes the receiver singular
-	def syngular
+	def singular
 		Extlib::Inflection.singular self
 	end
 

@@ -1,8 +1,9 @@
 	<activity>
 		<text><%= @entry.text -%></text>
-		<timestamp><%= @entry.timestamp.to_s -%></start_time><% @partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags -%>
+		<timestamp><%= @entry.timestamp.to_s -%></timestamp><% @partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags -%>
 		<start_time><%= @entry.activity.start.to_s if @entry.activity.start -%></start_time>
 		<end_time><%= @entry.activity.end.to_s if @entry.activity.end -%></end_time>
 		<tracking><%= @entry.activity.tracking -%></tracking>
 		<duration tracked="<%= @entry.activity.tracked_duration -%>"><%= @entry.activity.duration -%></duration>
 	</activity>
+

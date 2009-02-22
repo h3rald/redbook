@@ -2,3 +2,4 @@
 		<text><%= @entry.text -%></text>
 		<timestamp><%= @entry.timestamp.to_s -%></timestamp><% @partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags -%>
 	</entry>
+

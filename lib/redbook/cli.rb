@@ -130,7 +130,7 @@ module RedBook
 			end
 			result.each do |e| 
 				count += 1
-				display e.type.symbolize, :entry => e, :details => true, :index => count, :total => @result.length if RedBook.output 
+				display e.type.symbolize, :entry => e, :details => true, :index => count, :total => result.length if RedBook.output 
 			end
 		end
 

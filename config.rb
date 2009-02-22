@@ -1,11 +1,12 @@
 module RedBook
 
 	# General Settings
-	config.debug = true
+	config.debug =  true
 	config.output = true
 	config.colors = true
 	config.completion = true
-	config.time_format = "%a %b %d %Y - %I:%M:%S %p"
+	config.duration_format = :minutes
+	config.time_format = "%d/%m/%Y - %H:%M:%S"
 
 	# Repositories
 	config.repositories.default = RedBook::HOME_DIR/"repository.rbk"

@@ -33,7 +33,7 @@ module RedBook
 		end
 
 		def create_resource(table, options={})
-			model = table.to_s.singularize.camelize.to_sym
+			model = table.to_s.singularize.camel_case.to_sym
 			name = table.to_s	
 			begin
 				klass = Repository.const_get(model)
