@@ -1,19 +1,11 @@
-	<div class="activity">
-		<span class="start_time"><%= @entry.timestamp.strftime("%a %b %d %Y - %I:%M:%S %p") -%>: </span>
-		<span class="end_time"><%= @entry.activity.completion.strftime("%a %b %d %Y - %I:%M:%S %p") if @entry.activity.completion -%>: </span>
-		<span class="text"><%= @entry.text -%></span><% if @entry.respond_to? :tags then -%>
-			<ul class="tags"><% @entry.tags.each do |t| -%>
-			<li class="tag"><%= t.name -%></li><% end -%>
-		</ul><% end -%>
+	<div class="activity, <%= (@entry.activity.foreground) ? 'foreground' : 'background' %>">
+		<span class="timestamp"><%= @entry.timestamp.textualize -%>: </span>
+		<span class="start_time"><%= @entry.activity.end.textualize if @entry.end -%>: </span>
+		<span class="end_time"><%= @entry.activity.end.textualize if @entry.end -%>: </span>
+		<span class="text"><%= @entry.text -%></span><% @partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags -%>
 		<ul>
-			<li>Project: <em><%= @entry.activity.project.name if @entry.activity.project -%></em></li>
-			<li>Version: <em><%= @entry.activity.version.name if @entry.activity.project -%></em></li>
-			<li>Ref: <em><%= @entry.activity.ref -%></em></li>
 			<li>Tracking: <em><%= @entry.activity.tracking -%></em></li>
-			<li>Duration: <em><%= @entry.activity.duration -%> minutes</em></li>
-			<li>Tracked Duration: <em><%= @entry.activity.tracked_duration -%> minutes</em></li>
+			<li>Duration: <em><%= @entry.activity.duration.in_minutes -%> minutes</em></li>
+			<li>Tracked Duration: <em><%= @entry.activity.tracked_duration.in_minutes -%> minutes</em></li>
 		</ul>
-		<p class="notes">
-		<%= @entry.activity.notes -%>
-		</p>
 	</div>

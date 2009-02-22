@@ -9,9 +9,36 @@ class Symbol
 end
 
 class Hash
-
 	def null_key?(attr)
 		self.has_key?(attr) && self[attr] == nil
+	end
+end
+
+class DateTime
+	def textualize
+		strftime(RedBook.config.time_format)
+	end
+end
+
+class Time
+	def textualize
+		strftime(RedBook.config.time_format)
+	end
+end
+
+class Numeric
+	def textualize
+		((self*100).round/100.0).to_s
+	end
+
+	def in_minutes
+		(((self/60)*100).round/100.0).to_s
+	end
+end
+
+class NilClass
+	def textualize
+		"n/a"
 	end
 end
 

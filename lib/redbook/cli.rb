@@ -130,31 +130,31 @@ module RedBook
 			end
 			result.each do |e| 
 				count += 1
-				display e.type.symbolize, :entry => e, :details => true, :index => count if RedBook.output 
+				display e.type.symbolize, :entry => e, :details => true, :index => count, :total => @result.length if RedBook.output 
 			end
 		end
 
-		def clear_operation
+		def clear_operation(params=nil)
 			command = RUBY_PLATFORM.match(/win/i) ? "cls" : "clear"
 			system command
 		end
 
-		def quit_operation
+		def quit_operation(params=nil)
 			debug "Stopping RedBook CLI..."
 			exit
 		end
 
-		def debug_operation
+		def debug_operation(params=nil)
 			@engine.debug
 			info "Debug #{RedBook.debug ? 'on' : 'off'}."
 		end
 
-		def output_operation
+		def output_operation(params=nil)
 			@engine.output		
 			info "Output #{RedBook.output ? 'on' : 'off'}."
 		end
 
-		def color_operation
+		def color_operation(params=nil)
 			RedBook.colors = RedBook.colors ? false : true
 			info "Colors #{RedBook.colors ? 'on' : 'off'}."
 		end
@@ -173,7 +173,7 @@ module RedBook
 			result = @engine.select params
 			count = 1
 			result.each do |e| 
-				display e.type.symbolize, :entry => e, :index => count if RedBook.output
+				display e.type.symbolize, :entry => e, :index => count, :total => result.length if RedBook.output
 				count = count+1
 			end
 			info "#{result.length} item#{result.length == 1 ? '' : 's'} loaded into dataset."
@@ -203,7 +203,7 @@ module RedBook
 			end
 		end
 
-		def dataset_operation
+		def dataset_operation(params=nil)
 			if @engine.dataset.blank? then
 				warning "Empty dataset."
 				return
@@ -215,10 +215,10 @@ module RedBook
 			end
 		end
 
-		def ruby_operation(string)
+		def ruby_operation(params)
 			result = nil
 			begin 
-				result = @engine.ruby string
+				result = @engine.ruby params[:ruby]
 			rescue Exception => e
 				raise CliError, e.message, e.backtrace
 			end

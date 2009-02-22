@@ -64,7 +64,7 @@ module RedBook
 					nil
 				end
 			end
-			{:value => result, :stop => result ? true : false}
+			result ? stop(result) : continue
 		end
 
 	end

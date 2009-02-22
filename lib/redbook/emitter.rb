@@ -29,6 +29,7 @@ module RedBook
 		end
 			
 		def render(template, params={})
+			params[:partial] = lambda { |t, p| load_template(t).evaluate(p).chomp }
 			load_template template unless @templates[template]
 			begin
 				return @templates[template].evaluate(params).chomp
@@ -38,7 +39,7 @@ module RedBook
 				bkt = bkt + e.backtrace	
 				raise EmitterError, "Unable to render template '#{template.to_s}'.", bkt
 			end
-			nil
+			''
 		end
 
 		def load_templates(dir)

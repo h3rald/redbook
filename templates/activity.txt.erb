@@ -1,5 +1,5 @@
 <%
-time_format = "%a %b %d %Y - %I:%M:%S %p"
+padding = ' '*Math.log10(@total).round
 tracking = ""
 case @entry.activity.tracking
 when 'started'
@@ -11,19 +11,13 @@ when 'completed'
 else
 	tracking = "*"
 end
-completion = @entry.activity.completion
-completion = completion.blank? ? "n/a" : completion.strftime(time_format)
-icon = (@entry.activity.foreground.blank?) ? "[#{tracking}]" : "(#{tracking})"
-project = @entry.activity.project ? @entry.activity.project.name : "n/a"
-version = @entry.activity.version ? @entry.activity.version.name : "n/a"
-ref = @entry.activity.ref || "n/a"
-notes = @entry.activity.notes || "n/a"
-timestamp = @entry.timestamp.strftime(time_format)
-tracked_duration = ((@entry.activity.tracked_duration.to_f*100).round/100.0).to_s
-duration = ((@entry.activity.duration.to_f*100).round/100.0).to_s 
--%><%= " #{@index.to_s} #{timestamp}" %> <%= icon -%> <%= "#{@entry.text}"%> - <%= "#{duration} min." -%> <% if @entry.respond_to? :tags then
-@entry.tags.each { |t| %><%= " @".dark_yellow+"#{t.name.yellow}"-%><% } -%> 
-<% end -%><% if @details then %>	<%= "Project: #{project}" %> | <%= "Version: #{version}" %>  | <%= "Ref: #{ref}" %>
-	<%= "Completion Time: #{completion}" %> | <%= "Tracked Duration: #{(tracked_duration+" min.")}" %>
-	<%= "Notes: #{notes}" %>
+icon = @entry.activity.foreground.blank? ? "[#{tracking}]" : "(#{tracking})"
+_start = @entry.activity.start.textualize
+_end = @entry.activity.end.textualize
+tracked_duration = (@entry.activity.tracked_duration)? @entry.activity.tracked_duration.in_minutes : "n/a"
+duration = (@entry.activity.duration) ? @entry.activity.duration.in_minutes : "n/a"
+%><%= "#{padding}#{@index.to_s} #{@entry.timestamp.textualize}" %> <%=icon%> <%= @entry.text -%><%= 
+@partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags %>
+<% if @details then %>  <%= "Start: #{_start}" %> <%= "End: #{_end}" %>
+<%= "#{padding*2}Duration: #{duration}" %>	<%= "Tracked Duration: #{tracked_duration}" %>
 <% end -%>

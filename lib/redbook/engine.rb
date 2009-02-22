@@ -147,7 +147,7 @@ module RedBook
 				header = hook :saved_file_header, :format => format
 				f.write header unless header.blank?
 				@dataset.each do |entry|
-					f.write em.render(entry.type.to_sym, :entry => entry)
+					f.write em.render(entry.type.to_sym, :entry => entry, :total => @dataset.length)
 				end
 				footer = hook :saved_file_footer , :format => format
 				f.write footer unless footer.blank?

@@ -1,4 +1,5 @@
-[<%= @entry.timestamp.strftime("%a %b %d %Y - %I:%M:%S %p") %>] <%= @entry.text -%>
-<% if @entry.respond_to? :tags then %>
-<% @entry.tags.each { |t| %><%= "@#{t.name} "-%> <% } %>
-<% end%>
+<%
+padding = ' '*Math.log10(@total).round
+%>
+<%= "#{padding}#{@index.to_s} #{@entry.timestamp.textualize}" %> <%= @entry.text -%><%= 
+	@partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags %>

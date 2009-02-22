@@ -1,14 +1,8 @@
 	<activity>
 		<text><%= @entry.text -%></text>
-		<start_time><%= @entry.timestamp.to_s -%></start_time><% if @entry.respond_to? :tags then -%>
-		<tags><% @entry.tags.each do |t| -%>
-			<tag><%= t.name -%></tag><% end -%>
-		</tags><% end -%>
-		<end_time><%= @entry.activity.completion.to_s if @entry.activity.completion -%></end_time>
-		<project><%= @entry.activity.project.name if @entry.activity.project -%></project>
-		<version><%= @entry.activity.version.name if @entry.activity.version -%></version>
-		<ref><%= @entry.activity.ref -%></ref>
+		<timestamp><%= @entry.timestamp.to_s -%></start_time><% @partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags -%>
+		<start_time><%= @entry.activity.start.to_s if @entry.activity.start -%></start_time>
+		<end_time><%= @entry.activity.end.to_s if @entry.activity.end -%></end_time>
 		<tracking><%= @entry.activity.tracking -%></tracking>
 		<duration tracked="<%= @entry.activity.tracked_duration -%>"><%= @entry.activity.duration -%></duration>
-		<notes><%= @entry.activity.notes -%></notes>
 	</activity>

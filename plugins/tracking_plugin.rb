@@ -184,6 +184,7 @@ module RedBook
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			entry = @dataset[index-1]
 			raise EngineError, "Invalid index #{i}" unless entry
+			entry.activity.reload
 			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
 			raise EngineError, "Selected activity is already started." if entry.activity.started?
 			raise EngineError, "Selected activity has been completed." if entry.activity.completed?
@@ -197,7 +198,8 @@ module RedBook
 		def finish(index=nil)
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			entry = @dataset[index-1] if index
-			raise EngineError, "Invalid activity or no activity specified." unless entry
+			raise EngineError, "Invalid index #{i}" unless entry
+			entry.activity.reload
 			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
 			raise EngineError, "Tracking is disabled for selected activity." if entry.activity.disabled?
 			raise EngineError, "Selected activity is already completed." if entry.activity.completed?
@@ -210,6 +212,7 @@ module RedBook
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			entry = @dataset[index-1]
 			raise EngineError, "Invalid index #{i}" unless entry
+			entry.activity.reload
 			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
 			raise EngineError, "Tracking is disabled for selected activity." if entry.activity.disabled?
 			raise EngineError, "Selected activity is already #{entry.activity.tracking}." unless entry.activity.started?
@@ -341,7 +344,7 @@ module RedBook
 			end
 			entry.activity.tracking = 'paused'
 			entry.activity.track
-			entry.save
+			entry.activity.save
 		end
 
 		def Engine.complete_activity(entry, time=nil)
@@ -355,7 +358,7 @@ module RedBook
 			entry.activity.end = time 
 			entry.activity.tracking = 'completed'
 			entry.activity.track
-			entry.save
+			entry.activity.save
 		end
 
 		def Engine.start_activity(entry, time=nil)
@@ -364,7 +367,7 @@ module RedBook
 			Repository::Record.create(:entry_id => entry.id, :start => time)
 			entry.activity.start = time
 			entry.activity.tracking = 'started'
-			entry.save
+			entry.activity.save
 		end
 	end
 
