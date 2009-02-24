@@ -11,7 +11,7 @@ describe RedBook::TrackingPlugin do
 		@c = RedBook::Cli.new @db
 		RedBook::Repository.reset
 		@a = lambda { @c.process ":log Current activity :type activity" }
-		@p = lambda { @c.process ":log Background activity :type activity :foreground no :duration 120" }
+		@p = lambda { @c.process ":insert Background activity :type activity :foreground no :duration 120" }
 		@b = lambda { @c.process ":log Old activity :type activity :timestamp 30 seconds ago :start 30 seconds ago :end now" }
 		@a.should_not raise_error
 		@p.should_not raise_error

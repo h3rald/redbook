@@ -59,6 +59,15 @@ describe RedBook::Parser do
 		op[1][:timestamp].class.should == Time
 	end
 
+	it "should support alias operations" do
+		op1 = @p.parse ":log Test :timestamp 2 minutes ago :type test"
+		op2 = @p.parse ":insert Test :timestamp 2 minutes ago :type test"
+		op1[1][:text].should == op2[1][:text]
+		op1[1][:type].should == op2[1][:type]
+		op1[0].should == :log
+		op2[0].should == :insert
+	end
+
 	it "should parse :select operations" do
 		op = @p.parse ":select something :from today at 8 am :to today at 10 am"
 		op[0].should == :select

@@ -30,7 +30,7 @@ module RedBook
 		# * <i>:after_initialize</i> :repository => String, :dataset => Array 
 		def initialize(db=nil)
 			hook :before_initialize, :db => db
-			@db = db || RedBook.config.repositories.default 
+			@db = db || RedBook.config.repositories[:default] 
 			@repository = "sqlite3://#{@db}"
 			@dataset = []
 			@inventory = {}
@@ -50,6 +50,8 @@ module RedBook
 			hook :after_insert, :attributes => attributes, :entry => entry
 			entry
 		end
+
+		alias insert log
 
 		# Relogs a previouly logged entry.
 		#

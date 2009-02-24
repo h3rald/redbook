@@ -9,7 +9,9 @@ module RedBook
 	config.time_format = "%d/%m/%Y - %H:%M:%S"
 
 	# Repositories
-	config.repositories.default = RedBook::HOME_DIR/"repository.rbk"
+	config.repositories = {}
+	config.repositories[:default] = RedBook::HOME_DIR/"repository.rbk"
+	config.repositories[:personal] = RedBook::HOME_DIR/"personal.rbk"
 
 	# Plugins
 	config.plugins.list = [:tracking, :tagging, :aggregation]

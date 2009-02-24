@@ -5,7 +5,7 @@ module RedBook
 	class Parser
 
 		class Operation
-			attr_accessor :parameters, :name
+			attr_accessor :parameters, :name, :alias
 
 			def to_s
 				@name.to_s
@@ -18,6 +18,7 @@ module RedBook
 			def initialize(name)
 				@name = name
 				@parameters = {}
+				@alias = nil
 				yield self if block_given?
 			end
 
@@ -149,6 +150,14 @@ module RedBook
 			self.operations[name] = Operation.new(name, &block)
 		end
 
+		def self.alias_operation(new_op, old_op)
+			_old = self.operations[old_op]
+			_new = self.operation new_op 
+			_new.parameters = _old.parameters
+			_new.parameters[new_op] = _old.parameters[old_op]
+			_new.alias = old_op
+		end
+
 		def parse(str)
 			directives = parse_ruby_code(parse_command(str))
 			operation = Parser.operations[directives[0].symbolize]
@@ -225,6 +234,11 @@ module RedBook
 					next
 				end
 				parameters[key] = operation.parameters[key].parse value
+				# Alias support
+				if operation.alias && key == operation.name then
+					parameters[operation.alias] = parameters[key] 
+					parameters.delete operation.name
+				end
 				i = i+2
 			end
 			parameters
@@ -252,6 +266,8 @@ class RedBook::Parser
 		o.parameter :type 
 	end
 
+	alias_operation :insert, :log
+
 	operation(:relog) do |o|
 		o.parameter(:log) { |p| p.required = true, p.type = :integer}
 		o.parameter :as
@@ -265,6 +281,8 @@ class RedBook::Parser
 		o.parameter(:first) { |p| p.type = :integer }
 		o.parameter(:last) { |p| p.type = :integer }
 	end
+
+	alias_operation :load, :select
 
 	operation(:update) do |o|
 		o.parameter(:update) { |p| p.required = true; p.type = :integer }
@@ -302,6 +320,10 @@ class RedBook::Parser
 
 	operation(:detail) do |o|
 		o.parameter(:detail) { |p| p.type = :intlist }
+	end
+
+	operation(:use) do |o|
+		o.parameter :use
 	end
 
 	operation :quit

@@ -119,6 +119,19 @@ module RedBook
 
 		### Operations
 
+		def use_operation(params=nil)
+  		if params[:use] then
+				name = params[:use].to_sym
+				file = RedBook.config.repositories[name]
+			end
+			@engine = RedBook::Engine.new file
+			if file then
+				info "Switched to repository '#{name}' [#{file}]."
+			else
+				warning "Unknown repository, switching to default one."
+			end			
+		end
+
 		def detail_operation(params)
 			raise CliError, "Empty dataset." if @engine.dataset.blank?
 			result = []
@@ -164,6 +177,8 @@ module RedBook
 			info "Entry logged."
 		end
 
+		alias insert_operation log_operation
+
 		def relog_operation(params)
 			@engine.log params[:relog], params[:as]
 			info "Entry relogged."
@@ -177,6 +192,13 @@ module RedBook
 				count = count+1
 			end
 			info "#{result.length} item#{result.length == 1 ? '' : 's'} loaded into dataset."
+		end
+
+		def load_operation(params=nil)
+			out = RedBook.output
+			RedBook.output = false
+			select_operation(params)
+			RedBook.output = out
 		end
 
 		def update_operation(params)

@@ -56,7 +56,7 @@ describe RedBook::TaggingPlugin do
 
 	it "should be possible to cleanup unused tags" do
 		@c.process ":log Testing cleanup :tags tag1 tag2"
-		@c.process ":log Testing cleanup :tags tag3 tag2"
+		@c.process ":insert Testing cleanup :tags tag3 tag2"
 		@c.process ":select :tags tag3"
 		@c.engine.delete
 		lambda { @c.process ":cleanup tags" }.should_not raise_error
@@ -69,12 +69,12 @@ describe RedBook::TaggingPlugin do
 		@c.process ":select"
 		@c.process ":addtag tag2 tag3 tag1 tag4"
 		@c.process ":addtag tag5 :to 1"
-		@c.process ":select :tags tag1 tag2 tag3 tag4"
+		@c.process ":load :tags tag1 tag2 tag3 tag4"
 		@c.engine.dataset.length.should == 2
 		@c.process ":select :tags tag5"
 		@c.engine.dataset.length.should == 1
 		@c.process ":rmtag tag2 tag3 :from 1"
-		@c.process ":select :tags tag2 tag3"
+		@c.process ":load :tags tag2 tag3"
 		@c.engine.dataset.length.should == 1
 	end
 
