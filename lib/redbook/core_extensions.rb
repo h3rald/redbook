@@ -12,6 +12,21 @@ class Hash
 	def null_key?(attr)
 		self.has_key?(attr) && self[attr] == nil
 	end
+
+	def pair?
+		self.length == 1
+	end
+
+	def name
+		return nil unless self.pair?
+		keys[0]
+	end
+
+	def value
+		return nil unless self.pair?
+		values[0]
+	end
+
 end
 
 class DateTime

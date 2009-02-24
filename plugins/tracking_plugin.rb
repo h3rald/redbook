@@ -181,7 +181,7 @@ module RedBook
 		def start(index)
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			entry = @dataset[index-1]
-			raise EngineError, "Invalid index #{i}" unless entry
+			raise EngineError, "Invalid index #{index}" unless entry
 			entry.activity.reload
 			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
 			raise EngineError, "Selected activity is already started." if entry.activity.started?
@@ -196,7 +196,7 @@ module RedBook
 		def finish(index=nil)
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			entry = @dataset[index-1] if index
-			raise EngineError, "Invalid index #{i}" unless entry
+			raise EngineError, "Invalid index #{index}" unless entry
 			entry.activity.reload
 			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
 			raise EngineError, "Tracking is disabled for selected activity." if entry.activity.disabled?
@@ -209,7 +209,7 @@ module RedBook
 		def pause(index)
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			entry = @dataset[index-1]
-			raise EngineError, "Invalid index #{i}" unless entry
+			raise EngineError, "Invalid index #{index}" unless entry
 			entry.activity.reload
 			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
 			raise EngineError, "Tracking is disabled for selected activity." if entry.activity.disabled?

@@ -143,6 +143,22 @@ module RedBook
 			fields.each { |f| add_attribute.call f, attributes}
 			continue
 		end
+
+		define_hook(:before_each_delete) do |params|
+			entry = params[:entry]
+			unless entry.items.blank? then
+				# Destroy all associations
+				entry_items = Repository::ItemMap.all(:entry_id => entry.id)
+				entry.entry_map.each { |i| i.destroy }
+				entry.items.reload
+			end
+			unless entry.details.blank? then
+				# Destroy all associations
+				Repository::Detail.all(:entry_id => entry.id).each {|d| d.destroy}
+				entry.details.reload
+			end
+			continue
+		end
 	end
 
 end

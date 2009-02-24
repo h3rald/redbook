@@ -26,7 +26,7 @@ module RedBook
 		end
 
 		protected
-		
+
 		def load_macros
 			macros = RedBook.config.plugins.send(@label).macros || {}
 			macros.each_pair { |k, v| RedBook::Parser.macro k, v }
@@ -89,9 +89,9 @@ module RedBook
 
 		def self.load(file)
 			if file.to_s =~ /\_plugin.rb$/ then
-				if require(file.to_s) then
-					name = file.basename.to_s.gsub!(/\_plugin.rb$/, '')
-					if RedBook.config.plugins.list.include? name.symbolize then
+				name = file.basename.to_s.gsub!(/\_plugin.rb$/, '')
+				if RedBook.config.plugins.list.include? name.symbolize then
+					if require(file.to_s) then
 						plugin = {:name => name.camel_case, :file => file, :label => name.to_sym}
 						@plugins[name.to_sym] = RedBook.const_get(:"#{plugin[:name]}Plugin").new plugin
 						return @plugins[name.to_sym]

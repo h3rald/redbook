@@ -12,8 +12,8 @@ entries << {:text => "Third", :type => 'entry', :timestamp => Chronic.parse("10 
 describe RedBook::Engine do
 
 	before(:each) do
-		RedBook::Repository.reset
 		@e = RedBook::Engine.new db
+		RedBook::Repository.reset
 	end
 
 	it "should create the repository if necessary" do

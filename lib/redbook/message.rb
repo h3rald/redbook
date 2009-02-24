@@ -2,8 +2,6 @@
 
 module RedBook
 
-	Message = Struct.new :name, :value	
-
 	module Messaging
 		
 		include Observable
@@ -35,7 +33,7 @@ end
 module Kernel
 
 	def msg(name, value)
-		RedBook::Message.new(name, value)
+		{name => value}
 	end
 
 end

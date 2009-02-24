@@ -24,4 +24,8 @@ module RedBook
 	config.plugins.tracking.macros[:foreground] = ":update <:foreground> :foreground true"
 	config.plugins.tracking.macros[:background] = ":update <:background> :foreground false"
 
+	# Detail Plugin
+	config.plugins.detail.details = [:code, :notes]
+	config.plugins.detail.items = [:project, :version]
+
 end

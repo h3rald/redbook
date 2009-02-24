@@ -5,7 +5,7 @@ module RedBook
 	class TaggingPlugin < Plugin
 
 		def setup
-			create_resource :tagmap
+			create_resource :tag_map
 			create_resource :tags, :inventory => true, :completion_for => [:addtag, :rmtag, :tags]
 		end
 	end
@@ -28,16 +28,16 @@ module RedBook
 
 		class Tag
 			include DataMapper::Resource
-			has n, :tagmap
-			has n, :entries, :through => :tagmap, :mutable => true
+			has n, :tag_map
+			has n, :entries, :through => :tag_map, :mutable => true
 			property :id, Serial
 			property :name, String, :nullable => false, :unique => true
 			storage_names[:default] = 'tags'
 		end
 
 		class Entry
-			has n, :tagmap
-			has n, :tags, :through => :tagmap, :mutable => true 
+			has n, :tag_map
+			has n, :tags, :through => :tag_map, :mutable => true 
 
 			def tagged_with?(tags=nil)
 				tags = [] unless tags
@@ -48,21 +48,21 @@ module RedBook
 			end
 
 			def add_tag(t)
-				tag = Repository::Tag.first(:name => t) || Repository::Tag.create(:name => t)
-				tagmap = Repository::Tagmap.create :tag_id => tag.id, :entry_id => self.id
-				self.tagmap << tagmap
-				tagmap.save
+				tag = Tag.first(:name => t) || Tag.create(:name => t)
+				tm = Repository::TagMap.create :tag_id => tag.id, :entry_id => self.id
+				self.tag_map << tm
+				tm.save
 			end
 
 		end
 
-		class Tagmap
+		class TagMap 
 			include DataMapper::Resource
 			belongs_to :entry
 			belongs_to :tag
 			property :entry_id, Integer, :key => true
 			property :tag_id, Integer, :key => true
-			storage_names[:default] = "tagmap"
+			storage_names[:default] = "tag_map"
 		end
 	end
 
@@ -104,7 +104,7 @@ module RedBook
 			entries.each do |e|
 				tags.each do |t|
 					if e.tagged_with? t then
-						tag = Repository::Tagmap.first(:entry_id => e.id, :tag_id => Repository::Tag.first(:name => t).id)
+						tag = Repository::TagMap.first(:entry_id => e.id, :tag_id => Repository::Tag.first(:name => t).id)
 						tag.destroy
 						e.tags.reload
 					end
@@ -135,7 +135,7 @@ module RedBook
 			entry = params[:entry]
 			if tags then
 				# Destroy all tag associations
-				entry_tags = Repository::Tagmap.all(:entry_id => entry.id)
+				entry_tags = Repository::TagMap.all(:entry_id => entry.id)
 				entry_tags.each { |t| t.destroy }
 				entry.tags.reload
 				tags.each do |t|
@@ -149,38 +149,19 @@ module RedBook
 			entry = params[:entry]
 			unless entry.tags.blank? then
 				# Destroy all tag associations
-				entry_tags = Repository::Tagmap.all(:entry_id => entry.id)
-				entry.tagmap.each { |t| t.destroy }
+				entry_tags = Repository::TagMap.all(:entry_id => entry.id)
+				entry.tag_map.each { |t| t.destroy }
 				entry.tags.reload
 			end
 			continue
 		end
 
-		define_hook(:after_select) do |params|
+		define_hook(:filter_dataset) do |params|
 			tags = params[:attributes][:tags]
-			i = 0
-			dataset = params[:dataset]
-			while i < dataset.length
-				dataset[i] = nil unless dataset[i].tagged_with?(tags) 
-				i = i+1
-			end
-			dataset.compact!
-			continue
+			entry = params[:entry]
+			result = (tags.blank?) ? true : entry.tagged_with?(tags)
+			(result == true) ? continue(true) : stop(false)
 		end
-
-		define_hook(:cleanup) do |params|
-			if params[:tables].blank? || params[:tables].include?('tags') then
-				tags = Repository::Tag.all
-				tags.each do |t|
-					tagmap = Repository::Tagmap.first(:tag_id => t.id)
-					if tagmap.blank? then
-						t.destroy
-					end
-				end
-			end
-			continue
-		end
-
 	end
 end
 

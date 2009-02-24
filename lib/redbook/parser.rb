@@ -150,7 +150,10 @@ module RedBook
 			self.operations[name] = Operation.new(name, &block)
 		end
 
-		def self.alias_operation(new_op, old_op)
+		def self.alias_operation(pair)
+			raise ParserError, "Alias operation must be specified using a pair ':alias => :original'" unless pair.is_a?(Hash) && pair.pair?
+			old_op = pair.value
+			new_op = pair.name
 			_old = self.operations[old_op]
 			_new = self.operation new_op 
 			_new.parameters = _old.parameters
@@ -266,7 +269,7 @@ class RedBook::Parser
 		o.parameter :type 
 	end
 
-	alias_operation :insert, :log
+	alias_operation :insert => :log
 
 	operation(:relog) do |o|
 		o.parameter(:log) { |p| p.required = true, p.type = :integer}
@@ -282,7 +285,7 @@ class RedBook::Parser
 		o.parameter(:last) { |p| p.type = :integer }
 	end
 
-	alias_operation :load, :select
+	alias_operation :load => :select
 
 	operation(:update) do |o|
 		o.parameter(:update) { |p| p.required = true; p.type = :integer }

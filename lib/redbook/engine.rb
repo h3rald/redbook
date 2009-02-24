@@ -14,12 +14,12 @@ module RedBook
 	#	e.update 2, :text => "An updated entry"
 	#	e.delete 3
 	class Engine
-		
+
 		include Hookable
 		include Messaging
 
 		attr_accessor :repository, :dataset, :db, :special_attributes, :inventory
-		
+
 		# Sets up the repository. 
 		# If +db+ is not specified, a new SQLite database is created in
 		# <tt>$HOME/repository.rbk</tt> (*nix, Mac) or <tt>C:/repository.rbk</tt>
@@ -70,7 +70,7 @@ module RedBook
 			new_entry = log(attributes)
 			hook :after_relog, :attributes => attributes, :entry => new_entry
 		end
-		
+
 		# Selects entries matching specified criteria.
 		#
 		# <i>Hooks</i>
@@ -83,6 +83,7 @@ module RedBook
 			m_debug attributes.to_yaml
 			@dataset = select_entries attributes
 			hook :after_select, :attributes => attributes, :dataset => @dataset
+			filter_dataset attributes
 			m_debug "Items in dataset: #{@dataset.length.to_s}"
 			@dataset
 		end
@@ -169,7 +170,7 @@ module RedBook
 			item.name = to
 			item.save
 		end
-		
+
 		# Redefining Messaging::debug
 		alias m_debug debug
 
@@ -219,10 +220,42 @@ module RedBook
 
 		# Cleans up unused auxiliary records belonging to specific tables.
 		def cleanup(tables=[])
-			hook :cleanup, :tables => tables
+			if tables.blank? then
+				target = RedBook.inventory_tables
+			else
+				target = tables
+			end
+			target.each { |t| cleanup_table t }
 		end
 
+		# Private methods
+
 		private
+
+		def filter_dataset(attributes)
+			i = 0
+			while i < @dataset.length
+				@dataset[i] = nil unless hook :filter_dataset, :entry => @dataset[i], :attributes => attributes
+				i = i+1
+			end
+			@dataset.compact!
+		end
+
+		def cleanup_table(table)
+			begin
+				name = table.to_s.singularize
+				model = name.camel_case.to_sym
+				objects = Repository.const_get(model).all
+				objects.each do |o|
+					object_map = Repository.const_get("#{model.to_s}Map".to_sym).first("#{name}_id".to_sym => o.id)
+					if object_map.blank? then
+						o.destroy
+					end
+				end
+			rescue
+				raise EngineError, "Unable to cleanup '#{table.to_s}'"
+			end
+		end
 
 		def create_repository
 			Repository.reset
@@ -249,7 +282,6 @@ module RedBook
 			end
 			entries
 		end
-
 
 		def insert_entry(attributes={})
 			# Delete special attributes
@@ -283,7 +315,7 @@ module RedBook
 			end
 			entry
 		end
-		
+
 		def delete_entry(entry)
 			entry.destroy
 			entry
@@ -310,41 +342,41 @@ module RedBook
 			end
 		end
 
+		public
+		# Defining core hooks
+
+		define_hook(:saved_file_header) do |params|
+			result = ""
+			case params[:format]
+			when :xml then
+				result <<	"<xml version=\"1.0\" encoding=\"UTF-8\">\n"
+				result << "<dataset>\n"
+			when :html||:xhtml then
+				result << "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
+				result << "<head>\n"
+				result << "	<title>RedBook Dataset</title>\n"
+				result << "</head>\n"
+				result << "<body>\n"
+				result << "<h1>RedBook Dataset</h1>\n"
+				result << "<div id=\"dataset\">\n"
+			end
+			{ :value => result, :stop => result ? true : false }
+		end
+
+		RedBook::Engine.define_hook(:saved_file_footer) do |params|
+			result = ""
+			case params[:format]
+			when :xml then
+				result << "\n</dataset>\n"
+			when :html||:xhtml then
+				result << "\n</div>\n"
+				result << "</body>\n"
+			end
+			{ :value => result, :stop => result ? true : false }
+		end
 	end
 end
 
-# Implementing hooks for saving XML and XHTML files
 
-RedBook::Engine.define_hook :saved_file_header do |params|
-	result = ""
-	case params[:format]
-	when :xml then
-		result <<	"<xml version=\"1.0\" encoding=\"UTF-8\">\n"
-		result << "<dataset>\n"
-	when :html||:xhtml then
-		result << "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
-		result << "<head>\n"
-		result << "	<title>RedBook Dataset</title>\n"
-		result << "</head>\n"
-		result << "<body>\n"
-		result << "<h1>RedBook Dataset</h1>\n"
-		result << "<div id=\"dataset\">\n"
-	end
-	{ :value => result, :stop => result ? true : false }
-end
 
-RedBook::Engine.define_hook :saved_file_footer do |params|
-	result = ""
-	case params[:format]
-	when :xml then
-		result << "\n</dataset>\n"
-	when :html||:xhtml then
-		result << "\n</div>\n"
-		result << "</body>\n"
-	end
-	{ :value => result, :stop => result ? true : false }
-end
 
-		
-		
-	

@@ -16,7 +16,7 @@ describe RedBook::TaggingPlugin do
 		lambda { @c.process ":log Testing tags :tags tag1 tag2" }.should_not raise_error
 		lambda { @c.process ":log Testing tags #2 :tags tag1 tag3" }.should_not raise_error
 		RedBook::Repository::Tag.all.length.should == 3
-		RedBook::Repository::Tagmap.all.length.should == 4
+		RedBook::Repository::TagMap.all.length.should == 4
 	end
 
 	it "should allow tagged entries to be retrieved" do
@@ -50,7 +50,7 @@ describe RedBook::TaggingPlugin do
 		@c.process ":log Testing tag delete :tags tag1 tag3"
 		@c.process ":select"
 		@c.engine.delete
-		RedBook::Repository::Tagmap.all.length.should == 0
+		RedBook::Repository::TagMap.all.length.should == 0
 		RedBook::Repository::Tag.all.length.should == 3
 	end
 
