@@ -6,19 +6,19 @@ module RedBook
 
 		def setup
 			create_resource :tag_map
-			create_resource :tags, :inventory => true, :completion_for => [:addtag, :rmtag, :tags]
+			create_resource :tags, :inventory => true, :completion_for => [:tag, :untag, :tags]
 		end
 	end
 
 	class Cli
 
-		def addtag_operation(params)
-			@engine.addtag params[:addtag], params[:to]
+		def tag_operation(params)
+			@engine.tag params[:as], params[:tag]
 			info "Done."
 		end
 
-		def rmtag_operation(params)
-			@engine.rmtag params[:rmtag], params[:from]
+		def untag_operation(params)
+			@engine.untag params[:as], params[:untag]
 			info "Done."
 		end
 
@@ -72,21 +72,21 @@ module RedBook
 		operations[:select].parameter(:tags) {|p| p.type = :list; p.special = true}
 		operations[:update].parameter(:tags) {|p| p.type = :list; p.special = true}
 		
-		operation(:addtag) do |o|
-			o.parameter(:to) { |p| p.type = :intlist }
-			o.parameter(:addtag) { |p| p.type = :list }
+		operation(:tag) do |o|
+			o.parameter(:tag) { |p| p.type = :intlist }
+			o.parameter(:as) { |p| p.type = :list }
 		end
 
-		operation(:rmtag) do |o|
-			o.parameter(:from) { |p| p.type = :intlist }
-			o.parameter(:rmtag) { |p| p.type = :list }
+		operation(:untag) do |o|
+			o.parameter(:untag) { |p| p.type = :intlist }
+			o.parameter(:as) { |p| p.type = :list }
 		end
 
 	end
 
 	class Engine	
 
-		def addtag(tags, indexes=nil)
+		def tag(tags, indexes=nil)
 			raise EngineError, "Empty dataset." if @dataset.blank?
 			entries = get_selected_entries indexes
 			entries.each do |e|
@@ -98,7 +98,7 @@ module RedBook
 			end
 		end
 
-		def rmtag(tags, indexes=nil)
+		def untag(tags, indexes=nil)
 			raise EngineError, "Empty dataset." if @dataset.blank?
 			entries = get_selected_entries indexes
 			entries.each do |e|

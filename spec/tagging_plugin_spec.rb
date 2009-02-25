@@ -67,13 +67,13 @@ describe RedBook::TaggingPlugin do
 		@c.process ":log Testing add+ :tags tag1"
 		@c.process ":log Testing add+ :tags tag1 tag2"
 		@c.process ":select"
-		@c.process ":addtag tag2 tag3 tag1 tag4"
-		@c.process ":addtag tag5 :to 1"
+		@c.process ":tag :as tag2 tag3 tag1 tag4"
+		@c.process ":tag 1 :as tag5"
 		@c.process ":load :tags tag1 tag2 tag3 tag4"
 		@c.engine.dataset.length.should == 2
 		@c.process ":select :tags tag5"
 		@c.engine.dataset.length.should == 1
-		@c.process ":rmtag tag2 tag3 :from 1"
+		@c.process ":untag 1 :as tag2 tag3"
 		@c.process ":load :tags tag2 tag3"
 		@c.engine.dataset.length.should == 1
 	end
