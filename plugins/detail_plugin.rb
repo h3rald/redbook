@@ -47,38 +47,40 @@ module RedBook
 			has n, :details
 
 			def get_item(t)
-				return nil if items.blank?
-				result = items.select{|i| i.type == t }
+				return nil if self.items.blank?
+				result = self.items.select{|i| i.type == t.to_s }
 				return (result.blank?) ? nil : result[0]
 			end
 
 			def set_item(i)
 				raise RepositoryError, "Item must be a pair." unless i.pair?
 				old_item = get_item(i.name)
-				unless old_item == i.value then
+				if old_item.blank? || old_item.name != i.value then
 					# Delete the current association, if necessary
 					ItemMap.first(:entry_id => self.id, :item_id => old_item.id).destroy unless old_item.blank?
 					# Add item
-					new_item = Item.first(:type => i.name.to_s)||Item.create(:type => i.name.to_s, :name => i.value.to_s)
+					new_item = Item.first(:type => i.name.to_s, :name => i.value.to_s)||Item.create(:type => i.name.to_s, :name => i.value.to_s)
 					im = ItemMap.create(:entry_id => self.id, :item_id => new_item.id)
 					im.save
+					self.items.reload
 				end
 			end
 
 			def get_detail(t)
-				return nil if details.blank?
-				result = details.select{|i| d.type == t }
+				return nil if self.details.blank?
+				result = self.details.select{|d| d.type == t.to_s }
 				return (result.blank?) ? nil : result[0]
 			end
 
-			def detail=(i)
+			def set_detail(i)
 				raise RepositoryError, "Detail must be a pair." unless i.pair?
-				old_detail = get_detail(i.name)
-				unless old_detail == i.value then
+				old_detail = self.get_detail(i.name)
+				if old_detail.blank? || old_detail.name != i.value then
 					# Delete the current association, if necessary
-					old_detail.destroy unless old_item.blank?
+					old_detail.destroy unless old_detail.blank?
 					# Add detail
 					new_detail = Detail.create(:type => i.name.to_s, :name => i.value.to_s, :entry_id => self.id)
+					self.details.reload
 				end
 			end
 
@@ -113,7 +115,7 @@ module RedBook
 				if RedBook.config.plugins.detail.details.include? k then
 					entry.set_detail k => v	
 				elsif RedBook.config.plugins.detail.items.include? k then
-					entry.set_detail k => v	
+					entry.set_item k => v	
 				end
 			end
 			continue
@@ -149,7 +151,7 @@ module RedBook
 			unless entry.items.blank? then
 				# Destroy all associations
 				entry_items = Repository::ItemMap.all(:entry_id => entry.id)
-				entry.entry_map.each { |i| i.destroy }
+				entry.item_map.each { |i| i.destroy }
 				entry.items.reload
 			end
 			unless entry.details.blank? then

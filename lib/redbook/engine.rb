@@ -79,7 +79,7 @@ module RedBook
 		def select(attributes=nil)
 			attributes = {} if attributes.blank?
 			hook :before_select, :attributes => attributes
-			m_debug ":select attributes:" 
+			m_debug "select attributes:" 
 			m_debug attributes.to_yaml
 			@dataset = select_entries attributes
 			hook :after_select, :attributes => attributes, :dataset => @dataset

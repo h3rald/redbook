@@ -162,10 +162,11 @@ module RedBook
 		end
 
 		def parse(str)
+			op_prefix = RedBook.config.parser.operation_prefix || ':'
 			directives = parse_ruby_code(parse_command(str))
-			operation = Parser.operations[directives[0].symbolize]
+			operation = Parser.operations[directives[0].gsub(/^#{op_prefix}/, '').symbolize]
 			return parse(parse_macro(str, directives)) if operation.blank?		
-			parameters = parse_directives operation, directives
+			parameters = parse_parameters operation, directives
 			check_required_parameters operation, parameters
 			operation.parameters.each_value { |v| v.rewrite_value(parameters) if v.rewrite }
 			parameters = nil if parameters.blank?
@@ -177,24 +178,26 @@ module RedBook
 		def parse_macro(str, directives)
 			name = directives[0]
 			macro = Parser.macros[name.symbolize]
+			param_prefix = RedBook.config.parser.parameter_prefix || ':'
+			ph_prefix = RedBook.config.parser.placeholder_prefix || ':'
 			raise ParserError, "Unknown operation '#{name}'." unless macro	
-			placeholders = macro.scan(/<:([a-z_]+)>/).to_a.flatten
+			placeholders = macro.scan(/<#{ph_prefix}([a-z_]+)>/).to_a.flatten
 			raw_params = {}
 			result = macro.dup
 			i = 0
 			while i < directives.length do
-				key = directives[i].symbolize
+				key = directives[i].gsub(/^#{param_prefix}/, '').to_sym
 				value = directives[i+1]
 				if placeholders.include? key.to_s then
 					raw_params[key] = value
 				else
-					result << ' '+key.textualize+' '+value
+					result << " #{param_prefix}"+key.to_s+' '+value
 				end				
 				i = i+2
 			end
 			# Substitute placeholders
 			raw_params.each_pair do |label, value|
-				result.gsub!(/<#{label.textualize}>/, value)
+				result.gsub!(/<#{ph_prefix}#{label}>/, value)
 			end
 			debug "Processed macro: '#{result}'"
 			return result
@@ -219,18 +222,21 @@ module RedBook
 		end
 
 		def parse_command(str)
-			directives = str.split(/(^:[a-z_]+){1}|(\s+:[a-z_]+){1}/)
+			op_prefix = RedBook.config.parser.operation_prefix || ':'
+			param_prefix = RedBook.config.parser.parameter_prefix || ':'
+			directives = str.split(/(^#{op_prefix}[a-z_]+){1}|(\s#{param_prefix}[a-z_]+){1}/)
 			directives.delete_at(0)
 			raise ParserError, "No operation specified." if directives.blank?
 			directives.each { |d| d.strip! }
 			directives
 		end
 
-		def parse_directives(operation, directives)
+		def parse_parameters(operation, directives)
+			param_prefix = RedBook.config.parser.parameter_prefix || ':'
 			parameters = {}
 			i = 0
 			while i < directives.length do
-				key = directives[i].symbolize
+				key = directives[i].gsub(/^#{param_prefix}/, '').symbolize
 				value = directives[i+1]
 				unless operation.parameters[key] # Unknown parameters are ignored
 					i = i+2

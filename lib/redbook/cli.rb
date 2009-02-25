@@ -6,7 +6,7 @@ module RedBook
 		include Messaging
 		include Hookable
 
-		attr_reader :engine, :editor
+		attr_reader :engine, :editor, :parser, :emitter, :prompt
 
 		def initialize(repository=nil, prompt=" >> ")
 			@prompt = prompt
@@ -64,11 +64,14 @@ module RedBook
 
 		def setup_completion
 			operations = []
+			op_prefix = RedBook.config.parser.operation_prefix || ':'
+			ph_prefix = RedBook.config.parser.placeholder_prefix || ':'
+			param_prefix = RedBook.config.parser.parameter_prefix || ':'
 			RedBook::Parser.operations.each_pair do |l,v|
-				operations << ":#{l.to_s}"
+				operations << "#{op_prefix}#{l.to_s}"
 			end
 			RedBook::Parser.macros.each_pair do |l,v|
-				operations << ":#{l.to_s}"
+				operations << "#{op_prefix}#{l.to_s}"
 			end
 			@editor.completion_proc = lambda do |str|
 				if @editor.line.text.strip == str.strip then
@@ -92,14 +95,14 @@ module RedBook
 						# Try macros
 						macro = RedBook::Parser.macros[name]
 						if macro then
-							macro_params = macro.scan(/:([a-z_]+)/).to_a.flatten
+							macro_params = macro.scan(/#{op_prefix}([a-z_]+)/).to_a.flatten
 							macro_params.each { |p| matches << p unless @editor.line.text.match p}
 							add_operation_params.call macro_params[0].to_sym, matches
 							# Remove original operation from parameters
 							matches.delete(macro_params[0].symbolize.textualize)
 						end
 					end
-					if @editor.line.text.match /:rename\s[a-z]+$/ then
+					if @editor.line.text.match /#{op_prefix}rename\s[a-z]+$/ then
 						RedBook.inventory_tables.each { |t| matches << t.to_s }
 					end
 					hook :setup_completion, :cli => self, :matches => matches
@@ -109,8 +112,7 @@ module RedBook
 		end
 
 		def setup_shortcuts
-			shortcut "\e\e", ":quit"
-			hook :cli_shortcuts, :cli => self
+			RedBook.config.cli.shortcuts.each_pair {|k,v| shortcut k, v}
 		end
 
 		def shortcut(seq, command)
