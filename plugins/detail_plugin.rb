@@ -46,15 +46,23 @@ module RedBook
 			has n, :items, :through => :item_map, :mutable => true 
 			has n, :details
 
-			def get_item(t)
+			def get_field(f, raw=false)
+				(f.in? RedBook.config.plugins.detail.details) ? get_detail(f, raw) : get_item(f, raw)
+			end
+
+			def set_field(f)
+				raise RepositoryError, "Field must be a pair." unless i.pair?
+				(f.name.in? RedBook.config.plugins.detail.details) ? set_detail(f) : set_item(f)
+			end
+
+			def get_item(t, raw=false)
 				return nil if self.items.blank?
 				result = self.items.select{|i| i.type == t.to_s }
-				return (result.blank?) ? nil : result[0]
+				return (result.blank?) ? nil : ((raw) ? result[0] : result[0].name)
 			end
 
 			def set_item(i)
-				raise RepositoryError, "Item must be a pair." unless i.pair?
-				old_item = get_item(i.name)
+				old_item = get_item(i.name, true)
 				if old_item.blank? || old_item.name != i.value then
 					# Delete the current association, if necessary
 					ItemMap.first(:entry_id => self.id, :item_id => old_item.id).destroy unless old_item.blank?
@@ -66,15 +74,14 @@ module RedBook
 				end
 			end
 
-			def get_detail(t)
+			def get_detail(t, raw=false)
 				return nil if self.details.blank?
 				result = self.details.select{|d| d.type == t.to_s }
-				return (result.blank?) ? nil : result[0]
+				return (result.blank?) ? nil : ((raw) ? result[0] : result[0].name)
 			end
 
 			def set_detail(i)
-				raise RepositoryError, "Detail must be a pair." unless i.pair?
-				old_detail = self.get_detail(i.name)
+				old_detail = self.get_detail(i.name, true)
 				if old_detail.blank? || old_detail.name != i.value then
 					# Delete the current association, if necessary
 					old_detail.destroy unless old_detail.blank?
@@ -161,6 +168,35 @@ module RedBook
 			end
 			continue
 		end
-	end
 
+		define_hook(:filter_dataset) do |params|
+			attrs = params[:attributes]
+			entry = params[:entry]
+			get_stuff = lambda do |stuff| 
+				res = returning Hash.new do |s|
+					stuff.each do |i|
+						s[i] = attrs[i] unless attrs[i].blank?
+					end
+				end
+			end
+			details = get_stuff.call RedBook.config.plugins.detail.details
+			items = get_stuff.call RedBook.config.plugins.detail.items
+			check_details = lambda do
+				res = true
+				details.each_pair do |k, v|
+					break unless res = (entry.get_detail(k) =~ /#{Regexp.escape(v)}/)
+				end
+				res
+			end
+			check_items = lambda do
+				res = true
+				items.each_pair do |k, v|
+					break unless res = (entry.get_item(k) == v)
+				end
+				res
+			end
+			result = (details.blank? ? true : check_details.call) && (items.blank? ? true : check_items.call)
+			stop_hooks_unless result
+		end
+	end
 end

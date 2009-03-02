@@ -168,6 +168,7 @@ module RedBook
 			check_required_parameters operation, parameters
 			operation.parameters.each_value { |v| v.rewrite_value(parameters) if v.rewrite }
 			parameters = nil if parameters.blank?
+			debug "Parsed operation '#{operation.name}'"
 			return operation.name, parameters
 		end
 	
@@ -222,7 +223,7 @@ module RedBook
 		def parse_command(str)
 			op_prefix = RedBook.config.parser.operation_prefix || ':'
 			param_prefix = RedBook.config.parser.parameter_prefix || ':'
-			directives = str.split(/(^#{Regexp.escape(op_prefix)}[a-z_]+){1}|(\s#{param_prefix}[a-z_]+){1}/)
+			directives = str.split(/(^#{Regexp.escape(op_prefix)}[a-z_]+){1}|(\s#{Regexp.escape(param_prefix)}[a-z_]+){1}/)
 			directives.delete_at(0)
 			raise ParserError, "No operation specified." if directives.blank?
 			directives.each { |d| d.strip! }

@@ -71,7 +71,7 @@ module RedBook
 		operations[:log].parameter(:tags) {|p| p.type = :list; p.special = true}
 		operations[:select].parameter(:tags) {|p| p.type = :list; p.special = true}
 		operations[:update].parameter(:tags) {|p| p.type = :list; p.special = true}
-		
+
 		operation(:tag) do |o|
 			o.parameter(:tag) { |p| p.type = :intlist }
 			o.parameter(:as) { |p| p.type = :list }
@@ -160,10 +160,7 @@ module RedBook
 			tags = params[:attributes][:tags]
 			entry = params[:entry]
 			result = (tags.blank?) ? true : entry.tagged_with?(tags)
-			(result == true) ? continue(true) : stop(false)
+			stop_hooks_unless result
 		end
 	end
 end
-
-
-

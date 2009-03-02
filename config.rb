@@ -37,6 +37,7 @@ module RedBook
 	# Tracking Plugin  
 	config.plugins.tracking.macros = {}
 	config.plugins.tracking.macros[:activity] = "#{config.op}log <#{config.ph}activity> #{config.pm}type activity"
+	config.plugins.tracking.macros[:active] = "#{config.op}select #{config.pm}type activity #{config.pm}tracking started paused"
 	config.plugins.tracking.macros[:activities] =  "#{config.op}select #{config.pm}type activity"
 	config.plugins.tracking.macros[:foreground] = "#{config.op}update <#{config.ph}foreground> #{config.pm}foreground true"
 	config.plugins.tracking.macros[:background] = "#{config.op}update <#{config.ph}background> #{config.pm}foreground false"

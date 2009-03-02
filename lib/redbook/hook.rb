@@ -95,6 +95,10 @@ module RedBook
 					{:value => value, :stop => true}
 				end
 
+				# If result is true, then continue(true), else stop(false)
+				def stop_hooks_unless(result)
+					(result == true) ? continue(true) : stop(false)
+				end
 			end
 
 			# Triggers the execution of a particular hook at instance level.

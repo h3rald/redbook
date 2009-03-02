@@ -15,10 +15,8 @@ module RedBook
 		end
 
 		def init
-			debug "Setting up #@name plugin..."	
 			setup
 			load_macros
-			debug "Done."
 		end
 
 		def setup
