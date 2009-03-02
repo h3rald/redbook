@@ -1,11 +1,22 @@
 #!/usr/bin/env ruby
 
-class Symbol
+class Object
 
-	# Converts the receiver to a string (:select becomes ":select").
-	def textualize
-		":#{self.to_s}"
+	def returning(value)
+		yield(value)
+		value
 	end
+
+end
+
+class Class
+
+	def class_instance_variable(pair)
+		raise ArgumentError unless pair.pair?
+		instance_variable_set "@#{pair.name.to_s}", pair.value
+		self.meta_class.class_eval { attr_accessor pair.name }
+	end
+		
 end
 
 class Hash
@@ -66,16 +77,6 @@ end
 
 # The String class has been extended with some methods mainly for colorizing and encoding output.
 class String
-
-	# Converts the receiver to a symbol. It works like <tt>to_sym</tt>,
-	# but ":select" becomes :select instead of :":select". 
-	def symbolize
-		if self.match /^:[a-z]+/ then
-			self.sub(':', '').to_sym
-		else
-			self.to_sym
-		end
-	end
 
 	# Makes the receiver plural
 	def plural

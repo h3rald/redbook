@@ -76,8 +76,7 @@ module RedBook
 
 		def self.included(mod)
 			mod.instance_eval do
-				@hooks = HookCollection.new
-				class << mod;	attr_reader :hooks;	end
+				class_instance_variable :hooks => HookCollection.new
 
 				# Defines a new hook for the hookable class.
 				def define_hook(id, &block)

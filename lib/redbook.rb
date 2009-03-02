@@ -69,7 +69,7 @@ end
 
 
 
-require core/'core_extensions'
+require core/'system_extensions'
 require core/'hook'
 require core/'message'
 require core/'repository'

@@ -9,8 +9,7 @@ module RedBook
 			DataMapper.setup(:default, params)
 		end
 
-		@resources = []
-		class << self; attr_accessor :resources; end
+		class_instance_variable :resources => []
 
 		def self.reset
 			self.resources.each { |r| r.auto_migrate! }
