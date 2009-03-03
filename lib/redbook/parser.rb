@@ -160,9 +160,8 @@ module RedBook
 		end
 
 		def parse(str)
-			op_prefix = RedBook.config.parser.operation_prefix || ':'
 			directives = parse_ruby_code(parse_command(str))
-			operation = Parser.operations[directives[0].gsub(/^#{Regexp.escape(op_prefix)}/, '').to_sym]
+			operation = Parser.operations[directives[0].to_sym]
 			return parse(parse_macro(str, directives)) if operation.blank?		
 			parameters = parse_parameters operation, directives
 			check_required_parameters operation, parameters
@@ -177,26 +176,24 @@ module RedBook
 		def parse_macro(str, directives)
 			name = directives[0]
 			macro = Parser.macros[name.to_sym]
-			param_prefix = RedBook.config.parser.parameter_prefix || ':'
-			ph_prefix = RedBook.config.parser.placeholder_prefix || ':'
 			raise ParserError, "Unknown operation '#{name}'." unless macro	
-			placeholders = macro.scan(/<#{Regexp.escape(ph_prefix)}([a-z_]+)>/).to_a.flatten
+			placeholders = macro.scan(/<([a-z_]+)>/).to_a.flatten
 			raw_params = {}
 			result = macro.dup
 			i = 0
 			while i < directives.length do
-				key = directives[i].gsub(/^#{Regexp.escape(param_prefix)}/, '').to_sym
+				key = directives[i].gsub(/^-/, '').to_sym
 				value = directives[i+1]
 				if placeholders.include? key.to_s then
 					raw_params[key] = value
 				else
-					result << " #{param_prefix}"+key.to_s+' '+value
+					result << " -#{key} #{value}"
 				end				
 				i = i+2
 			end
 			# Substitute placeholders
 			raw_params.each_pair do |label, value|
-				result.gsub!(/<#{ph_prefix}#{label}>/, value)
+				result.gsub!(/<#{label}>/, value)
 			end
 			debug "Processed macro: '#{result}'"
 			return result
@@ -221,9 +218,7 @@ module RedBook
 		end
 
 		def parse_command(str)
-			op_prefix = RedBook.config.parser.operation_prefix || ':'
-			param_prefix = RedBook.config.parser.parameter_prefix || ':'
-			directives = str.split(/(^#{Regexp.escape(op_prefix)}[a-z_]+){1}|(\s#{Regexp.escape(param_prefix)}[a-z_]+){1}/)
+			directives = str.split(/(^[a-z_]+){1}|(\s-[a-z_]+){1}/)
 			directives.delete_at(0)
 			raise ParserError, "No operation specified." if directives.blank?
 			directives.each { |d| d.strip! }
@@ -231,11 +226,10 @@ module RedBook
 		end
 
 		def parse_parameters(operation, directives)
-			param_prefix = RedBook.config.parser.parameter_prefix || ':'
 			parameters = {}
 			i = 0
 			while i < directives.length do
-				key = directives[i].gsub(/^#{Regexp.escape(param_prefix)}/, '').to_sym
+				key = directives[i].gsub(/^-/, '').to_sym
 				value = directives[i+1]
 				unless operation.parameters[key] # Unknown parameters are ignored
 					i = i+2

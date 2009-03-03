@@ -47,12 +47,12 @@ module RedBook
 			has n, :details
 
 			def get_field(f, raw=false)
-				(f.in? RedBook.config.plugins.detail.details) ? get_detail(f, raw) : get_item(f, raw)
+				(f.in? RedBook.config.details) ? get_detail(f, raw) : get_item(f, raw)
 			end
 
 			def set_field(f)
 				raise RepositoryError, "Field must be a pair." unless i.pair?
-				(f.name.in? RedBook.config.plugins.detail.details) ? set_detail(f) : set_item(f)
+				(f.name.in? RedBook.config.details) ? set_detail(f) : set_item(f)
 			end
 
 			def get_item(t, raw=false)
@@ -97,14 +97,14 @@ module RedBook
 	class Parser
 
 		# Add details
-		RedBook.config.plugins.detail.details.each do |d|
+		RedBook.config.details.each do |d|
 			operations[:log].parameter(d) { |p| p.special = true }
 			operations[:update].parameter(d) { |p| p.special = true }
 			operations[:select].parameter(d) { |p| p.special = true }
 		end
 
 		# Add items 
-		RedBook.config.plugins.detail.items.each do |i|
+		RedBook.config.items.each do |i|
 			operations[:log].parameter(i) { |p| p.special = true }
 			operations[:update].parameter(i) { |p| p.special = true }
 			operations[:select].parameter(i) { |p| p.special = true }
@@ -119,9 +119,9 @@ module RedBook
 			items = {}
 			entry = params[:entry]
 			params[:attributes].each_pair do |k, v|
-				if RedBook.config.plugins.detail.details.include? k then
+				if RedBook.config.details.include? k then
 					entry.set_detail k => v	
-				elsif RedBook.config.plugins.detail.items.include? k then
+				elsif RedBook.config.items.include? k then
 					entry.set_item k => v	
 				end
 			end
@@ -133,9 +133,9 @@ module RedBook
 			items = {}
 			entry = params[:entry]
 			params[:attributes].each_pair do |k, v|
-				if RedBook.config.plugins.detail.details.include? k then
+				if RedBook.config.details.include? k then
 					entry.set_detail k => v	
-				elsif RedBook.config.plugins.detail.items.include? k then
+				elsif RedBook.config.items.include? k then
 					entry.set_item k => v	
 				end
 			end
@@ -148,7 +148,7 @@ module RedBook
 			add_attribute = lambda do |field, attributes|
 				attributes[field] = entry.send field if entry.respond_to? field
 			end
-			fields = RedBook.config.plugins.detail.details + RedBook.config.plugins.detail.items
+			fields = RedBook.config.details + RedBook.config.items
 			fields.each { |f| add_attribute.call f, attributes}
 			continue
 		end
@@ -179,8 +179,8 @@ module RedBook
 					end
 				end
 			end
-			details = get_stuff.call RedBook.config.plugins.detail.details
-			items = get_stuff.call RedBook.config.plugins.detail.items
+			details = get_stuff.call RedBook.config.details
+			items = get_stuff.call RedBook.config.items
 			check_details = lambda do
 				res = true
 				details.each_pair do |k, v|

@@ -26,7 +26,7 @@ module RedBook
 		protected
 
 		def load_macros
-			macros = RedBook.config.plugins.send(@label).macros || {}
+			macros = RedBook.config.macros.send(@label) || {}
 			macros.each_pair { |k, v| RedBook::Parser.macro k, v }
 		end
 
