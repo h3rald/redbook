@@ -16,7 +16,7 @@ module RedBook
 	class Parser
 
 		operation(:calculate) do |o|
-			o.parameter(:calculate) { |p| p.required = true; p.type = :enum; p.values = ['sum', 'average', 'max', 'min']}
+			o.parameter(:calculate) { |p| p.required = true; p.parameter_type = :enum; p.values = ['sum', 'average', 'max', 'min']}
 			o.parameter(:on) { |p| p.required = true }
 		end
 

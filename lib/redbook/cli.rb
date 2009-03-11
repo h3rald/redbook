@@ -55,11 +55,11 @@ module RedBook
 		end
 
 		def update(message)
-			display :message, :message => message
+			display message
 		end
 
-		def display(symbol, params)
-			puts @emitter.render(symbol, params).chomp
+		def display(object)
+			puts @emitter.render(object).chomp
 		end
 
 		def setup_completion
@@ -143,10 +143,7 @@ module RedBook
 			else
 				result = @engine.dataset
 			end
-			result.each do |e| 
-				count += 1
-				display e.type.symbolize, :entry => e, :details => true, :index => count, :total => result.length if RedBook.output 
-			end
+			display result, :details => true if RedBook.output 
 		end
 
 		def clear_operation(params=nil)
@@ -189,10 +186,7 @@ module RedBook
 		def select_operation(params=nil)
 			result = @engine.select params
 			count = 1
-			result.each do |e| 
-				display e.type.symbolize, :entry => e, :index => count, :total => result.length if RedBook.output
-				count = count+1
-			end
+			display result if RedBook.output
 			info "#{result.length} item#{result.length == 1 ? '' : 's'} loaded into dataset."
 		end
 
@@ -232,11 +226,7 @@ module RedBook
 				warning "Empty dataset."
 				return
 			end
-			count = 1
-			@engine.dataset.each do |i|
-				display :entry, :entry => i, :index => count if RedBook.output
-				count +=1
-			end
+			display @dataset if RedBook.output
 		end
 
 		def ruby_operation(params)

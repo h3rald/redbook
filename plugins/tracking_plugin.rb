@@ -121,56 +121,56 @@ module RedBook
 	class Parser
 
 		operations[:log].modify do |o|
-			o.parameter(:foreground) { |p| p.type = :bool; p.special = true } 
-			o.parameter(:tracking) { |p| p.type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
-			o.parameter(:start) { |p| p.type = :time; p.special = true } 
-			o.parameter(:end) { |p| p.type = :time; p.special = true } 
-			o.parameter(:duration) { |p| p.type = :float; p.special = true }
+			o.parameter(:foreground) { |p| p.parameter_type = :bool; p.special = true } 
+			o.parameter(:tracking) { |p| p.parameter_type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
+			o.parameter(:start) { |p| p.parameter_type = :time; p.special = true } 
+			o.parameter(:end) { |p| p.parameter_type = :time; p.special = true } 
+			o.parameter(:duration) { |p| p.parameter_type = :float; p.special = true }
 		end
 		
 		operations[:select].modify do |o|
-			o.parameter(:foreground) { |p| p.type = :bool; p.rewrite_as 'activity.foreground'; p.special = true } 
-			o.parameter(:tracking) { |p| p.type = :list; p.values = ['started', 'disabled', 'paused', 'completed']; p.rewrite_as 'activity.tracking.in' }
-			o.parameter(:started_before) { |p| p.type = :time; p.rewrite_as 'activity.start.lt'} 
-			o.parameter(:started_after) { |p| p.type = :time; p.rewrite_as 'activity.start.gt'} 
-			o.parameter(:ended_before) { |p| p.type = :time; p.rewrite_as 'activity.end.lt'} 
-			o.parameter(:ended_after) { |p| p.type = :time; p.rewrite_as 'activity.end.gt'} 
-			o.parameter(:longer_than) { |p| p.type = :float; p.rewrite_as 'activity.duration.gt'}
-			o.parameter(:shorter_than) { |p| p.type = :float; p.rewrite_as 'activity.duration.lt'}
+			o.parameter(:foreground) { |p| p.parameter_type = :bool; p.rewrite_as 'activity.foreground'; p.special = true } 
+			o.parameter(:tracking) { |p| p.parameter_type = :list; p.values = ['started', 'disabled', 'paused', 'completed']; p.rewrite_as 'activity.tracking.in' }
+			o.parameter(:started_before) { |p| p.parameter_type = :time; p.rewrite_as 'activity.start.lt'} 
+			o.parameter(:started_after) { |p| p.parameter_type = :time; p.rewrite_as 'activity.start.gt'} 
+			o.parameter(:ended_before) { |p| p.parameter_type = :time; p.rewrite_as 'activity.end.lt'} 
+			o.parameter(:ended_after) { |p| p.parameter_type = :time; p.rewrite_as 'activity.end.gt'} 
+			o.parameter(:longer_than) { |p| p.parameter_type = :float; p.rewrite_as 'activity.duration.gt'}
+			o.parameter(:shorter_than) { |p| p.parameter_type = :float; p.rewrite_as 'activity.duration.lt'}
 		end
 
 		operations[:update].modify do |o|
-			o.parameter(:foreground) { |p| p.type = :bool; p.special = true } 
-			o.parameter(:tracking) { |p| p.type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
-			o.parameter(:start) { |p| p.type = :time; p.special = true} 
-			o.parameter(:end) { |p| p.type = :time; p.special = true} 
-			o.parameter(:duration) { |p| p.type = :float; p.special = true }
+			o.parameter(:foreground) { |p| p.parameter_type = :bool; p.special = true } 
+			o.parameter(:tracking) { |p| p.parameter_type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
+			o.parameter(:start) { |p| p.parameter_type = :time; p.special = true} 
+			o.parameter(:end) { |p| p.parameter_type = :time; p.special = true} 
+			o.parameter(:duration) { |p| p.parameter_type = :float; p.special = true }
 		end
 
 		# New Operations
 
 		operation(:start) do |o|
-			o.parameter(:start) { |p| p.type = :integer; p.required = true; p.special=true}
+			o.parameter(:start) { |p| p.parameter_type = :integer; p.required = true; p.special=true}
 		end
 
 		operation(:finish) do |o|
-			o.parameter(:finish) { |p| p.type = :integer}
+			o.parameter(:finish) { |p| p.parameter_type = :integer}
 		end
 
 		operation(:pause) do |o|
-			o.parameter(:pause) { |p| p.type = :integer; p.required = true}
+			o.parameter(:pause) { |p| p.parameter_type = :integer; p.required = true}
 		end
 
 		operation(:track) do |o|
-			o.parameter(:track) { |p| p.type = :integer; p.required = true}
-			o.parameter(:from) { |p| p.type = :time; p.required = true}
-			o.parameter(:to) { |p| p.type = :time }
+			o.parameter(:track) { |p| p.parameter_type = :integer; p.required = true}
+			o.parameter(:from) { |p| p.parameter_type = :time; p.required = true}
+			o.parameter(:to) { |p| p.parameter_type = :time }
 		end
 
 		operation(:untrack) do |o|
-			o.parameter(:untrack) { |p| p.type = :integer; p.required = true}
-			o.parameter(:from) { |p| p.type = :time}
-			o.parameter(:to) { |p| p.type = :time}
+			o.parameter(:untrack) { |p| p.parameter_type = :integer; p.required = true}
+			o.parameter(:from) { |p| p.parameter_type = :time}
+			o.parameter(:to) { |p| p.parameter_type = :time}
 		end
 
 	end
@@ -183,7 +183,7 @@ module RedBook
 			entry = @dataset[index-1]
 			raise EngineError, "Invalid index #{index}" unless entry
 			entry.activity.reload
-			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
+			raise EngineError, "Selected entry is not an activity." unless entry.resource_type == 'activity'
 			raise EngineError, "Selected activity is already started." if entry.activity.started?
 			raise EngineError, "Selected activity has been completed." if entry.activity.completed?
 			started = Repository::Entry.all('activity.tracking' => 'started', 'activity.foreground' => true) 
@@ -198,7 +198,7 @@ module RedBook
 			entry = @dataset[index-1] if index
 			raise EngineError, "Invalid index #{index}" unless entry
 			entry.activity.reload
-			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
+			raise EngineError, "Selected entry is not an activity." unless entry.resource_type == 'activity'
 			raise EngineError, "Tracking is disabled for selected activity." if entry.activity.disabled?
 			raise EngineError, "Selected activity is already completed." if entry.activity.completed?
 			# Verify if there's any open record
@@ -211,7 +211,7 @@ module RedBook
 			entry = @dataset[index-1]
 			raise EngineError, "Invalid index #{index}" unless entry
 			entry.activity.reload
-			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
+			raise EngineError, "Selected entry is not an activity." unless entry.resource_type == 'activity'
 			raise EngineError, "Tracking is disabled for selected activity." if entry.activity.disabled?
 			raise EngineError, "Selected activity is already #{entry.activity.tracking}." unless entry.activity.started?
 			Engine.pause_activity entry
@@ -223,7 +223,7 @@ module RedBook
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			entry = @dataset[index-1]
 			raise EngineError, "Invalid index #{i}" unless entry
-			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
+			#raise EngineError, "Selected entry is not an activity." unless entry.resource_type == 'activity'
 			entry.activity.reload
 			entry.records.reload
 			started = Repository::Record.all(:entry_id => entry.id, :start.lt => from, :end.gt => from)
@@ -245,7 +245,7 @@ module RedBook
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			entry = @dataset[index-1]
 			raise EngineError, "Invalid index #{i}" unless entry
-			raise EngineError, "Selected entry is not an activity." unless entry.type == 'activity'
+			raise EngineError, "Selected entry is not an activity." unless entry.resource_type == 'activity'
 			entry.activity.reload
 			entry.records.reload
 			raise EngineError, "Tracking is disabled for selected activity." if entry.activity.disabled?
@@ -269,7 +269,7 @@ module RedBook
 			a_start = attributes[:start]
 			duration = attributes[:duration]
 			entry = params[:entry]
-			if entry.type == 'activity' || foreground != nil || a_end || a_start || duration then	
+			if entry.resource_type == 'activity' || foreground != nil || a_end || a_start || duration then	
 				activity =  Repository::Activity.first(:entry_id => entry.id) || Repository::Activity.create(:entry_id => entry.id)  
 				activity.foreground = foreground unless foreground == nil
 				activity.end = a_end unless attributes.null_key? :end
@@ -298,7 +298,7 @@ module RedBook
 			foreground = params[:attributes][:foreground]
 			duration = params[:attributes][:duration]
 			entry = params[:entry]
-			if entry.type == 'activity' || foreground || tracking || a_end || a_start || duration then	
+			if entry.resource_type == 'activity' || foreground || tracking || a_end || a_start || duration then	
 				tracking ||= 'disabled'
 				activity =  Repository::Activity.create(:entry_id => entry.id)	
 				activity.tracking = tracking
@@ -310,17 +310,6 @@ module RedBook
 				entry.activity = activity
 				entry.save
 			end
-			continue
-		end
-
-		define_hook(:after_relog) do |params|
-			entry = params[:entry]
-			attributes = params[:attributes]
-			add_attribute = lambda do |field, attributes|
-				attributes[field] = entry.send field if entry.respond_to? field
-			end
-			fields = [:start, :tracking, :end, :foreground, :duration]
-			fields.each { |f| add_attribute.call f, attributes}
 			continue
 		end
 

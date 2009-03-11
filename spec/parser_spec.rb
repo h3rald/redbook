@@ -107,7 +107,7 @@ describe RedBook::Parser do
 	end
 
 	it "should allow operations to be modified at runtime" do
-		RedBook::Parser.operations[:log].parameter(:test_tags) {|p| p.type = :list}
+		RedBook::Parser.operations[:log].parameter(:test_tags) {|p| p.parameter_type = :list}
 		op = @p.parse "log test -test_tags tag1 tag2 tag3"
 		op[1][:text].should == "test"
 		op[1][:test_tags].should == ['tag1', 'tag2', 'tag3']
@@ -126,7 +126,7 @@ describe RedBook::Parser do
 		RedBook::Parser.macros[:bugfix] = "log Fixing <bugfix> -test_tags <test_tags> bugfix"
 		# Macros can be recursive
 	 	RedBook::Parser.macros[:urgfix]	= "bugfix <urgfix> -test_tags urgent"
-		RedBook::Parser.operations[:log].parameter(:test_tags) {|p| p.type = :list}
+		RedBook::Parser.operations[:log].parameter(:test_tags) {|p| p.parameter_type = :list}
 		@p.parse("test GUI").should == @p.parse("log Testing GUI")
 		# It should inherit the original operation's parameters
 		@p.parse("test GUI -type bugfix").should == @p.parse("log Testing GUI -type bugfix")

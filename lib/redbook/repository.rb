@@ -22,7 +22,7 @@ module RedBook
 
 			property :id, Serial
 			property :text, String, :nullable => false
-			property :type, String, :nullable => false, :default => 'entry'
+			property :resource_type, String, :nullable => false, :default => 'entry'
 			property :timestamp, DateTime, :nullable => false
 
 			default_scope(:default).update(:order => [:timestamp.asc]) # set default order

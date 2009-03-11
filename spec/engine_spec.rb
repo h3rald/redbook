@@ -33,24 +33,12 @@ describe RedBook::Engine do
 		@e.select(:text => "Second").length.should == 1
 		@e.select().length.should == 3
 		@e.select(:timestamp.gt => t).length.should == 3
-		@e.select(:type.like => "%ent%", :text.like => '%d%').length.should == 2
+		@e.select(:resource_type.like => "%ent%", :text.like => '%d%').length.should == 2
 		@e.select(:last => 2).length.should == 2
 		@e.select(:first => 1).length.should == 1
 		last2 = @e.select.reverse
 		last2.pop
 		@e.select(:last => 2).should == last2
-	end
-
-	it "should relog entries" do
-		lambda { @e.relog 1 }.should raise_error
-		entries.each { |entry| @e.log entry }
-		@e.select
-		@e.relog 1
-		@e.relog 2, 'test'
-		@e.select
-		@e.dataset[3].text.should == "Third" # The third entry is the oldest 
-		@e.dataset[4].text.should == "First"
-		@e.dataset[4].type.should == "test"
 	end
 
 	it "should add selected entries to the dataset" do

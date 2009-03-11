@@ -53,24 +53,6 @@ module RedBook
 
 		alias insert log
 
-		# Relogs a previouly logged entry.
-		#
-		# <i>Hooks</i>
-		# * <i>:before_relog</i> :attributes => Hash, :entry => RedBook::Repository::Entry
-		# * <i>:after_relog</i> :attributes => Hash, :entry => RedBook::Repository::Entry
-		def relog(index, type=nil)
-			raise EngineError, "Empty dataset." if @dataset.blank?
-			entry = @dataset[index-1]
-			raise EngineError, "Invalid index #{index}." unless entry
-			attributes = {}
-			attributes[:timestamp] = Time.now
-			attributes[:text] = entry.text
-			attributes[:type] = type || entry.type
-			hook :before_relog, :entry => entry, :attributes => attributes
-			new_entry = log(attributes)
-			hook :after_relog, :attributes => attributes, :entry => new_entry
-		end
-
 		# Selects entries matching specified criteria.
 		#
 		# <i>Hooks</i>
@@ -136,23 +118,12 @@ module RedBook
 		# <i>Hooks</i>
 		# * <i>:before_save</i> :file => String, :format => Symbol
 		# * <i>:after_save</i> :file => String
-		# * <i>:saved_file_header</i> :format => Symbol # => String
-		# * <i>:saved_file_footer</i> :format => Symbol # => String
 		def save(file, format=:txt)
 			raise EngineError, "Empty dataset." if @dataset.blank?
 			em = Emitter.new(format)
-			em.load_template :entry
 			hook :before_save, :file => file, :format => format
 			File.open(file, 'w+')	do |f|
-				header = hook :saved_file_header, :format => format
-				f.write header unless header.blank?
-				count = 0
-				@dataset.each do |entry|
-					count +=1
-					f.write em.render(entry.type.to_sym, :entry => entry, :index => count, :total => @dataset.length)
-				end
-				footer = hook :saved_file_footer , :format => format
-				f.write footer unless footer.blank?
+				f.write em.render @dataset
 			end
 			hook :after_save, :file => file
 		end
@@ -282,6 +253,8 @@ module RedBook
 
 		def insert_entry(attributes={})
 			# Delete special attributes
+			attributes[:resource_type] = attributes[:type] if attributes[:type]
+			attributes.delete :type
 			attrs = attributes.dup
 			attrs.each_pair do |l, v|
 				param = Parser.operations[:log].parameters[l]
@@ -289,7 +262,7 @@ module RedBook
 			end
 			entry = Repository::Entry.new attrs
 			raise Exception, "Entry text not specified" unless attrs[:text] 
-			entry.type = "entry" unless attrs[:type]
+			entry.resource_type = "entry" unless attrs[:resource_type]
 			entry.timestamp = Time.now unless attrs[:timestamp]
 			entry.save
 			entry
@@ -297,6 +270,8 @@ module RedBook
 
 		def update_entry(index, attributes={})
 			# Delete special attributes
+			attributes[:resource_type] = attributes[:type] if attributes[:type]
+			attributes.delete :type
 			attrs = attributes.dup
 			attrs.each_pair do |l, v|
 				param = Parser.operations[:update].parameters[l]
@@ -319,6 +294,8 @@ module RedBook
 		end
 
 		def select_entries(attributes={})
+			attributes[:resource_type] = attributes[:type] if attributes[:type]
+			attributes.delete :type
 			attrs = attributes.dup
 			limit, type = attrs.delete(:first), :first if attrs[:first]
 			limit, type = attrs.delete(:last), :last if attrs[:last]
@@ -339,38 +316,6 @@ module RedBook
 			end
 		end
 
-		public
-		# Defining core hooks
-
-		define_hook(:saved_file_header) do |params|
-			result = ""
-			case params[:format]
-			when :xml then
-				result <<	"<xml version=\"1.0\" encoding=\"UTF-8\">\n"
-				result << "<dataset>\n"
-			when :html||:xhtml then
-				result << "<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
-				result << "<head>\n"
-				result << "	<title>RedBook Dataset</title>\n"
-				result << "</head>\n"
-				result << "<body>\n"
-				result << "<h1>RedBook Dataset</h1>\n"
-				result << "<div id=\"dataset\">\n"
-			end
-			{ :value => result, :stop => result ? true : false }
-		end
-
-		RedBook::Engine.define_hook(:saved_file_footer) do |params|
-			result = ""
-			case params[:format]
-			when :xml then
-				result << "\n</dataset>\n"
-			when :html||:xhtml then
-				result << "\n</div>\n"
-				result << "</body>\n"
-			end
-			{ :value => result, :stop => result ? true : false }
-		end
 	end
 end
 

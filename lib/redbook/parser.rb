@@ -34,7 +34,7 @@ module RedBook
 
 		class Parameter 
 			include Hookable
-			attr_accessor :name, :type, :required, :values, :special, :rewrite
+			attr_accessor :name, :parameter_type, :required, :values, :special, :rewrite
 
 			def to_s
 				@name.to_s
@@ -46,7 +46,7 @@ module RedBook
 
 			def initialize(name)
 				@name = name
-				@type = :string
+				@parameter_type = :string
 				@required = false
 				@special = nil
 				@values = []
@@ -74,7 +74,7 @@ module RedBook
 					raise ParserError, "Please specify a value for the ':#{self}' directive." if @required
 					return nil
 				end
-				case @type
+				case @parameter_type
 				when :string then
 					return value
 				when :time then
@@ -124,7 +124,7 @@ module RedBook
 				else
 					return_value = nil
 					hook :parse_custom_type, :value => value, :return => return_value
-					raise ParserError, "Unknown type '#{@type.textualize}' for parameter ':#{self}'." unless return_value
+					raise ParserError, "Unknown parameter type '#{@parameter_type.textualize}' for parameter ':#{self}'." unless return_value
 					return return_value
 				end
 			end
@@ -264,37 +264,37 @@ class RedBook::Parser
 
 	operation(:log) do |o|
 		o.parameter(:log) { |p| p.required = true; p.rewrite_as :text }
-		o.parameter(:timestamp) { |p| p.type = :time }
+		o.parameter(:timestamp) { |p| p.parameter_type = :time }
 		o.parameter :type 
 	end
 
 	alias_operation :insert => :log
 
 	operation(:relog) do |o|
-		o.parameter(:log) { |p| p.required = true, p.type = :integer}
+		o.parameter(:log) { |p| p.required = true, p.parameter_type = :integer}
 		o.parameter :as
 	end
 
 	operation(:select) do |o|
 		o.parameter(:select) { |p| p.rewrite_as(:text.like){|v| "%#{v}%" }}
-		o.parameter(:from) { |p| p.type = :time; p.rewrite_as(:timestamp.gt) }
-		o.parameter(:to) { |p| p.type = :time; p.rewrite_as(:timestamp.lt)}
-		o.parameter(:type)  { |p| p.type = :list}
-		o.parameter(:first) { |p| p.type = :integer }
-		o.parameter(:last) { |p| p.type = :integer }
+		o.parameter(:from) { |p| p.parameter_type = :time; p.rewrite_as(:timestamp.gt) }
+		o.parameter(:to) { |p| p.parameter_type = :time; p.rewrite_as(:timestamp.lt)}
+		o.parameter(:type)  { |p| p.parameter_type = :list}
+		o.parameter(:first) { |p| p.parameter_type = :integer }
+		o.parameter(:last) { |p| p.parameter_type = :integer }
 	end
 
 	alias_operation :load => :select
 
 	operation(:update) do |o|
-		o.parameter(:update) { |p| p.required = true; p.type = :integer }
+		o.parameter(:update) { |p| p.required = true; p.parameter_type = :integer }
 		o.parameter :text
-		o.parameter(:timestamp) { |p| p.type = :time }
+		o.parameter(:timestamp) { |p| p.parameter_type = :time }
 		o.parameter :type
 	end
 
 	operation(:delete) do |o|
-		o.parameter(:delete) { |p| p.type = :intlist }
+		o.parameter(:delete) { |p| p.parameter_type = :intlist }
 	end
 
 	operation(:save) do |o|
@@ -313,15 +313,15 @@ class RedBook::Parser
 	end
 
 	operation(:cleanup) do |o|
-		o.parameter(:cleanup) { |p| p.type = :list }
+		o.parameter(:cleanup) { |p| p.parameter_type = :list }
 	end
 
 	operation(:refresh) do |o|
-		o.parameter(:refresh) { |p| p.type = :list }
+		o.parameter(:refresh) { |p| p.parameter_type = :list }
 	end
 
 	operation(:detail) do |o|
-		o.parameter(:detail) { |p| p.type = :intlist }
+		o.parameter(:detail) { |p| p.parameter_type = :intlist }
 	end
 
 	operation(:use) do |o|

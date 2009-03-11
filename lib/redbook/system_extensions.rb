@@ -1,10 +1,23 @@
 #!/usr/bin/env ruby
 
+module Kernel
+
+	def msg(name, value)
+		{}.tap { |h| h[name] = value; h.resource_type = :message }
+	end
+
+end
+
 class Object
 
 	def returning(value)
 		yield(value)
 		value
+	end
+
+	def tap 
+		yield self
+		self
 	end
 
 end
@@ -20,6 +33,9 @@ class Class
 end
 
 class Hash
+
+	attr_accessor :resource_type 
+
 	def null_key?(attr)
 		self.has_key?(attr) && self[attr] == nil
 	end

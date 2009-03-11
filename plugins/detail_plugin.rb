@@ -18,7 +18,7 @@ module RedBook
 			has n, :entries, :through => :item_map, :mutable => true
 			property :id, Serial
 			property :name, String, :nullable => false, :unique => true
-			property :type, String, :nullable => false
+			property :item_type, String, :nullable => false
 			storage_names[:default] = 'items'
 		end
 
@@ -28,7 +28,7 @@ module RedBook
 			property :id, Serial
 			property :entry_id, Integer, :key => true
 			property :name, String, :nullable => false, :unique => true
-			property :type, String, :nullable => false
+			property :detail_type, String, :nullable => false
 			storage_names[:default] = 'details'
 		end
 
@@ -57,7 +57,7 @@ module RedBook
 
 			def get_item(t, raw=false)
 				return nil if self.items.blank?
-				result = self.items.select{|i| i.type == t.to_s }
+				result = self.items.select{|i| i.item_type == t.to_s }
 				return (result.blank?) ? nil : ((raw) ? result[0] : result[0].name)
 			end
 
@@ -67,7 +67,7 @@ module RedBook
 					# Delete the current association, if necessary
 					ItemMap.first(:entry_id => self.id, :item_id => old_item.id).destroy unless old_item.blank?
 					# Add item
-					new_item = Item.first(:type => i.name.to_s, :name => i.value.to_s)||Item.create(:type => i.name.to_s, :name => i.value.to_s)
+					new_item = Item.first(:item_type => i.name.to_s, :name => i.value.to_s)||Item.create(:item_type => i.name.to_s, :name => i.value.to_s)
 					im = ItemMap.create(:entry_id => self.id, :item_id => new_item.id)
 					im.save
 					self.items.reload
@@ -76,7 +76,7 @@ module RedBook
 
 			def get_detail(t, raw=false)
 				return nil if self.details.blank?
-				result = self.details.select{|d| d.type == t.to_s }
+				result = self.details.select{|d| d.detail_type == t.to_s }
 				return (result.blank?) ? nil : ((raw) ? result[0] : result[0].name)
 			end
 
@@ -86,7 +86,7 @@ module RedBook
 					# Delete the current association, if necessary
 					old_detail.destroy unless old_detail.blank?
 					# Add detail
-					new_detail = Detail.create(:type => i.name.to_s, :name => i.value.to_s, :entry_id => self.id)
+					new_detail = Detail.create(:detail_type => i.name.to_s, :name => i.value.to_s, :entry_id => self.id)
 					self.details.reload
 				end
 			end

@@ -30,10 +30,4 @@ module RedBook
 	end
 end
 
-module Kernel
 
-	def msg(name, value)
-		{name => value}
-	end
-
-end

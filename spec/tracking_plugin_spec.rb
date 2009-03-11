@@ -46,7 +46,7 @@ describe RedBook::TrackingPlugin do
 	end
 	
 	it "should allow selection of activities" do
-		@c.process "log Testing -start 2 days ago -end 10 minutes ago -type process"
+		@c.process "log Testing -start 2 days ago -end 10 minutes ago -foreground no"
 		@c.process "select -foreground no"
 		@c.process "select -longer_than 119"
 		@c.engine.dataset.length.should == 1
@@ -68,7 +68,7 @@ describe RedBook::TrackingPlugin do
 		a.records.length.should == 1
 		a.records[0].end.should == nil
 		a.records[0].start.should_not be_blank
-		# It should be possible to start an activity *and* a process at the same time
+		# It should be possible to start a foreground activity *and* a background activity at the same time
 		@c.process "start 2"
 		p.activity.tracking.should == 'started'
 		p.records.length.should == 1

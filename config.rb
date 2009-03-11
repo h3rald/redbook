@@ -7,6 +7,7 @@ module RedBook
 	config.completion = true
 	config.duration_format = :minutes
 	config.time_format = "%d/%m/%Y - %H:%M:%S"
+	config.templates.directories = [LIB_DIR/'../templates']
 
 	# CLI Shortcuts
 	config.cli.shortcuts = {}
@@ -19,7 +20,7 @@ module RedBook
 
 	# Plugins
 	config.plugins.list = [:tracking, :tagging, :aggregation, :detail]
-	config.plugins.directories = [RedBook::LIB_DIR/'../plugins', RedBook::HOME_DIR/'.redbook-plugins', RedBook::HOME_DIR/'redbook-plugins']
+	config.plugins.directories = [LIB_DIR/'../plugins', HOME_DIR/'.redbook-plugins', HOME_DIR/'redbook-plugins']
 
 	# Detail Plugin
 	config.details = [:code, :notes]

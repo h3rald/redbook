@@ -3,59 +3,95 @@
 module RedBook
 	class Emitter
 
+		class CliHelper 
+
+			def entry(e, total=1, index=0)
+				padding = ' '*(Math.log10(total).floor-Math.log10(index).floor + 1)
+				timestamp = e.timestamp.textualize.dark_cyan
+				text = e.text.cyan
+				index =	padding+index.to_s.cyan
+				[index, timestamp, text].join(' ').tap do |s|
+					s <<  e.tags.each { |t| " @".dark_yellow+"#{t.name.yellow}" }.join if e.respond_to? :tags
+				end
+			end
+
+			def message(m)
+				colors = {:info => 'green', :warning => 'yellow', :error => 'red', :debug => 'magenta'}
+				prefix = ">>".send :"#{colors[m.name]}"
+				text = m.value.send :"dark_#{colors[m.name]}"
+				"#{prefix} #{text}"
+			end
+		end
+
+		class TxtHelper < CliHelper
+
+			def entry(e, total=1, index=0)
+				super(e, total, index).uncolorize
+			end
+
+			def message(m)
+				"[#{m.name}] #{m.value}"
+			end
+		end
+
+
 		attr_accessor :templates
 
-		@@template_dirs = []
-
-		def self.template_dirs
-			@@template_dirs
-		end
+		class_instance_variable :template_dirs => []
 
 		def initialize(format, cache=false)
 			@cache = cache
 			@format = format
-			set_folder = lambda do |folder|
-				begin 
-					Dir.new(folder)
-				rescue
-					nil
-				end
-			end
-			@@template_dirs << LIB_DIR/'../templates' unless @@template_dirs.include? LIB_DIR/'../templates'
 			@templates = {}
-			if @cache then
-				@@template_dirs.each {|d| load_templates d}
-			end
+			load_layout
+			RedBook.config.templates.directories.each {|d| load_templates d/@format.to_s} if @cache
 		end
-			
-		def render(template, params={})
-			params[:partial] = lambda { |t, p| load_template(t).evaluate(p).chomp }
-			load_template template unless @templates[template]
-			begin
-				return @templates[template].evaluate(params).chomp
-			rescue Exception => e
-				bkt = []
-			 	bkt << e.message
-				bkt = bkt + e.backtrace	
-				raise EmitterError, "Unable to render template '#{template.to_s}'.", bkt
+
+		def render(object, args={})
+			object  = (object.is_a? Hash) ? [object] : object.to_a
+			count = 1
+			params = {}.tap do |ps| 
+				content = [].tap do |c|
+					object.each do |o| 
+						p = {}.tap do |h|
+							h[:object] = o
+							h[:total] = object.length
+							h[:index] = count+=1
+							h[:helper] = Emitter.const_get("#{@format}_helper".camel_case.to_sym).new rescue nil
+						end
+						p.merge! args
+						t = "#{o.resource_type}.#{@format}"
+						view = @templates[t] || load_template(t) rescue @templates["entry.#@format"] || load_template("entry.#@format")
+						c << view.evaluate(p).chomp
+					end
+				end
+				ps[:content] = content.join
 			end
-			''
+			begin
+				@templates[@format].evaluate(params).chomp
+			rescue Exception => e
+				raise EmitterError, "Unable to render template.", [].tap { |b| b << e.message; 	b += e.backtrace }
+			end
 		end
 
 		def load_templates(dir)
-			Dir.glob(dir/"*.erb").each do	|f| 
-				load_template(:"#{File.basename(f, ".#{@format.to_s}.erb")}") if f =~ /#{@format.to_s}\.erb$/ 
-			end
+			Dir.glob(dir/"*.erb").each { |f| load_template(:"#{File.basename(f, ".erb")}") if f =~ /#{@format.to_s}\.erb$/ }
 		end
 
 		def load_template(template)
-			name = "#{template.to_s}.#{@format.to_s}.erb"
+			name = "#{template.to_s}.erb"
 			file = nil
-			@@template_dirs.each do |d|
-				file = d/name if File.exists? d/name
-			end
-			raise EmitterError, "Template '#{template.to_s}.#{@format.to_s}' not found." unless file
+			RedBook.config.templates.directories.each { |d| file = d/@format.to_s/name if File.exists? d/@format.to_s/name }
+			raise EmitterError, "Template '#{template.to_s}' not found." unless file
 			@templates[template] = Erubis::TinyEruby.new(File.read(file))
+		end
+
+		def load_layout
+			name = "#@format.erb"
+			file = nil
+			RedBook.config.templates.directories.each { |d| file = d/name if File.exists? d/name }
+			raise EmitterError, "Template '#@format' not found." unless file
+			@templates[@format] = Erubis::TinyEruby.new(File.read(file))
 		end
 
 	end

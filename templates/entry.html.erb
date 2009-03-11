@@ -1,5 +1,0 @@
-	<div class="entry">
-		<span class="timestamp"><%= @entry.timestamp.textualize -%>: </span>
-		<span class="text"><%= @entry.text -%></span><% @partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags -%>
-	</div>
-

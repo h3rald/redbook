@@ -68,18 +68,18 @@ module RedBook
 
 	class Parser
 
-		operations[:log].parameter(:tags) {|p| p.type = :list; p.special = true}
-		operations[:select].parameter(:tags) {|p| p.type = :list; p.special = true}
-		operations[:update].parameter(:tags) {|p| p.type = :list; p.special = true}
+		operations[:log].parameter(:tags) {|p| p.parameter_type = :list; p.special = true}
+		operations[:select].parameter(:tags) {|p| p.parameter_type = :list; p.special = true}
+		operations[:update].parameter(:tags) {|p| p.parameter_type = :list; p.special = true}
 
 		operation(:tag) do |o|
-			o.parameter(:tag) { |p| p.type = :intlist }
-			o.parameter(:as) { |p| p.type = :list }
+			o.parameter(:tag) { |p| p.parameter_type = :intlist }
+			o.parameter(:as) { |p| p.parameter_type = :list }
 		end
 
 		operation(:untag) do |o|
-			o.parameter(:untag) { |p| p.type = :intlist }
-			o.parameter(:as) { |p| p.type = :list }
+			o.parameter(:untag) { |p| p.parameter_type = :intlist }
+			o.parameter(:as) { |p| p.parameter_type = :list }
 		end
 
 	end
