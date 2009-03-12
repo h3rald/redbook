@@ -1,8 +1,6 @@
 	<entry>
 		<text><%= @object.text -%></text>
 		<timestamp><%= @object.timestamp.to_s -%></timestamp><% if @object.respond_to? :tags then %>
-		<tags><% @object.tags.each do |t| -%>
-			<tag><%= t.name -%></tag><% end -%>
-		</tags><% end %>
+		<%= @partial.call :tags, @object.tags %><% end %>
 	</entry>
 

@@ -10,9 +10,7 @@ module RedBook
 				timestamp = e.timestamp.textualize.dark_cyan
 				text = e.text.cyan
 				index =	padding+index.to_s.cyan
-				[index, timestamp, text].join(' ').tap do |s|
-					s <<  e.tags.each { |t| " @".dark_yellow+"#{t.name.yellow}" }.join if e.respond_to? :tags
-				end
+				[index, timestamp, text].join ' '
 			end
 
 			def message(m)
@@ -49,7 +47,7 @@ module RedBook
 
 		def render(object, args={})
 			object  = (object.is_a? Hash) ? [object] : object.to_a
-			count = 1
+			count = 0
 			params = {}.tap do |ps| 
 				content = [].tap do |c|
 					object.each do |o| 
@@ -58,10 +56,11 @@ module RedBook
 							h[:total] = object.length
 							h[:index] = count+=1
 							h[:helper] = Emitter.const_get("#{@format}_helper".camel_case.to_sym).new rescue nil
+							h[:partial] = lambda {|t, params| load_template(:"_#{t}.#@format").evaluate(params).chomp }
 						end
 						p.merge! args
 						t = "#{o.resource_type}.#{@format}"
-						view = @templates[t] || load_template(t) rescue @templates["entry.#@format"] || load_template("entry.#@format")
+						view = load_template(t) rescue load_template("entry.#@format")
 						c << view.evaluate(p).chomp
 					end
 				end
@@ -79,6 +78,7 @@ module RedBook
 		end
 
 		def load_template(template)
+			return @templates[template] if @templates[template]
 			name = "#{template.to_s}.erb"
 			file = nil
 			RedBook.config.templates.directories.each { |d| file = d/@format.to_s/name if File.exists? d/@format.to_s/name }

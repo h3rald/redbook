@@ -1,8 +1,6 @@
 	<div class="entry">
 		<span class="timestamp"><%= @object.timestamp.textualize -%>: </span>
 		<span class="text"><%= @object.text -%></span><% if @object.respond_to? :tags then %>
-		<ul class="tags"><% @object.tags.each do |t| -%>
-			<li class="tag"><%= t.name -%></li><% end -%>
-		</ul><% end %>
+		<%= @partial.call :tags, @object.tags %><% end %>
 	</div>
 

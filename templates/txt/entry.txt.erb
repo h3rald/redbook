@@ -1,2 +1,2 @@
-<%= @helper.entry(@object, @total, @index) %>
+<%= @helper.entry(@object, @total, @index) %><%= @partial.call :tags, @object.tags if @object.respond_to? :tags %>
 
