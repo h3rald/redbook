@@ -9,8 +9,9 @@
 
 require 'rubygems'
 require 'pathname'
-require 'extlib'
 require 'yaml'
+require 'methodchain'
+require 'extlib'
 require 'dm-core'
 require 'configatron'
 require 'observer'

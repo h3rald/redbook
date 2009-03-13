@@ -8,20 +8,6 @@ module Kernel
 
 end
 
-class Object
-
-	def returning(value)
-		yield(value)
-		value
-	end
-
-	def tap 
-		yield self
-		self
-	end
-
-end
-
 class Class
 
 	def class_instance_variable(pair)

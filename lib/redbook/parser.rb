@@ -25,7 +25,7 @@ module RedBook
 			def parameter(name, &block)
 				@parameters[name] = Parameter.new(name, &block)
 			end
-			
+
 			def modify
 				yield self if block_given?
 			end
@@ -170,7 +170,7 @@ module RedBook
 			debug "Parsed operation '#{operation.name}'"
 			return operation.name, parameters
 		end
-	
+
 		private
 
 		def parse_macro(str, directives)
@@ -201,49 +201,46 @@ module RedBook
 
 		def parse_ruby_code(directives)
 			regex = /%=(.+?)=%/
-			directives.each do |v|
-				code = v.scan(regex).to_a.flatten
-				unless code.blank? then
-					code.each do |c|
+				directives.tap do |ds|
+				ds.each do |v|
+					v.scan(regex).to_a.flatten.else(:blank?).each do |c|
 						begin
-							e = Kernel.instance_eval c
-							v.sub! regex, e.to_s
+							Kernel.instance_eval(c).tap { |e|	v.sub! regex, e.to_s }
 						rescue
 							raise ParserError, "Error evaluating '#{c}'."
 						end
 					end
+					end
 				end
-			end
-			directives
 		end
 
 		def parse_command(str)
-			directives = str.split(/(^[a-z_]+){1}|(\s-[a-z_]+){1}/)
-			directives.delete_at(0)
-			raise ParserError, "No operation specified." if directives.blank?
-			directives.each { |d| d.strip! }
-			directives
+			str.split(/(^[a-z_]+){1}|(\s-[a-z_]+){1}/).tap do |directives|
+				directives.delete_at(0)
+				raise ParserError, "No operation specified." if directives.blank?
+				directives.each { |d| d.strip! }
+			end
 		end
 
 		def parse_parameters(operation, directives)
-			parameters = {}
-			i = 0
-			while i < directives.length do
-				key = directives[i].gsub(/^-/, '').to_sym
-				value = directives[i+1]
-				unless operation.parameters[key] # Unknown parameters are ignored
+			{}.tap do |parameters|
+				i = 0
+				while i < directives.length do
+					key = directives[i].gsub(/^-/, '').to_sym
+					value = directives[i+1]
+					unless operation.parameters[key] # Unknown parameters are ignored
+						i = i+2
+						next
+					end
+					parameters[key] = operation.parameters[key].parse value
+					# Alias support
+					if operation.alias && key == operation.name then
+						parameters[operation.alias] = parameters[key] 
+						parameters.delete operation.name
+					end
 					i = i+2
-					next
 				end
-				parameters[key] = operation.parameters[key].parse value
-				# Alias support
-				if operation.alias && key == operation.name then
-					parameters[operation.alias] = parameters[key] 
-					parameters.delete operation.name
-				end
-				i = i+2
 			end
-			parameters
 		end
 
 		def check_required_parameters(operation, parameters)

@@ -16,9 +16,7 @@ module RedBook
 		# Executes the hook. The hook process should return a hash:
 		# {:value => (hook result), :stop => (stop processing hooks)}
 		def execute(params={})
-			result = @block.call(params)
-			raise EngineError, "Invalid hook definition (hash not returned)." unless result.is_a? Hash
-			result
+			@block.call(params).then([:is_a?, Hash]).else{raise EngineError, "Invalid hook definition (hash not returned)."}
 		end
 
 	end

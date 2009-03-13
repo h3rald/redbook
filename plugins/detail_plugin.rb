@@ -173,7 +173,7 @@ module RedBook
 			attrs = params[:attributes]
 			entry = params[:entry]
 			get_stuff = lambda do |stuff| 
-				res = returning Hash.new do |s|
+				res = {}.tap do |s|
 					stuff.each do |i|
 						s[i] = attrs[i] unless attrs[i].blank?
 					end

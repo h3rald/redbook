@@ -133,10 +133,11 @@ module RedBook
 			c = RedBook::Repository.const_get "#{type.to_s.camel_case}".to_sym
 			raise EngineError, "Unknown table '#{type.to_s.plural}'." unless c
 			raise EngineError, "#{type.to_s.camel_case.plural} cannot be renamed." unless c.method_defined? :name
-			item = c.first :name => from
-			raise EngineError, "There is no #{type.to_s} called '#{from}'" unless item
-			item.name = to
-			item.save
+			c.first(:name => from).tap do |i|
+				raise EngineError, "There is no #{type.to_s} called '#{from}'" unless i
+				i.name = to
+				i.save
+			end
 		end
 
 		# Redefining Messaging::debug
@@ -162,8 +163,7 @@ module RedBook
 		# * <i>:after_refresh_table</i> :tables => Hash [Object] 
 		def refresh(tables=[])
 			hook :before_refresh, :tables => tables
-			inv_tables = (tables.blank?) ? RedBook.inventory_tables : tables
-			inv_tables.each do |t|
+			tables.then(:blank?){RedBook.inventory_tables}.else{tables}.each do |t|
 				hook :before_refresh_table, :table => t.to_s
 				model = Repository.const_get(:"#{t.to_s.camel_case.singular}")
 				raise EngineError, "Table '#{t.to_s}' not found." unless model
@@ -188,12 +188,7 @@ module RedBook
 
 		# Cleans up unused auxiliary records belonging to specific tables.
 		def cleanup(tables=[])
-			if tables.blank? then
-				target = RedBook.inventory_tables
-			else
-				target = tables
-			end
-			target.each { |t| cleanup_table t }
+			target = tables.then(:blank?){RedBook.inventory_tables}.else{tables}.each{ |t| cleanup_table t }
 		end
 
 		# Private methods
@@ -213,10 +208,8 @@ module RedBook
 			begin
 				name = table.to_s.singularize
 				model = name.camel_case.to_sym
-				objects = Repository.const_get(model).all
-				objects.each do |o|
-					object_map = Repository.const_get("#{model.to_s}Map".to_sym).first("#{name}_id".to_sym => o.id)
-					if object_map.blank? then
+				Repository.const_get(model).all.each do |o|
+					Repository.const_get("#{model.to_s}Map".to_sym).first("#{name}_id".to_sym => o.id).then(:blank?) do
 						o.destroy
 					end
 				end
@@ -260,12 +253,12 @@ module RedBook
 				param = Parser.operations[:log].parameters[l]
 				attrs.delete l if param && param.special
 			end
-			entry = Repository::Entry.new attrs
-			raise Exception, "Entry text not specified" unless attrs[:text] 
-			entry.resource_type = "entry" unless attrs[:resource_type]
-			entry.timestamp = Time.now unless attrs[:timestamp]
-			entry.save
-			entry
+			Repository::Entry.new(attrs).tap do |entry|
+				raise Exception, "Entry text not specified" unless attrs[:text] 
+				entry.resource_type = "entry" unless attrs[:resource_type]
+				entry.timestamp = Time.now unless attrs[:timestamp]
+				entry.save
+			end
 		end
 
 		def update_entry(index, attributes={})
@@ -280,12 +273,12 @@ module RedBook
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			raise EngineError, "Invalid dataset index" unless valid_index? index
 			raise EngineError, "Nothing to update" if attributes.blank? # Must check *all* attributes
-			entry = @dataset[index]
-			unless attrs.blank? then
-				entry.attributes = attrs
-				entry.save
+			@dataset[index].tap do |entry|
+				attrs.else(:blank?).then do
+					entry.attributes = attrs
+					entry.save
+				end
 			end
-			entry
 		end
 
 		def delete_entry(entry)
@@ -318,7 +311,3 @@ module RedBook
 
 	end
 end
-
-
-
-
