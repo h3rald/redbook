@@ -120,7 +120,7 @@ module RedBook
 
 		class CliHelper
 		def details(entry, total=1, index=0)
-			entry.then(:details).map{|d| padding(total, index)+'   - 'pair(d.detail_type, d.name)}.join "\n"
+			entry.then(:details).map{|d| padding(total, index)+'   - '+pair(d.detail_type, d.name)}.join "\n"
 		end
 
 		def items(entry, total=1, index=0)
@@ -128,7 +128,7 @@ module RedBook
 				count = 0
 				arr.each do |e|
 					count+=1
-					e << (count%2 == 0) "\n", ' | '
+					e << (count%2 == 0) ? "\n" : ' | '
 				end
 			end
 		end
@@ -137,8 +137,8 @@ module RedBook
 			"".tap do |result|
 				result << "\n"
 				result << padding(total, index)+" => Details:\n"
-				result << items entry, total, index
-				result << details entry, total, index
+				result << items(entry, total, index)
+				result << details(entry, total, index)
 			end
 		end
 

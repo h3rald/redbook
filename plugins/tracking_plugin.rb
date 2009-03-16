@@ -140,7 +140,7 @@ module RedBook
 					result << padding(total, index)+"   - "+pair({:duration => a.activity.duration.textualize(RedBook.config.duration_format)})
 					result << ' '
 					result << "(#{a.activity.tracked_duration.textualize(RedBook.config.duration_format)})\n".cyan
-					result << activity_records a, padding
+					result << activity_records(a, padding)
 				end
 			end
 
