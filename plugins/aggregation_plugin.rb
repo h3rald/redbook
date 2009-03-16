@@ -15,9 +15,9 @@ module RedBook
 	
 	class Parser
 
-		operation(:calculate) do |o|
-			o.parameter(:calculate) { |p| p.required = true; p.parameter_type = :enum; p.values = ['sum', 'average', 'max', 'min']}
-			o.parameter(:on) { |p| p.required = true }
+		operation(:calculate) do
+			parameter(:calculate) { mandatory; type :enum; allow 'sum', 'average', 'max', 'min'}
+			parameter(:on) { mandatory }
 		end
 
 		macro :duration, ":calculate sum :on duration"

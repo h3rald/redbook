@@ -189,61 +189,61 @@ module RedBook
 
 	class Parser
 
-		operations[:log].modify do |o|
-			o.parameter(:foreground) { |p| p.parameter_type = :bool; p.special = true } 
-			o.parameter(:tracking) { |p| p.parameter_type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
-			o.parameter(:start) { |p| p.parameter_type = :time; p.special = true } 
-			o.parameter(:end) { |p| p.parameter_type = :time; p.special = true } 
-			o.parameter(:duration) { |p| p.parameter_type = :float; p.special = true }
+		operations[:log].modify do
+			parameter(:foreground) { type :bool; specialized } 
+			parameter(:tracking) { type :enum; allow 'started', 'disabled', 'paused', 'completed' }
+			parameter(:start) { type :time; specialized } 
+			parameter(:end) { type :time; specialized } 
+			parameter(:duration) { type :float; specialized }
 		end
 
-		operations[:select].modify do |o|
-			o.parameter(:foreground) { |p| p.parameter_type = :bool; p.rewrite_as 'activity.foreground'; p.special = true } 
-			o.parameter(:tracking) { |p| p.parameter_type = :list; p.values = ['started', 'disabled', 'paused', 'completed']; p.rewrite_as 'activity.tracking.in' }
-			o.parameter(:started_before) { |p| p.parameter_type = :time; p.rewrite_as 'activity.start.lt'} 
-			o.parameter(:started_after) { |p| p.parameter_type = :time; p.rewrite_as 'activity.start.gt'} 
-			o.parameter(:ended_before) { |p| p.parameter_type = :time; p.rewrite_as 'activity.end.lt'} 
-			o.parameter(:ended_after) { |p| p.parameter_type = :time; p.rewrite_as 'activity.end.gt'} 
-			o.parameter(:longer_than) { |p| p.parameter_type = :float; p.rewrite_as 'activity.duration.gt'}
-			o.parameter(:shorter_than) { |p| p.parameter_type = :float; p.rewrite_as 'activity.duration.lt'}
+		operations[:select].modify do
+			parameter(:foreground) { type :bool; rewrite_as 'activity.foreground'; specialized } 
+			parameter(:tracking) { type :list; allow 'started', 'disabled', 'paused', 'completed'; rewrite_as 'activity.tracking.in' }
+			parameter(:started_before) { type :time; rewrite_as 'activity.start.lt'} 
+			parameter(:started_after) { type :time; rewrite_as 'activity.start.gt'} 
+			parameter(:ended_before) { type :time; rewrite_as 'activity.end.lt'} 
+			parameter(:ended_after) { type :time; rewrite_as 'activity.end.gt'} 
+			parameter(:longer_than) { type :float; rewrite_as 'activity.duration.gt'}
+			parameter(:shorter_than) { type :float; rewrite_as 'activity.duration.lt'}
 		end
 
-		operations[:update].modify do |o|
-			o.parameter(:foreground) { |p| p.parameter_type = :bool; p.special = true } 
-			o.parameter(:tracking) { |p| p.parameter_type = :enum; p.values = ['started', 'disabled', 'paused', 'completed'] }
-			o.parameter(:start) { |p| p.parameter_type = :time; p.special = true} 
-			o.parameter(:end) { |p| p.parameter_type = :time; p.special = true} 
-			o.parameter(:duration) { |p| p.parameter_type = :float; p.special = true }
+		operations[:update].modify do
+			parameter(:foreground) { type :bool; specialized } 
+			parameter(:tracking) { type :enum; allow 'started', 'disabled', 'paused', 'completed'}
+			parameter(:start) { type :time; specialized} 
+			parameter(:end) { type :time; specialized} 
+			parameter(:duration) { type :float; specialized }
 		end
 
 		# New Operations
 
-		operation(:start) do |o|
-			o.parameter(:start) { |p| p.parameter_type = :integer; p.required = true; p.special=true}
+		operation(:start) do
+			parameter(:start) { type :integer; mandatory; special=true}
 		end
 
-		operation(:finish) do |o|
-			o.parameter(:finish) { |p| p.parameter_type = :integer}
+		operation(:finish) do
+			parameter(:finish) { type :integer}
 		end
 
-		operation(:pause) do |o|
-			o.parameter(:pause) { |p| p.parameter_type = :integer; p.required = true}
+		operation(:pause) do
+			parameter(:pause) { type :integer; mandatory}
 		end
 
-		operation(:track) do |o|
-			o.parameter(:track) { |p| p.parameter_type = :integer; p.required = true}
-			o.parameter(:from) { |p| p.parameter_type = :time; p.required = true}
-			o.parameter(:to) { |p| p.parameter_type = :time }
+		operation(:track) do
+			parameter(:track) { type :integer; mandatory}
+			parameter(:from) { type :time; mandatory}
+			parameter(:to) { type :time }
 		end
 
-		operation(:untrack) do |o|
-			o.parameter(:untrack) { |p| p.parameter_type = :integer; p.required = true}
-			o.parameter(:from) { |p| p.parameter_type = :time}
-			o.parameter(:to) { |p| p.parameter_type = :time}
+		operation(:untrack) do
+			parameter(:untrack) { type :integer; mandatory}
+			parameter(:from) { type :time}
+			parameter(:to) { type :time}
 		end
 
-		operation(:tracking) do |o|
-			o.parameter(:tracking) { |p| p.parameter_type = :intlist }
+		operation(:tracking) do
+			parameter(:tracking) { type :intlist }
 		end	
 
 	end

@@ -15,26 +15,27 @@ module RedBook
 				@name.to_s
 			end
 
-			def initialize(name)
+			def initialize(name, &block)
 				@name = name
 				@parameters = {}
 				@alias = nil
-				yield self if block_given?
+				tap &block 
 			end
 
 			def parameter(name, &block)
 				@parameters[name] = Parameter.new(name, &block)
 			end
 
-			def modify
-				yield self if block_given?
+			def modify(&block)
+				tap &block
 			end
 		end
 
 
 		class Parameter 
 			include Hookable
-			attr_accessor :name, :parameter_type, :required, :values, :special, :rewrite
+
+			attr_reader :name, :datatype, :required, :values, :special, :rewrite
 
 			def to_s
 				@name.to_s
@@ -44,14 +45,31 @@ module RedBook
 				@name.to_s
 			end
 
-			def initialize(name)
+			def initialize(name, &block)
 				@name = name
-				@parameter_type = :string
+				@datatype = :string
 				@required = false
 				@special = nil
 				@values = []
-				yield self if block_given?
+				tap &block
+			end		
+		
+			def type(t)
+				@datatype = t
 			end
+
+			def specialized
+				@special = true
+			end
+
+			def allow(*args)
+				@values = args
+			end
+
+			def mandatory
+				@required = true
+			end
+
 
 			def rewrite_as(key, &block)
 				@rewrite = key
@@ -74,7 +92,7 @@ module RedBook
 					raise ParserError, "Please specify a value for the ':#{self}' directive." if @required
 					return nil
 				end
-				case @parameter_type
+				case @datatype
 				when :string then
 					return value
 				when :time then
@@ -124,7 +142,7 @@ module RedBook
 				else
 					return_value = nil
 					hook :parse_custom_type, :value => value, :return => return_value
-					raise ParserError, "Unknown parameter type '#{@parameter_type.textualize}' for parameter ':#{self}'." unless return_value
+					raise ParserError, "Unknown parameter type '#{@datatype.textualize}' for parameter ':#{self}'." unless return_value
 					return return_value
 				end
 			end
@@ -259,66 +277,61 @@ end
 
 class RedBook::Parser
 
-	operation(:log) do |o|
-		o.parameter(:log) { |p| p.required = true; p.rewrite_as :text }
-		o.parameter(:timestamp) { |p| p.parameter_type = :time }
-		o.parameter :type 
+	operation(:log) do
+		parameter(:log) { mandatory; rewrite_as :text }
+		parameter(:timestamp) { type :time }
+		parameter :type 
 	end
 
 	alias_operation :insert => :log
 
-	operation(:relog) do |o|
-		o.parameter(:log) { |p| p.required = true, p.parameter_type = :integer}
-		o.parameter :as
-	end
-
-	operation(:select) do |o|
-		o.parameter(:select) { |p| p.rewrite_as(:text.like){|v| "%#{v}%" }}
-		o.parameter(:from) { |p| p.parameter_type = :time; p.rewrite_as(:timestamp.gt) }
-		o.parameter(:to) { |p| p.parameter_type = :time; p.rewrite_as(:timestamp.lt)}
-		o.parameter(:type)  { |p| p.parameter_type = :list}
-		o.parameter(:first) { |p| p.parameter_type = :integer }
-		o.parameter(:last) { |p| p.parameter_type = :integer }
+	operation(:select) do
+		parameter(:select) { rewrite_as(:text.like){|v| "%#{v}%" }}
+		parameter(:from) { type :time; rewrite_as(:timestamp.gt) }
+		parameter(:to) { type :time; rewrite_as(:timestamp.lt)}
+		parameter(:type)  { type :list}
+		parameter(:first) { type :integer }
+		parameter(:last) { type :integer }
 	end
 
 	alias_operation :load => :select
 
-	operation(:update) do |o|
-		o.parameter(:update) { |p| p.required = true; p.parameter_type = :integer }
-		o.parameter :text
-		o.parameter(:timestamp) { |p| p.parameter_type = :time }
-		o.parameter :type
+	operation(:update) do
+		parameter(:update) { mandatory; type :integer }
+		parameter :text
+		parameter(:timestamp) { type :time }
+		parameter :type
 	end
 
-	operation(:delete) do |o|
-		o.parameter(:delete) { |p| p.parameter_type = :intlist }
+	operation(:delete) do
+		parameter(:delete) { type :intlist }
 	end
 
-	operation(:save) do |o|
-		o.parameter(:save) { |p| p.required = true }
-		o.parameter(:format) { |p| p.required = true; p.rewrite_as(:format){|v| v.to_sym} }
+	operation(:save) do
+		parameter(:save) { mandatory }
+		parameter(:format) { mandatory; rewrite_as(:format){|v| v.to_sym} }
 	end
 
-	operation(:ruby) do |o|
-		o.parameter(:ruby) { |p| p.required = true }
+	operation(:ruby) do
+		parameter(:ruby) { mandatory }
 	end
 
-	operation(:rename) do |o|
-		o.parameter(:rename) { |p| p.required = true }
-		o.parameter(:from) { |p| p.required = true }
-		o.parameter(:to) { |p| p.required = true }
+	operation(:rename) do
+		parameter(:rename) { mandatory }
+		parameter(:from) { mandatory }
+		parameter(:to) { mandatory }
 	end
 
-	operation(:cleanup) do |o|
-		o.parameter(:cleanup) { |p| p.parameter_type = :list }
+	operation(:cleanup) do
+		parameter(:cleanup) { type :list }
 	end
 
-	operation(:refresh) do |o|
-		o.parameter(:refresh) { |p| p.parameter_type = :list }
+	operation(:refresh) do
+		parameter(:refresh) { type :list }
 	end
 
-	operation(:use) do |o|
-		o.parameter :use
+	operation(:use) do
+		parameter :use
 	end
 
 	operation :quit

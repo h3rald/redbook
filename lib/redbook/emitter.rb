@@ -63,7 +63,7 @@ module RedBook
 							h[:total] = object.length
 							h[:index] = count+=1
 							h[:helper] = Emitter.const_get("#{@format}_helper".camel_case.to_sym).new rescue nil
-							h[:partial] = lambda {|t, params| load_template(:"_#{t}.#@format").evaluate(h).chomp }
+							h[:partial] = lambda {|t| load_template(:"_#{t}.#@format").evaluate(h).chomp }
 						end
 						p.merge! args
 						t = "#{o.resource_type}.#{@format}"

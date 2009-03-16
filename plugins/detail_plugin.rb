@@ -98,20 +98,20 @@ module RedBook
 
 		# Add details
 		RedBook.config.details.each do |d|
-			operations[:log].parameter(d) { |p| p.special = true }
-			operations[:update].parameter(d) { |p| p.special = true }
-			operations[:select].parameter(d) { |p| p.special = true }
+			operations[:log].parameter(d) { specialized }
+			operations[:update].parameter(d) { specialized }
+			operations[:select].parameter(d) { specialized }
 		end
 
 		# Add items 
 		RedBook.config.items.each do |i|
-			operations[:log].parameter(i) { |p| p.special = true }
-			operations[:update].parameter(i) { |p| p.special = true }
-			operations[:select].parameter(i) { |p| p.special = true }
+			operations[:log].parameter(i) { specialized }
+			operations[:update].parameter(i) { specialized }
+			operations[:select].parameter(i) { specialized }
 		end
 
-		operation(:detail) do |o|
-			o.parameter(:detail) { |p| p.parameter_type = :intlist }
+		operation(:detail) do
+			parameter(:detail) { type :intlist }
 		end
 
 	end
