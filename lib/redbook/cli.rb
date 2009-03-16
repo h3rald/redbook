@@ -134,18 +134,6 @@ module RedBook
 			end			
 		end
 
-		def detail_operation(params)
-			raise CliError, "Empty dataset." if @engine.dataset.blank?
-			result = []
-			count = 0
-			unless params[:detail].blank?
-				params[:detail].each { |i| result << @engine.dataset[i-1] }
-			else
-				result = @engine.dataset
-			end
-			display result, :details => true if RedBook.output 
-		end
-
 		def clear_operation(params=nil)
 			command = RUBY_PLATFORM.match(/win/i) ? "cls" : "clear"
 			system command

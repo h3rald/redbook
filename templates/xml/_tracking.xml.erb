@@ -1,0 +1,10 @@
+		<start><%= @object.activity.start -%></start>
+		<end><%= @object.activity.end -%></end>
+		<foreground><%= @object.activity.foreground -%></foreground>
+		<tracking><%= @object.activity.tracking -%></tracking>
+		<duration tracked="<%= @object.activity.tracked_duration -%>"><%= @object.activity.duration -%></duration>
+		<records>
+		<%  @object.activity.records.each do |r| %>
+			<record start="<% r.start %>" end="<% r.end %>" />
+		<% end %>
+		</records>

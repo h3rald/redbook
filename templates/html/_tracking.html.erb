@@ -1,0 +1,30 @@
+	<table class="tracking">
+		<tr>
+			<td colspan="2" class="label">Foreground</td>
+			<td colspan="2"><%= @object.activity.foreground %></td>
+		</tr>
+		<tr>
+			<td class="label">Start Time</td>
+			<td><%= @object.activity.start.textualize %></td>
+			<td class="label">End Time</td>
+			<td><%= @object.activity.end.textualize %></td>
+		</tr>
+		<tr>
+			<td class="label">Duration</td>
+			<td><%= @object.activity.duration.textualize(RedBook.config.duration_format) %> <%= RedBook.config.duration_format %></td>
+			<td class="label">Tracked Duration</td>
+			<td><%= @object.activity.tracked_duration.textualize(RedBook.config.duration_format) %> <%= RedBook.config.duration_format %></td>
+		</tr>
+	</table>
+	<table class="tracking_records">
+		<tr>
+			<th>Start</th>
+			<th>End</th>
+		</tr>
+		<% @object.activity.records.each do |r| %>
+			<tr>
+				<td>r.start.textualize</td>
+				<td>r.end.textualize</td>
+			</tr>
+		<% end %>
+	</table>

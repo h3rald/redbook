@@ -317,10 +317,6 @@ class RedBook::Parser
 		o.parameter(:refresh) { |p| p.parameter_type = :list }
 	end
 
-	operation(:detail) do |o|
-		o.parameter(:detail) { |p| p.parameter_type = :intlist }
-	end
-
 	operation(:use) do |o|
 		o.parameter :use
 	end

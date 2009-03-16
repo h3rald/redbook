@@ -11,6 +11,12 @@ module RedBook
 
 	class Cli
 
+		def tracking_operation(params)
+			raise CliError, "Empty dataset." if @engine.dataset.blank?
+			result = (params[:tracking].blank?) ? @engine.dataset : [].tap{|a| params[:tracking].each{|i| a << @engine.dataset[i-1]}}
+			display result, :tracking => true if RedBook.output 
+		end
+
 		def start_operation(params)
 			@engine.start params[:start]
 			info "Activity started."
@@ -118,6 +124,69 @@ module RedBook
 
 	end
 
+	class Emitter
+
+		class CliHelper
+
+			def activity(a, total=1, index=0)
+				[padding(total, index), index, activity_icon(a), a.text].join ' '  
+			end
+
+			def tracking(a, total=1, index=0)
+				"".tap do |result|
+					result << "\n"
+					result << padding(total, index)+" => Tracking Info:\n"
+					result << padding(total, index)+"   - "+pair({:start => a.activity.start.textualize})+' '+pair({:end => a.activity.end.textualize})+"\n"
+					result << padding(total, index)+"   - "+pair({:duration => a.activity.duration.textualize(RedBook.config.duration_format)})
+					result << ' '
+					result << "(#{a.activity.tracked_duration.textualize(RedBook.config.duration_format)})\n".cyan
+					result << activity_records a, padding
+				end
+			end
+
+			def activity_records(a, total=1, index=0)
+				"".tap do |result|
+					if a.activity.records then
+						result << padding(total, index)+" => Tracking Records:\n"
+						a.activity.records.each do |r|
+							result << padding(total, index)+'   - '+pair({:start => r.start})+' -> '+pair({:end => r.end})+"\n"
+						end
+					end
+				end
+			end
+
+			def activity_icon(entry)
+				case entry.activity.tracking
+				when 'started'
+					i = ">"
+					m = :yellow
+				when 'paused'
+					i = "="
+					m = :blue
+				when 'completed'
+					i = "#"
+					m = :green
+				else
+					i = "*"
+					m = :cyan
+				end
+				(entry.activity.foreground.blank?) ? "{#{i}}".send(m) : "[#{i}]".send(m)
+			end
+		end
+
+		class TxtHelper
+			
+			def activity(entry, total=1, index=0)
+				super(entry, total, index).uncolorize
+			end
+				
+			def activity_tracking(entry, total=1, index=0)
+				super(entry, total, index).uncolorize
+			end
+
+		end
+	end
+
 	class Parser
 
 		operations[:log].modify do |o|
@@ -127,7 +196,7 @@ module RedBook
 			o.parameter(:end) { |p| p.parameter_type = :time; p.special = true } 
 			o.parameter(:duration) { |p| p.parameter_type = :float; p.special = true }
 		end
-		
+
 		operations[:select].modify do |o|
 			o.parameter(:foreground) { |p| p.parameter_type = :bool; p.rewrite_as 'activity.foreground'; p.special = true } 
 			o.parameter(:tracking) { |p| p.parameter_type = :list; p.values = ['started', 'disabled', 'paused', 'completed']; p.rewrite_as 'activity.tracking.in' }
@@ -172,6 +241,10 @@ module RedBook
 			o.parameter(:from) { |p| p.parameter_type = :time}
 			o.parameter(:to) { |p| p.parameter_type = :time}
 		end
+
+		operation(:tracking) do |o|
+			o.parameter(:tracking) { |p| p.parameter_type = :intlist }
+		end	
 
 	end
 

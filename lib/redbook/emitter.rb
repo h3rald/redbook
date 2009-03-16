@@ -6,11 +6,14 @@ module RedBook
 		class CliHelper 
 
 			def entry(e, total=1, index=0)
-				padding = ' '*(Math.log10(total).floor-Math.log10(index).floor + 1)
 				timestamp = e.timestamp.textualize.dark_cyan
 				text = e.text.cyan
-				index =	padding+index.to_s.cyan
+				index =	padding(total, index)+index.to_s.cyan
 				[index, timestamp, text].join ' '
+			end
+
+			def padding(total=1, index=0)
+				' '*(Math.log10(total).floor-Math.log10(index).floor + 1)
 			end
 
 			def message(m)
@@ -18,6 +21,10 @@ module RedBook
 				prefix = ">>".send :"#{colors[m.name]}"
 				text = m.value.send :"dark_#{colors[m.name]}"
 				"#{prefix} #{text}"
+			end
+
+			def pair(p)
+				"#{p.name.to_s.camel_case.dark_cyan}: #{p.value.to_s.camel_case.cyan}"
 			end
 		end
 

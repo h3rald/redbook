@@ -1,12 +1,9 @@
-	<div class="activity, <%= (@entry.activity.foreground) ? 'foreground' : 'background' %>">
-		<span class="timestamp"><%= @entry.timestamp.textualize -%>: </span>
-		<span class="start_time"><%= @entry.activity.start.textualize if @entry.activity.start -%>: </span>
-		<span class="end_time"><%= @entry.activity.end.textualize if @entry.activity.end -%>: </span>
-		<span class="text"><%= @entry.text -%></span><% @partial.call :_tags, :tags => @entry.tags if @entry.respond_to? :tags -%>
-		<ul>
-			<li>Tracking: <em><%= @entry.activity.tracking -%></em></li>
-			<li>Duration: <em><%= @entry.activity.duration.in_minutes -%> minutes</em></li>
-			<li>Tracked Duration: <em><%= @entry.activity.tracked_duration.in_minutes -%> minutes</em></li>
-		</ul>
+	<div class="activity, <%= (@object.activity.foreground) ? 'foreground' : 'background' %>">
+		<span class="timestamp"><%= @object.timestamp.textualize -%>: </span>
+		<span class="start_time"><%= @object.activity.start.textualize if @object.activity.start -%>: </span>
+		<span class="end_time"><%= @object.activity.end.textualize if @object.activity.end -%>: </span>
+		<span class="text"><%= @object.text -%></span><%= @partial.call :tags if @object.respond_to? :tags -%><%=
+			@partial.call :detail if @detail %><%= 
+			@partial.call :tracking if @tracking %>
 	</div>
 

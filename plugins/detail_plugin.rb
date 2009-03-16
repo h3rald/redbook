@@ -110,6 +110,57 @@ module RedBook
 			operations[:select].parameter(i) { |p| p.special = true }
 		end
 
+		operation(:detail) do |o|
+			o.parameter(:detail) { |p| p.parameter_type = :intlist }
+		end
+
+	end
+
+	class Emitter
+
+		class CliHelper
+		def details(entry, total=1, index=0)
+			entry.then(:details).map{|d| padding(total, index)+'   - 'pair(d.detail_type, d.name)}.join "\n"
+		end
+
+		def items(entry, total=1, index=0)
+			entry.then(:items).to_a.map{|i| padding(total, index)+'   - '+pair(i.item_type, i.name)}.tap do |arr|
+				count = 0
+				arr.each do |e|
+					count+=1
+					e << (count%2 == 0) "\n", ' | '
+				end
+			end
+		end
+
+		def detail(entry, total=1, index=0)
+			"".tap do |result|
+				result << "\n"
+				result << padding(total, index)+" => Details:\n"
+				result << items entry, total, index
+				result << details entry, total, index
+			end
+		end
+
+		end
+
+		class TxtHelper
+
+			def detail(entry, total=1, index=0)
+				super(entry, total, index).uncolorize
+			end
+		end
+
+	end
+
+	class Cli
+
+		def detail_operation(params)
+			raise CliError, "Empty dataset." if @engine.dataset.blank?
+			result = (params[:detail].blank?) ? @engine.dataset : [].tap{|a| params[:detail].each{|i| a << @engine.dataset[i-1]}}
+			display result, :detail => true if RedBook.output 
+		end
+
 	end
 
 	class Engine

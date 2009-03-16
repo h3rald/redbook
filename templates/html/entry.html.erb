@@ -1,6 +1,6 @@
 	<div class="entry">
 		<span class="timestamp"><%= @object.timestamp.textualize -%>: </span>
-		<span class="text"><%= @object.text -%></span><% if @object.respond_to? :tags then %>
-		<%= @partial.call :tags, @object.tags %><% end %>
+		<span class="text"><%= @object.text -%><%= @partial.call :tags if @object.respond_to? :tags -%><%=
+			@partial.call :detail if @detail %>
 	</div>
 
