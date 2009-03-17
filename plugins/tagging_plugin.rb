@@ -66,8 +66,6 @@ module RedBook
 		end
 	end
 
-	class Parser
-
 		operations[:log].parameter(:tags) { type :list; specialized} 
 		operations[:select].parameter(:tags) {type :list; specialized}
 		operations[:update].parameter(:tags) {type :list; specialized}
@@ -81,8 +79,6 @@ module RedBook
 			parameter(:untag) { type :intlist }
 			parameter(:as) { type :list }
 		end
-
-	end
 
 	class Engine	
 

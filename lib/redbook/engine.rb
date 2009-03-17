@@ -250,7 +250,7 @@ module RedBook
 			attributes.delete :type
 			attrs = attributes.dup
 			attrs.each_pair do |l, v|
-				param = Parser.operations[:log].parameters[l]
+				param = RedBook.operations[:log].parameters[l]
 				attrs.delete l if param && param.special
 			end
 			Repository::Entry.new(attrs).tap do |entry|
@@ -267,7 +267,7 @@ module RedBook
 			attributes.delete :type
 			attrs = attributes.dup
 			attrs.each_pair do |l, v|
-				param = Parser.operations[:update].parameters[l]
+				param = RedBook.operations[:update].parameters[l]
 				attrs.delete l if param && param.special
 			end
 			raise EngineError, "Empty dataset" if @dataset.blank?
@@ -294,7 +294,7 @@ module RedBook
 			limit, type = attrs.delete(:last), :last if attrs[:last]
 			# Delete unknown attributes
 			attrs.each_pair do |l, v|
-				param = Parser.operations[:select].parameters[l]
+				param = RedBook.operations[:select].parameters[l]
 				attrs.delete l if param && param.special
 			end
 			type ||= :select	

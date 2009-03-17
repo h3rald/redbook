@@ -94,7 +94,6 @@ module RedBook
 		end
 	end
 
-	class Parser
 
 		# Add details
 		RedBook.config.details.each do |d|
@@ -114,7 +113,6 @@ module RedBook
 			parameter(:detail) { type :intlist }
 		end
 
-	end
 
 	class Emitter
 

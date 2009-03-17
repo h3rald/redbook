@@ -187,8 +187,6 @@ module RedBook
 		end
 	end
 
-	class Parser
-
 		operations[:log].modify do
 			parameter(:foreground) { type :bool; specialized } 
 			parameter(:tracking) { type :enum; allow 'started', 'disabled', 'paused', 'completed' }
@@ -245,8 +243,6 @@ module RedBook
 		operation(:tracking) do
 			parameter(:tracking) { type :intlist }
 		end	
-
-	end
 
 	class Engine
 

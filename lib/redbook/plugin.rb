@@ -27,7 +27,7 @@ module RedBook
 
 		def load_macros
 			macros = RedBook.config.macros.send(@label) || {}
-			macros.each_pair { |k, v| RedBook::Parser.macro k, v }
+			macros.each_pair { |k, v| RedBook.macro k, v }
 		end
 
 		def create_resource(table, options={})

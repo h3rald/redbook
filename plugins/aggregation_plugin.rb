@@ -13,7 +13,6 @@ module RedBook
 
 	end
 	
-	class Parser
 
 		operation(:calculate) do
 			parameter(:calculate) { mandatory; type :enum; allow 'sum', 'average', 'max', 'min'}
@@ -26,7 +25,6 @@ module RedBook
 		macro :max, ":calculate max :on <:max>"
 		macro :average, ":calculate average :on <:average>"
 
-	end
 
 	class Engine
 

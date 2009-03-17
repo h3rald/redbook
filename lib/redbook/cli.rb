@@ -67,10 +67,10 @@ module RedBook
 			op_prefix = RedBook.config.parser.operation_prefix || ':'
 			ph_prefix = RedBook.config.parser.placeholder_prefix || ':'
 			param_prefix = RedBook.config.parser.parameter_prefix || ':'
-			RedBook::Parser.operations.each_pair do |l,v|
+			RedBook.operations.each_pair do |l,v|
 				operations << "#{op_prefix}#{l.to_s}"
 			end
-			RedBook::Parser.macros.each_pair do |l,v|
+			RedBook.macros.each_pair do |l,v|
 				operations << "#{op_prefix}#{l.to_s}"
 			end
 			@editor.completion_proc = lambda do |str|
@@ -81,7 +81,7 @@ module RedBook
 					words = @editor.line.words
 					name = words[0].symbolize
 					add_operation_params = lambda do |name, matches|
-						operation = RedBook::Parser.operations[name]
+						operation = RedBook.operations[name]
 						if operation then
 							operation.parameters.each_pair do |l,v|
 								parameter = v.to_s.symbolize.textualize
@@ -93,7 +93,7 @@ module RedBook
 					end
 					unless add_operation_params.call name, matches then  
 						# Try macros
-						macro = RedBook::Parser.macros[name]
+						macro = RedBook.macros[name]
 						if macro then
 							macro_params = macro.scan(/#{op_prefix}([a-z_]+)/).to_a.flatten
 							macro_params.each { |p| matches << p unless @editor.line.text.match p}

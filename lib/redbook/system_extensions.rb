@@ -8,7 +8,7 @@ module Kernel
 
 end
 
-class Class
+class Object
 
 	def class_instance_variable(pair)
 		raise ArgumentError unless pair.pair?

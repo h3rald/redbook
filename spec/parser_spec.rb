@@ -9,7 +9,7 @@ describe RedBook::Parser do
 	end
 	
 	it "should define log operation" do
-		op= RedBook::Parser.operations[:log]
+		op= RedBook.operations[:log]
 		op.should_not == nil
 		op.name.should == :log
 		op.parameters[:log].should_not == nil
@@ -18,7 +18,7 @@ describe RedBook::Parser do
 	end
 
 	it "should define select operation" do
-		op = RedBook::Parser.operations[:select]
+		op = RedBook.operations[:select]
 		op.should_not == nil
 		op.name.should == :select
 		op.parameters[:select].should_not == nil
@@ -28,7 +28,7 @@ describe RedBook::Parser do
 	end
 
 	it "should define update operation" do
-		op= RedBook::Parser.operations[:update]
+		op= RedBook.operations[:update]
 		op.should_not == nil
 		op.name.should == :update
 		op.parameters[:update].should_not == nil
@@ -38,14 +38,14 @@ describe RedBook::Parser do
 	end
 
 	it "should define delete operation" do
-		op= RedBook::Parser.operations[:delete]
+		op= RedBook.operations[:delete]
 		op.should_not == nil
 		op.name.should == :delete
 		op.parameters[:delete].should_not == nil
 	end
 
 	it "should define save operation" do
-		op= RedBook::Parser.operations[:save]
+		op= RedBook.operations[:save]
 		op.should_not == nil
 		op.name.should == :save
 		op.parameters[:save].should_not == nil
@@ -107,11 +107,11 @@ describe RedBook::Parser do
 	end
 
 	it "should allow operations to be modified at runtime" do
-		RedBook::Parser.operations[:log].parameter(:test_tags) {type :list}
+		RedBook.operations[:log].parameter(:test_tags) {type :list}
 		op = @p.parse "log test -test_tags tag1 tag2 tag3"
 		op[1][:text].should == "test"
 		op[1][:test_tags].should == ['tag1', 'tag2', 'tag3']
-		RedBook::Parser.operations[:log].parameters.delete :test_tags
+		RedBook.operations[:log].parameters.delete :test_tags
 	end
 
 	it "should detect invalid operations" do
@@ -122,18 +122,18 @@ describe RedBook::Parser do
 	end
 
 	it "should parse macros" do
-		RedBook::Parser.macros[:test] = "log Testing <test>" 
-		RedBook::Parser.macros[:bugfix] = "log Fixing <bugfix> -test_tags <test_tags> bugfix"
+		RedBook.macros[:test] = "log Testing <test>" 
+		RedBook.macros[:bugfix] = "log Fixing <bugfix> -test_tags <test_tags> bugfix"
 		# Macros can be recursive
-	 	RedBook::Parser.macros[:urgfix]	= "bugfix <urgfix> -test_tags urgent"
-		RedBook::Parser.operations[:log].parameter(:test_tags) { type :list}
+	 	RedBook.macros[:urgfix]	= "bugfix <urgfix> -test_tags urgent"
+		RedBook.operations[:log].parameter(:test_tags) { type :list}
 		@p.parse("test GUI").should == @p.parse("log Testing GUI")
 		# It should inherit the original operation's parameters
 		@p.parse("test GUI -type bugfix").should == @p.parse("log Testing GUI -type bugfix")
 		@p.parse("bugfix A12008 -test_tags low").should == @p.parse("log Fixing A12008 -test_tags low bugfix")
 		@p.parse("urgfix A12008").should == @p.parse("log Fixing A12008 -test_tags urgent bugfix")
 		lambda { p.parse ":wrong This won't work" }.should raise_error
-		RedBook::Parser.operations[:log].parameters.delete :test_tags
+		RedBook.operations[:log].parameters.delete :test_tags
 	end
 
 	it "should evaluate Ruby code" do

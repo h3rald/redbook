@@ -77,6 +77,7 @@ require core/'repository'
 require core/'engine'
 require core/'emitter'
 require core/'parser'
+require core/'operations'
 require core/'cli'
 require core/'plugin'
 
