@@ -26,6 +26,10 @@ module RedBook
 	config.details = [:code, :notes]
 	config.items = [:project, :version]
 
+	# Aggregation Plugin
+	config.calculation_fields = {}
+	config.calculation_fields[:duration] = 'activity.duration'
+
 	# Macros
 	config.macros.tracking = {}
 	config.macros.tracking[:activity] = "log <activity> -type activity"

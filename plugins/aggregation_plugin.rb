@@ -9,7 +9,7 @@ module RedBook
 		parameter(:on) { set :required }
 		body { |params|
 			result = @engine.calculate params[:calculate], params[:on]
-			info "Result #{result}"
+			info "Result: #{result}"
 		}
 	}
 
@@ -26,12 +26,12 @@ module RedBook
 			raise EngineError, "Empty dataset." if @dataset.blank?
 			data = []
 			sum = 0
-			fields = {}
 			@dataset.each do |e|
-				f = hook(:get_calculation_field, :entry => e, :field => field) || nil
-				next unless f
-				data << f
-				sum += f
+				value = e.send RedBook.config.calculation_fields[field.to_sym] rescue nil
+				value = (value.to_f == 0.0 && !value.in?('0.0', '0')) ? nil : value.to_f  
+				next unless value
+				data << value
+				sum += value
 			end
 			case function.to_sym
 			when :sum then
@@ -45,18 +45,6 @@ module RedBook
 			else
 				raise EngineError, "Function '#{function}' not supported."
 			end
-		end
-
-		define_hook(:get_calculation_field) do |params|
-			result = nil
-			if params[:field] == 'duration' then
-				begin
-					result = params[:entry].activity.duration
-				rescue
-					nil
-				end
-			end
-			result ? stop(result) : continue
 		end
 
 	end

@@ -145,7 +145,7 @@ module RedBook
 			when :integer then
 				begin
 					result = value.to_i
-					raise ParserError, "Parameter ':#{self}' is not an integer." if result == 0 && value != "0"
+					raise ParserError, "Parameter ':#{self}' is not an integer." if result == 0 && !value.in?('0', '0.0')
 					return result
 				rescue
 					raise ParserError, "Parameter ':#{self}' is not an integer."
@@ -153,7 +153,7 @@ module RedBook
 			when :float then
 				begin 
 					result = value.to_f
-					raise ParserError, "Parameter ':#{self}' is not a float." if result == 0.0 && value != "0.0"
+					raise ParserError, "Parameter ':#{self}' is not a float." if result == 0.0 && !value.in?('0', '0.0')
 					return result
 				rescue
 					raise ParserError, "Parameter ':#{self}' is not a float."
