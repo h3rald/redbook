@@ -26,6 +26,11 @@ module RedBook
 
 	operation(:detail) {
 		target { type :intlist }
+		body { |params|
+			raise CliError, "Empty dataset." if @engine.dataset.blank?
+			result = (params[:detail].blank?) ? @engine.dataset : [].tap{|a| params[:detail].each{|i| a << @engine.dataset[i-1]}}
+			display result, :detail => true if RedBook.output 
+		}
 	}
 
 	class Repository 
@@ -145,16 +150,6 @@ module RedBook
 			def detail(entry, total=1, index=0)
 				super(entry, total, index).uncolorize
 			end
-		end
-
-	end
-
-	class Cli
-
-		def detail_operation(params)
-			raise CliError, "Empty dataset." if @engine.dataset.blank?
-			result = (params[:detail].blank?) ? @engine.dataset : [].tap{|a| params[:detail].each{|i| a << @engine.dataset[i-1]}}
-			display result, :detail => true if RedBook.output 
 		end
 
 	end

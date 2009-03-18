@@ -54,7 +54,7 @@ describe RedBook::Parser do
 
 	it "should parse log operations" do
 		op = @p.parse "log Something -timestamp 3 minutes ago"
-		op[0].should == :log
+		op[0].name.should == :log
 		op[1][:text].should == "Something"
 		op[1][:timestamp].class.should == Time
 	end
@@ -64,13 +64,13 @@ describe RedBook::Parser do
 		op2 = @p.parse "insert Test -timestamp 2 minutes ago -type test"
 		op1[1][:text].should == op2[1][:text]
 		op1[1][:type].should == op2[1][:type]
-		op1[0].should == :log
-		op2[0].should == :insert
+		op1[0].name.should == :log
+		op2[0].name.should == :insert
 	end
 
 	it "should parse select operations" do
 		op = @p.parse "select something -from today at 8 am -to today at 10 am"
-		op[0].should == :select
+		op[0].name.should == :select
 		op[1].each_pair do |key, value|
 			if key.class == Symbol # it could also be a string/other, but it doesn't matter here. 
 				case key.target
@@ -87,7 +87,7 @@ describe RedBook::Parser do
 
 	it "should parse update operations" do
 		op = @p.parse "update 4 -text something"
-		op[0].should == :update
+		op[0].name.should == :update
 		op[1][:update].should == 4
 		op[1][:text].should == "something"
 		op[1][:timestamp].should == nil
@@ -95,13 +95,13 @@ describe RedBook::Parser do
 
 	it "should parse delete operations" do
 		op = @p.parse "delete 3"
-		op[0].should == :delete
+		op[0].name.should == :delete
 		op[1][:delete].should == [3]
 	end
 
 	it "should parse save operations" do
 		op = @p.parse "save /home/h3rald/test.txt -format txt"
-		op[0].should == :save
+		op[0].name.should == :save
 		op[1][:save].should == "/home/h3rald/test.txt"
 		op[1][:format].should == :txt
 	end

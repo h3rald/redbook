@@ -40,68 +40,59 @@ module RedBook
 
 	operation(:start) { 
 		target { type :integer; set :required}
+		body { |params|
+			@engine.start params[:start]
+			info "Activity started."
+		}
 	}
 
 	operation(:finish) {
 		target { type :integer}
+		body { |params|
+			@engine.finish params[:finish]
+			info "Activity completed."
+		}
 	}
 
 	operation(:pause) {
 		 target { type :integer; set :required }
+		 body { |params|
+			@engine.pause params[:pause]
+			info "Activity paused."
+		 }
 	}
 
 	operation(:track) {
 		target { type :integer; set :required }
 		parameter(:from) { type :time; set :required }
 		parameter(:to) { type :time }
+		body { |params|
+			@engine.track params[:track], params[:from], params[:to]
+			info "Done."
+		}
 	}
 
 	operation(:untrack) {
 		target { type :integer; set :required }
 		parameter(:from) { type :time }
 		parameter(:to) { type :time }
-	}
-
-	operation(:tracking) {
-		target { type :intlist }
-	}
-
-	class Cli
-
-		def tracking_operation(params)
-			raise CliError, "Empty dataset." if @engine.dataset.blank?
-			result = (params[:tracking].blank?) ? @engine.dataset : [].tap{|a| params[:tracking].each{|i| a << @engine.dataset[i-1]}}
-			display result, :tracking => true if RedBook.output 
-		end
-
-		def start_operation(params)
-			@engine.start params[:start]
-			info "Activity started."
-		end
-
-		def finish_operation(params)
-			@engine.finish params[:finish]
-			info "Activity completed."
-		end
-
-		def pause_operation(params)
-			@engine.pause params[:pause]
-			info "Activity paused."
-		end
-
-		def track_operation(params)
-			@engine.track params[:track], params[:from], params[:to]
-			info "Done."
-		end
-
-		def untrack_operation(params)
+		body { |params|
 			if params[:from].blank? && params[:to].blank? then
 				return unless agree "Do you really want to disable tracking for this activity? "
 			end
 			@engine.untrack params[:untrack], params[:from], params[:to]
 			info "Done."
-		end
-	end
+		}
+	}
+
+	operation(:tracking) {
+		target { type :intlist }
+		body { |params|
+			raise UIError, "Empty dataset." if @engine.dataset.blank?
+			result = (params[:tracking].blank?) ? @engine.dataset : [].tap{|a| params[:tracking].each{|i| a << @engine.dataset[i-1]}}
+			display result, :tracking => true if RedBook.output 
+		}
+	}
 
 	class Repository
 

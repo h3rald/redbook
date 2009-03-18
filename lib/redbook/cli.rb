@@ -50,8 +50,14 @@ module RedBook
 		def process(string)
 			operation, params = @parser.parse string
 			name = (operation.to_s+"_operation").to_sym
-			raise CliError, "Operation '#{operation.to_sym.textualize}' is not accessible from this shell." unless respond_to? name
-			self.send name, params
+			#raise CliError, "Operation '#{operation.to_sym.textualize}' is not accessible from this shell." unless respond_to? name
+			####################
+			if respond_to? name then
+				self.send name, params
+			else
+				operation.exec self, params
+			end	
+			####################
 		end
 
 		def update(message)
@@ -60,6 +66,10 @@ module RedBook
 
 		def display(object)
 			puts @emitter.render(object).chomp
+		end
+
+		def confirm(msg)
+			agree(msg)
 		end
 
 		def setup_completion
@@ -118,134 +128,5 @@ module RedBook
 		def shortcut(seq, command)
 			@editor.bind(seq) { @editor.write_line command }
 		end
-
-		### Operations
-
-		def use_operation(params=nil)
-  		if params[:use] then
-				name = params[:use].to_sym
-				file = RedBook.config.repositories[name]
-			end
-			@engine = RedBook::Engine.new file
-			if file then
-				info "Switched to repository '#{name}' [#{file}]."
-			else
-				warning "Unknown repository, switching to default one."
-			end			
-		end
-
-		def clear_operation(params=nil)
-			command = RUBY_PLATFORM.match(/win/i) ? "cls" : "clear"
-			system command
-		end
-
-		def quit_operation(params=nil)
-			debug "Stopping RedBook CLI..."
-			exit
-		end
-
-		def debug_operation(params=nil)
-			@engine.debug
-			info "Debug #{RedBook.debug ? 'on' : 'off'}."
-		end
-
-		def output_operation(params=nil)
-			@engine.output		
-			info "Output #{RedBook.output ? 'on' : 'off'}."
-		end
-
-		def color_operation(params=nil)
-			RedBook.colors = RedBook.colors ? false : true
-			info "Colors #{RedBook.colors ? 'on' : 'off'}."
-		end
-
-		def log_operation(params)
-			@engine.log params
-			info "Entry logged."
-		end
-
-		alias insert_operation log_operation
-
-		def relog_operation(params)
-			@engine.log params[:relog], params[:as]
-			info "Entry relogged."
-		end
-
-		def select_operation(params=nil)
-			result = @engine.select params
-			count = 1
-			display result if RedBook.output
-			info "#{result.length} item#{result.length == 1 ? '' : 's'} loaded into dataset."
-		end
-
-		def load_operation(params=nil)
-			out = RedBook.output
-			RedBook.output = false
-			select_operation(params)
-			RedBook.output = out
-		end
-
-		def update_operation(params)
-			indexes = params.delete :update
-			@engine.update indexes, params
-			info "Item #{params[0].to_s} updated successfully."
-		end
-
-		def delete_operation(params=nil)
-			msg = ""
-			case
-			when params[:delete].blank? then
-				msg = "the whole dataset"
-			when params[:delete].length == 1 then
-				msg = "this item"
-			else
-				msg = "these items"
-			end	
-			if agree(" >> Do you really want to delete #{msg}? ") then
-				@engine.delete params[:delete]
-				info "Operation successful."
-			else
-				warning "Nothing to do."
-			end
-		end
-
-		def dataset_operation(params=nil)
-			if @engine.dataset.blank? then
-				warning "Empty dataset."
-				return
-			end
-			display @dataset if RedBook.output
-		end
-
-		def ruby_operation(params)
-			result = nil
-			begin 
-				result = @engine.ruby params[:ruby]
-			rescue Exception => e
-				raise CliError, e.message, e.backtrace
-			end
-			result.to_s.each_line { |l| puts " #{l}" if RedBook.output }
-		end	
-
-		def save_operation(params)
-			@engine.save params[:save], params[:format]
-			info "Dataset saved to '#{params[:save]}'"
-		end
-
-		def rename_operation(params)
-			@engine.rename params[:rename], params[:from], params[:to]
-			info "#{params[:rename].to_s.camelize} '#{params[:from]}' renamed to '#{params[:to]}'."
-		end
-
-		def cleanup_operation(params=nil)
-			info "Cleaning up unused records..."
-			@engine.cleanup params[:cleanup]
-			info "Cleanup complete."
-		end
-
-		def refresh_operation(params=nil)
-			@engine.refresh params[:inventory]
-			info "Inventory loaded."
-		end	
 	end
 end

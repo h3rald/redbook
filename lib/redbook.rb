@@ -29,7 +29,7 @@ module RedBook
 	class EngineError < RuntimeError; {} end;
 	class EmitterError < RuntimeError; {} end;
 	class ParserError < RuntimeError; {} end;
-	class CliError < RuntimeError; {} end;
+	class UIError < RuntimeError; {} end;
 	class PluginError < RuntimeError; {} end;
 	
 	LIB_DIR = Pathname(__FILE__).dirname.expand_path

@@ -4,26 +4,20 @@ module RedBook
 	class AggregationPlugin < Plugin
 	end
 
-	class Cli
-
-		def calculate_operation(params)
+	operation(:calculate) {
+		parameter(:calculate) { set :required; type :enum; restrict_to 'sum', 'average', 'max', 'min'}
+		parameter(:on) { set :required }
+		body { |params|
 			result = @engine.calculate params[:calculate], params[:on]
 			info "Result #{result}"
-		end
+		}
+	}
 
-	end
-	
-
-		operation(:calculate) do
-			parameter(:calculate) { set :required; type :enum; restrict_to 'sum', 'average', 'max', 'min'}
-			parameter(:on) { set :required }
-		end
-
-		macro :duration, ":calculate sum :on duration"
-		macro :sum, ":calculate sum :on <:sum>"
-		macro :min, ":calculate min :on <:max>"
-		macro :max, ":calculate max :on <:max>"
-		macro :average, ":calculate average :on <:average>"
+	macro :duration, ":calculate sum :on duration"
+	macro :sum, ":calculate sum :on <:sum>"
+	macro :min, ":calculate min :on <:max>"
+	macro :max, ":calculate max :on <:max>"
+	macro :average, ":calculate average :on <:average>"
 
 
 	class Engine

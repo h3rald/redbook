@@ -17,26 +17,20 @@ module RedBook
 	operation(:tag) {
 		target { type :intlist }
 		parameter(:as) { type :list }
+		body { |params|
+			@engine.tag params[:as], params[:tag]
+			info "Done."
+		}
 	}
 
 	operation(:untag) {
 		target { type :intlist }
 		parameter(:as) { type :list }
-	}
-
-	class Cli
-
-		def tag_operation(params)
-			@engine.tag params[:as], params[:tag]
-			info "Done."
-		end
-
-		def untag_operation(params)
+		body { |params|
 			@engine.untag params[:as], params[:untag]
 			info "Done."
-		end
-
-	end
+		}
+	}
 
 	class Repository 
 

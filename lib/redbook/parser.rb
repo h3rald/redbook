@@ -14,7 +14,7 @@ module RedBook
 	end
 
 	def self.operation_alias(pair)
-		raise GenericError, "Alias operation must be specified using a pair ':alias => :original'" unless pair.is_a?(Hash) && pair.pair?
+		raise GenericError, "Alias operation must be specified using a pair ':alias => :original'" unless pair.then([:is_a?, Hash]).then(:pair?)
 		old_op = pair.value
 		new_op = pair.name
 		_old = self.operations[old_op]
@@ -22,10 +22,11 @@ module RedBook
 		_new.parameters = _old.parameters
 		_new.parameters[new_op] = _old.parameters[old_op]
 		_new.alias = old_op
+		_new.block = _old.block
 	end
 
 	class Operation
-		attr_accessor :parameters, :name, :alias
+		attr_accessor :parameters, :name, :alias, :block
 
 		def to_s
 			@name.to_s
@@ -39,11 +40,20 @@ module RedBook
 			@name = name
 			@parameters = {}
 			@alias = nil
+			@block = nil
 			tap &block 
+		end
+
+		def body(&block)
+			@block = block
 		end
 
 		def target(&block)
 			parameter @name, &block
+		end
+
+		def exec(ui, params)
+			ui.instance_exec params, &@block
 		end
 
 		def parameter(name, &block)
@@ -193,7 +203,7 @@ module RedBook
 			operation.parameters.each_value { |v| v.rewrite_value(parameters) if v.rewrite }
 			parameters = nil if parameters.blank?
 			debug "Parsed operation '#{operation.name}'"
-			return operation.name, parameters
+			return operation, parameters
 		end
 
 		private
