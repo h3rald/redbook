@@ -10,6 +10,20 @@ module RedBook
 		end
 	end
 
+	operations[:log].parameter(:tags) { type :list; set :special} 
+	operations[:select].parameter(:tags) {type :list; set :special}
+	operations[:update].parameter(:tags) {type :list; set :special}
+
+	operation(:tag) {
+		target { type :intlist }
+		parameter(:as) { type :list }
+	}
+
+	operation(:untag) {
+		target { type :intlist }
+		parameter(:as) { type :list }
+	}
+
 	class Cli
 
 		def tag_operation(params)
@@ -65,20 +79,6 @@ module RedBook
 			storage_names[:default] = "tag_map"
 		end
 	end
-
-		operations[:log].parameter(:tags) { type :list; specialized} 
-		operations[:select].parameter(:tags) {type :list; specialized}
-		operations[:update].parameter(:tags) {type :list; specialized}
-
-		operation(:tag) do
-			parameter(:tag) { type :intlist }
-			parameter(:as) { type :list }
-		end
-
-		operation(:untag) do
-			parameter(:untag) { type :intlist }
-			parameter(:as) { type :list }
-		end
 
 	class Engine	
 

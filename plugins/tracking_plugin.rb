@@ -9,6 +9,63 @@ module RedBook
 		end
 	end
 
+	operations[:log].modify do
+		parameter(:foreground) { type :bool; set :special } 
+		parameter(:tracking) { type :enum; restrict_to 'started', 'disabled', 'paused', 'completed' }
+		parameter(:start) { type :time; set :special } 
+		parameter(:end) { type :time; set :special } 
+		parameter(:duration) { type :float; set :special }
+	end
+
+	operations[:select].modify do
+		parameter(:foreground) { type :bool; rewrite_as 'activity.foreground'; set :special } 
+		parameter(:tracking) { type :list; restrict_to 'started', 'disabled', 'paused', 'completed'; rewrite_as 'activity.tracking.in' }
+		parameter(:started_before) { type :time; rewrite_as 'activity.start.lt'} 
+		parameter(:started_after) { type :time; rewrite_as 'activity.start.gt'} 
+		parameter(:ended_before) { type :time; rewrite_as 'activity.end.lt'} 
+		parameter(:ended_after) { type :time; rewrite_as 'activity.end.gt'} 
+		parameter(:longer_than) { type :float; rewrite_as 'activity.duration.gt'}
+		parameter(:shorter_than) { type :float; rewrite_as 'activity.duration.lt'}
+	end
+
+	operations[:update].modify do
+		parameter(:foreground) { type :bool; set :special } 
+		parameter(:tracking) { type :enum; restrict_to 'started', 'disabled', 'paused', 'completed'}
+		parameter(:start) { type :time; set :special} 
+		parameter(:end) { type :time; set :special} 
+		parameter(:duration) { type :float; set :special }
+	end
+
+	# New Operations
+
+	operation(:start) { 
+		target { type :integer; set :required}
+	}
+
+	operation(:finish) {
+		target { type :integer}
+	}
+
+	operation(:pause) {
+		 target { type :integer; set :required }
+	}
+
+	operation(:track) {
+		target { type :integer; set :required }
+		parameter(:from) { type :time; set :required }
+		parameter(:to) { type :time }
+	}
+
+	operation(:untrack) {
+		target { type :integer; set :required }
+		parameter(:from) { type :time }
+		parameter(:to) { type :time }
+	}
+
+	operation(:tracking) {
+		target { type :intlist }
+	}
+
 	class Cli
 
 		def tracking_operation(params)
@@ -175,74 +232,17 @@ module RedBook
 		end
 
 		class TxtHelper
-			
+
 			def activity(entry, total=1, index=0)
 				super(entry, total, index).uncolorize
 			end
-				
+
 			def activity_tracking(entry, total=1, index=0)
 				super(entry, total, index).uncolorize
 			end
 
 		end
 	end
-
-		operations[:log].modify do
-			parameter(:foreground) { type :bool; specialized } 
-			parameter(:tracking) { type :enum; allow 'started', 'disabled', 'paused', 'completed' }
-			parameter(:start) { type :time; specialized } 
-			parameter(:end) { type :time; specialized } 
-			parameter(:duration) { type :float; specialized }
-		end
-
-		operations[:select].modify do
-			parameter(:foreground) { type :bool; rewrite_as 'activity.foreground'; specialized } 
-			parameter(:tracking) { type :list; allow 'started', 'disabled', 'paused', 'completed'; rewrite_as 'activity.tracking.in' }
-			parameter(:started_before) { type :time; rewrite_as 'activity.start.lt'} 
-			parameter(:started_after) { type :time; rewrite_as 'activity.start.gt'} 
-			parameter(:ended_before) { type :time; rewrite_as 'activity.end.lt'} 
-			parameter(:ended_after) { type :time; rewrite_as 'activity.end.gt'} 
-			parameter(:longer_than) { type :float; rewrite_as 'activity.duration.gt'}
-			parameter(:shorter_than) { type :float; rewrite_as 'activity.duration.lt'}
-		end
-
-		operations[:update].modify do
-			parameter(:foreground) { type :bool; specialized } 
-			parameter(:tracking) { type :enum; allow 'started', 'disabled', 'paused', 'completed'}
-			parameter(:start) { type :time; specialized} 
-			parameter(:end) { type :time; specialized} 
-			parameter(:duration) { type :float; specialized }
-		end
-
-		# New Operations
-
-		operation(:start) do
-			parameter(:start) { type :integer; mandatory; special=true}
-		end
-
-		operation(:finish) do
-			parameter(:finish) { type :integer}
-		end
-
-		operation(:pause) do
-			parameter(:pause) { type :integer; mandatory}
-		end
-
-		operation(:track) do
-			parameter(:track) { type :integer; mandatory}
-			parameter(:from) { type :time; mandatory}
-			parameter(:to) { type :time }
-		end
-
-		operation(:untrack) do
-			parameter(:untrack) { type :integer; mandatory}
-			parameter(:from) { type :time}
-			parameter(:to) { type :time}
-		end
-
-		operation(:tracking) do
-			parameter(:tracking) { type :intlist }
-		end	
 
 	class Engine
 
@@ -297,7 +297,7 @@ module RedBook
 			entry.records.reload
 			started = Repository::Record.all(:entry_id => entry.id, :start.lt => from, :end.gt => from)
 			ended = Repository::Record.all(:entry_id => entry.id, :end.gt => to)
-			raise EngineError, "Operation not allowed (overlapping records)." unless started.blank? && ended.blank?
+			raise EngineError, "Operation not restrict_toed (overlapping records)." unless started.blank? && ended.blank?
 			raise EngineError, "Invalid start time." unless entry.activity.valid_time? from
 			raise EngineError, "Invalid end time." unless entry.activity.valid_time?(to) || to.blank? 
 			Repository::Record.create :entry_id => entry.id, :start => from, :end => to

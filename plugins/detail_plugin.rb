@@ -10,6 +10,24 @@ module RedBook
 		end
 	end
 
+	# Add details
+	RedBook.config.details.each do |d|
+		operations[:log].parameter(d) { set :special }
+		operations[:update].parameter(d) { set :special }
+		operations[:select].parameter(d) { set :special }
+	end
+
+	# Add items 
+	RedBook.config.items.each do |i|
+		operations[:log].parameter(i) { set :special }
+		operations[:update].parameter(i) { set :special }
+		operations[:select].parameter(i) { set :special }
+	end
+
+	operation(:detail) {
+		target { type :intlist }
+	}
+
 	class Repository 
 
 		class Item 
@@ -94,51 +112,31 @@ module RedBook
 		end
 	end
 
-
-		# Add details
-		RedBook.config.details.each do |d|
-			operations[:log].parameter(d) { specialized }
-			operations[:update].parameter(d) { specialized }
-			operations[:select].parameter(d) { specialized }
-		end
-
-		# Add items 
-		RedBook.config.items.each do |i|
-			operations[:log].parameter(i) { specialized }
-			operations[:update].parameter(i) { specialized }
-			operations[:select].parameter(i) { specialized }
-		end
-
-		operation(:detail) do
-			parameter(:detail) { type :intlist }
-		end
-
-
 	class Emitter
 
 		class CliHelper
-		def details(entry, total=1, index=0)
-			entry.then(:details).map{|d| padding(total, index)+'   - '+pair(d.detail_type, d.name)}.join "\n"
-		end
+			def details(entry, total=1, index=0)
+				entry.then(:details).map{|d| padding(total, index)+'   - '+pair(d.detail_type, d.name)}.join "\n"
+			end
 
-		def items(entry, total=1, index=0)
-			entry.then(:items).to_a.map{|i| padding(total, index)+'   - '+pair(i.item_type, i.name)}.tap do |arr|
-				count = 0
-				arr.each do |e|
-					count+=1
-					e << (count%2 == 0) ? "\n" : ' | '
+			def items(entry, total=1, index=0)
+				entry.then(:items).to_a.map{|i| padding(total, index)+'   - '+pair(i.item_type, i.name)}.tap do |arr|
+					count = 0
+					arr.each do |e|
+						count+=1
+						e << (count%2 == 0) ? "\n" : ' | '
+					end
 				end
 			end
-		end
 
-		def detail(entry, total=1, index=0)
-			"".tap do |result|
-				result << "\n"
-				result << padding(total, index)+" => Details:\n"
-				result << items(entry, total, index)
-				result << details(entry, total, index)
+			def detail(entry, total=1, index=0)
+				"".tap do |result|
+					result << "\n"
+					result << padding(total, index)+" => Details:\n"
+					result << items(entry, total, index)
+					result << details(entry, total, index)
+				end
 			end
-		end
 
 		end
 

@@ -42,6 +42,10 @@ module RedBook
 			tap &block 
 		end
 
+		def target(&block)
+			parameter @name, &block
+		end
+
 		def parameter(name, &block)
 			@parameters[name] = Parameter.new(name, &block)
 		end
@@ -51,11 +55,10 @@ module RedBook
 		end
 	end
 
-
 	class Parameter 
 		include Hookable
 
-		attr_reader :name, :datatype, :required, :values, :special, :rewrite
+		attr_reader :name, :datatype, :values, :rewrite
 
 		def to_s
 			@name.to_s
@@ -66,30 +69,35 @@ module RedBook
 		end
 
 		def initialize(name, &block)
+			@flags = {
+				:required => false,
+				:special => false,
+			}
 			@name = name
 			@datatype = :string
-			@required = false
-			@special = nil
 			@values = []
 			tap &block
-		end		
+		end	
+
+		def set(f)
+			@flags[f] = true
+		end
+
+		def unset(f)
+			@flags[f] = false
+		end
+
+		def set?(f)
+			@flags[f]
+		end
 
 		def type(t)
 			@datatype = t
 		end
 
-		def specialized
-			@special = true
-		end
-
-		def allow(*args)
+		def restrict_to(*args)
 			@values = args
 		end
-
-		def mandatory
-			@required = true
-		end
-
 
 		def rewrite_as(key, &block)
 			@rewrite = key
@@ -109,7 +117,7 @@ module RedBook
 
 		def parse(value="")
 			if value.blank? then
-				raise ParserError, "Please specify a value for the ':#{self}' directive." if @required
+				raise ParserError, "Please specify a value for the ':#{self}' directive." if set?(:required)
 				return nil
 			end
 			case @datatype
@@ -263,7 +271,7 @@ module RedBook
 		def check_required_parameters(operation, parameters)
 			operation.parameters.each_pair do |label, p|
 				# operation's target is already checked when parsed as parameter
-				if p.required && label != operation.name then
+				if p.set?(:required) && label != operation.name then
 					raise ParserError, "Parameter '#{p}' is required." if parameters[p.name].blank?
 				end
 			end

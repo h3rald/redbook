@@ -5,7 +5,7 @@
 module RedBook
 
 	operation(:log){
-		parameter(:log) { mandatory; rewrite_as :text }
+		target { set :required;	rewrite_as :text }
 		parameter(:timestamp) { type :time }
 		parameter :type 
 	}
@@ -13,7 +13,7 @@ module RedBook
 	operation_alias :insert => :log
 
 	operation(:select){
-		parameter(:select) { rewrite_as(:text.like){|v| "%#{v}%" }}
+		target { rewrite_as(:text.like){|v| "%#{v}%" }}
 		parameter(:from) { type :time; rewrite_as(:timestamp.gt) }
 		parameter(:to) { type :time; rewrite_as(:timestamp.lt)}
 		parameter(:type)  { type :list}
@@ -24,41 +24,41 @@ module RedBook
 	operation_alias :load => :select
 
 	operation(:update){
-		parameter(:update) { mandatory; type :integer }
+		target { set :required; type :integer }
 		parameter :text
 		parameter(:timestamp) { type :time }
 		parameter :type
 	}
 
 	operation(:delete) do
-		parameter(:delete) { type :intlist }
+		target { type :intlist }
 	end
 
 	operation(:save){
-		parameter(:save) { mandatory }
-		parameter(:format) { mandatory; rewrite_as(:format){|v| v.to_sym} }
+		target { set :required }
+		parameter(:format) { set :required; rewrite_as(:format){|v| v.to_sym} }
 	}
 
 	operation(:ruby){
-		parameter(:ruby) { mandatory }
+		target { set :required }
 	}
 
 	operation(:rename){		
-		parameter(:rename) { mandatory }
-		parameter(:from) { mandatory }
-		parameter(:to) { mandatory }
+		target { set :required }
+		parameter(:from) { set :required }
+		parameter(:to) { set :required }
 	}
 
 	operation(:cleanup){
-		parameter(:cleanup) { type :list }
+		target { type :list }
 	}
 
 	operation(:refresh){
-		parameter(:refresh) { type :list }
+		target { type :list }
 	}
 
 	operation(:use){
-		parameter :use
+		target { set :required }
 	}
 
 	operation :quit

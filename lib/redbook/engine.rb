@@ -251,7 +251,7 @@ module RedBook
 			attrs = attributes.dup
 			attrs.each_pair do |l, v|
 				param = RedBook.operations[:log].parameters[l]
-				attrs.delete l if param && param.special
+				attrs.delete l if param.chain [:set?, :special]
 			end
 			Repository::Entry.new(attrs).tap do |entry|
 				raise Exception, "Entry text not specified" unless attrs[:text] 
@@ -268,7 +268,7 @@ module RedBook
 			attrs = attributes.dup
 			attrs.each_pair do |l, v|
 				param = RedBook.operations[:update].parameters[l]
-				attrs.delete l if param && param.special
+				attrs.delete l if param.chain [:set?, :special]
 			end
 			raise EngineError, "Empty dataset" if @dataset.blank?
 			raise EngineError, "Invalid dataset index" unless valid_index? index
@@ -295,7 +295,7 @@ module RedBook
 			# Delete unknown attributes
 			attrs.each_pair do |l, v|
 				param = RedBook.operations[:select].parameters[l]
-				attrs.delete l if param && param.special
+				attrs.delete l if param.chain [:set?, :special]
 			end
 			type ||= :select	
 			case type

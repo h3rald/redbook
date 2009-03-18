@@ -15,8 +15,8 @@ module RedBook
 	
 
 		operation(:calculate) do
-			parameter(:calculate) { mandatory; type :enum; allow 'sum', 'average', 'max', 'min'}
-			parameter(:on) { mandatory }
+			parameter(:calculate) { set :required; type :enum; restrict_to 'sum', 'average', 'max', 'min'}
+			parameter(:on) { set :required }
 		end
 
 		macro :duration, ":calculate sum :on duration"
