@@ -177,30 +177,30 @@ module RedBook
 		class CliHelper
 
 			def activity(a, total=1, index=0)
-				[padding(total, index), index, activity_icon(a), a.text].join ' '  
+				[padding(total, index)+index.to_s.cyan, activity_icon(a), a.text.cyan].join ' '  
 			end
 
-			def tracking(a, total=1, index=0)
+			def tracking(a, ttl=1, indx=0)
 				"".tap do |result|
 					result << "\n"
-					result << padding(total, index)+" => Tracking Info:\n"
-					result << padding(total, index)+"   - "+pair({:start => a.activity.start.textualize})+' '+pair({:end => a.activity.end.textualize})+"\n"
-					result << padding(total, index)+"   - "+pair({:duration => a.activity.duration.textualize(RedBook.config.duration_format)})
+					result << padding(ttl, indx)+" => Tracking Info:\n".dark_green
+					result << padding(ttl, indx)+"   - "+pair({:start => a.activity.start.textualize})+' '+pair({:end => a.activity.end.textualize})+"\n"
+					result << padding(ttl, indx)+"   - "+pair({:duration => a.activity.duration.textualize(RedBook.config.duration_format)})
 					result << ' '
 					result << "(#{a.activity.tracked_duration.textualize(RedBook.config.duration_format)})\n".cyan
-					result << activity_records(a, padding)
+					result << records(a, ttl, indx)
 				end
 			end
 
-			def activity_records(a, total=1, index=0)
+			def records(a, ttl=1, indx=0)
 				"".tap do |result|
-					if a.activity.records then
-						result << padding(total, index)+" => Tracking Records:\n"
-						a.activity.records.each do |r|
-							result << padding(total, index)+'   - '+pair({:start => r.start})+' -> '+pair({:end => r.end})+"\n"
+					if a.respond_to? :records then
+						result << padding(ttl, indx)+" => Tracking Records:\n".dark_green
+						a.records.each do |r|
+							result << padding(ttl, indx)+'   - '+pair({:start => r.start.textualize})+' -> '+pair({:end => r.end.textualize})+"\n"
 						end
 					end
-				end
+				end.chomp
 			end
 
 			def activity_icon(entry)
@@ -288,7 +288,7 @@ module RedBook
 			entry.records.reload
 			started = Repository::Record.all(:entry_id => entry.id, :start.lt => from, :end.gt => from)
 			ended = Repository::Record.all(:entry_id => entry.id, :end.gt => to)
-			raise EngineError, "Operation not restrict_toed (overlapping records)." unless started.blank? && ended.blank?
+			raise EngineError, "Operation not allowed (overlapping records)." unless started.blank? && ended.blank?
 			raise EngineError, "Invalid start time." unless entry.activity.valid_time? from
 			raise EngineError, "Invalid end time." unless entry.activity.valid_time?(to) || to.blank? 
 			Repository::Record.create :entry_id => entry.id, :start => from, :end => to
@@ -332,8 +332,8 @@ module RedBook
 			if entry.resource_type == 'activity' || foreground != nil || a_end || a_start || duration then	
 				activity =  Repository::Activity.first(:entry_id => entry.id) || Repository::Activity.create(:entry_id => entry.id)  
 				activity.foreground = foreground unless foreground == nil
-				activity.end = a_end unless attributes.null_key? :end
-				activity.start = a_start unless attributes.null_key? :start
+				activity.end = a_end if attributes.has_key? :end
+				activity.start = a_start if attributes.has_key? :start
 				raise EngineError, "Start time is later than end time." if !activity.end.blank? && !activity.start.blank? && activity.start > activity.end
 				if activity.end == nil then
 					pause_activity(entry) if activity.started?

@@ -1,1 +1,1 @@
-<%= @object.tags.to_a.each { |t| " @".dark_yellow+"#{t.name.yellow}" }.join %>
+<%= @object.tags.map { |t| " @".dark_yellow+"#{t.name.yellow}" }.join %>

@@ -44,8 +44,9 @@ module RedBook
 		parameter(:timestamp) { type :time }
 		parameter :type
 		body { |params|
-			@engine.update params.delete(:update), params
-			info "Item ##{params[0]} updated successfully."
+			index = params.delete :update
+			@engine.update index, params
+			info "Item ##{index} updated successfully."
 		}
 	}
 

@@ -113,13 +113,6 @@ module RedBook
 			continue
 		end
 
-		define_hook(:after_relog) do |params|
-			entry = params[:entry]
-			attributes = params[:attributes]
-			attributes[:tags] = entry.tags if entry.respond_to? :tags 
-			continue
-		end
-
 		define_hook(:after_update) do |params|
 			tags = params[:attributes][:tags]
 			entry = params[:entry]

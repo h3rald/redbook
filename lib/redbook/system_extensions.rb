@@ -8,6 +8,20 @@ module Kernel
 
 end
 
+
+class Array
+  def chunk(number_of_chunks)
+    chunks = (1..number_of_chunks).collect { [] }
+    while self.any?
+      chunks.each do |a_chunk|
+        a_chunk << self.shift if self.any?
+      end
+    end
+    chunks
+  end
+  alias / chunk
+end
+
 class Object
 
 	def class_instance_variable(pair)
@@ -44,10 +58,6 @@ class Object
 class Hash
 
 	attr_accessor :resource_type 
-
-	def null_key?(attr)
-		self.has_key?(attr) && self[attr] == nil
-	end
 
 	def pair?
 		self.length == 1
@@ -96,7 +106,7 @@ end
 
 class NilClass
 	def textualize(format=nil)
-		"n/a"
+		"N/A"
 	end
 end
 

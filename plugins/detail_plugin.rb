@@ -121,25 +121,21 @@ module RedBook
 
 		class CliHelper
 			def details(entry, total=1, index=0)
-				entry.then(:details).map{|d| padding(total, index)+'   - '+pair(d.detail_type, d.name)}.join "\n"
+				entry.then{details}.map{|d| padding(total, index)+'   - '+pair(d.detail_type => d.name)}.join "\n"
 			end
 
 			def items(entry, total=1, index=0)
-				entry.then(:items).to_a.map{|i| padding(total, index)+'   - '+pair(i.item_type, i.name)}.tap do |arr|
-					count = 0
-					arr.each do |e|
-						count+=1
-						e << (count%2 == 0) ? "\n" : ' | '
-					end
-				end
+				entry.then{items}.map{|i| padding(total, index)+'   - '+pair(i.item_type => i.name)}.chunk(2).map{|e| e.join ' | '}.join "\n"
 			end
 
 			def detail(entry, total=1, index=0)
 				"".tap do |result|
-					result << "\n"
-					result << padding(total, index)+" => Details:\n"
-					result << items(entry, total, index)
-					result << details(entry, total, index)
+					if entry.then{items}.length > 0 || entry.then{details}.length > 0 then
+						result << "\n"
+						result << padding(total, index)+" => Details:\n"
+						result << items(entry, total, index)
+						result << details(entry, total, index)
+					end
 				end
 			end
 
@@ -181,17 +177,6 @@ module RedBook
 					entry.set_item k => v	
 				end
 			end
-			continue
-		end
-
-		define_hook(:after_relog) do |params|
-			entry = params[:entry]
-			attributes = params[:attributes]
-			add_attribute = lambda do |field, attributes|
-				attributes[field] = entry.send field if entry.respond_to? field
-			end
-			fields = RedBook.config.details + RedBook.config.items
-			fields.each { |f| add_attribute.call f, attributes}
 			continue
 		end
 

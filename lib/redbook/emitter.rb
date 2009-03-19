@@ -24,7 +24,7 @@ module RedBook
 			end
 
 			def pair(p)
-				"#{p.name.to_s.camel_case.dark_cyan}: #{p.value.to_s.camel_case.cyan}"
+				"#{p.name.to_s.camel_case.dark_green}: #{p.value.to_s.camel_case}"
 			end
 		end
 
@@ -71,7 +71,7 @@ module RedBook
 						c << view.evaluate(p).chomp
 					end
 				end
-				ps[:content] = content.join
+				ps[:content] = content.join "\n"
 			end
 			begin
 				@templates[@format].evaluate(params).chomp

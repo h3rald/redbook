@@ -16,7 +16,6 @@ module RedBook
 			[@parser, @engine, self].each { |o|	o.add_observer self }
 			RedBook::PluginCollection.plugins.each_pair { |l, v| v.add_observer self; v.init }
 			if RedBook.config.completion then
-				@editor = RawLine::Editor.new
 				setup_completion
 				setup_shortcuts	
 			end
@@ -29,7 +28,7 @@ module RedBook
 			loop do
 				begin
 					if RedBook.config.completion then
-						process @editor.read(@prompt)
+						process Rawline.readline(@prompt, true)
 					else
 						print @prompt
 						process gets
@@ -49,23 +48,15 @@ module RedBook
 
 		def process(string)
 			operation, params = @parser.parse string
-			name = (operation.to_s+"_operation").to_sym
-			#raise CliError, "Operation '#{operation.to_sym.textualize}' is not accessible from this shell." unless respond_to? name
-			####################
-			if respond_to? name then
-				self.send name, params
-			else
-				operation.exec self, params
-			end	
-			####################
+			operation.exec self, params
 		end
 
 		def update(message)
 			display message
 		end
 
-		def display(object)
-			puts @emitter.render(object).chomp
+		def display(object, params={})
+			puts @emitter.render(object, params).chomp
 		end
 
 		def confirm(msg)
@@ -73,29 +64,21 @@ module RedBook
 		end
 
 		def setup_completion
-			operations = []
-			op_prefix = RedBook.config.parser.operation_prefix || ':'
-			ph_prefix = RedBook.config.parser.placeholder_prefix || ':'
-			param_prefix = RedBook.config.parser.parameter_prefix || ':'
-			RedBook.operations.each_pair do |l,v|
-				operations << "#{op_prefix}#{l.to_s}"
-			end
-			RedBook.macros.each_pair do |l,v|
-				operations << "#{op_prefix}#{l.to_s}"
-			end
-			@editor.completion_proc = lambda do |str|
-				if @editor.line.text.strip == str.strip then
+			operations = (RedBook.operations.keys+RedBook.macros.keys).map{|k| k.to_s}
+			Rawline.completion_append_character = ' '
+			Rawline.completion_proc = lambda do |str|
+				if Rawline.editor.line.text.strip == str.strip then
 					return operations.find_all { |e| e.to_s.match(/^#{Regexp.escape(str)}/) }
 				else
 					matches = []
-					words = @editor.line.words
-					name = words[0].symbolize
+					words = Rawline.editor.line.words
+					name = words[0].to_sym
 					add_operation_params = lambda do |name, matches|
 						operation = RedBook.operations[name]
 						if operation then
 							operation.parameters.each_pair do |l,v|
-								parameter = v.to_s.symbolize.textualize
-								matches << parameter unless @editor.line.text.match parameter
+								parameter = "-#{v}"
+								matches << parameter unless Rawline.editor.line.text.match parameter
 							end
 							return true
 						end
@@ -105,14 +88,14 @@ module RedBook
 						# Try macros
 						macro = RedBook.macros[name]
 						if macro then
-							macro_params = macro.scan(/#{op_prefix}([a-z_]+)/).to_a.flatten
-							macro_params.each { |p| matches << p unless @editor.line.text.match p}
+							macro_params = macro.scan(/([a-z_]+)/).to_a.flatten
+							macro_params.each { |p| matches << p unless Rawline.editor.line.text.match p}
 							add_operation_params.call macro_params[0].to_sym, matches
 							# Remove original operation from parameters
-							matches.delete(macro_params[0].symbolize.textualize)
+							matches.delete(macro_params[0])
 						end
 					end
-					if @editor.line.text.match /#{op_prefix}rename\s[a-z]+$/ then
+					if Rawline.editor.line.text.match /rename\s[a-z]+$/ then
 						RedBook.inventory_tables.each { |t| matches << t.to_s }
 					end
 					hook :setup_completion, :cli => self, :matches => matches
@@ -126,7 +109,15 @@ module RedBook
 		end
 
 		def shortcut(seq, command)
-			@editor.bind(seq) { @editor.write_line command }
+			Rawline.editor.bind(seq) do
+				case 
+				when command.is_a?(String) then
+			 		Rawline.editor.write_line command
+				when command.is_a?(Proc) then
+					command.call
+				end
+			end
 		end
+
 	end
 end

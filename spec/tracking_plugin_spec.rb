@@ -33,7 +33,7 @@ describe RedBook::TrackingPlugin do
 
 	it "should allow deletion of activities" do
 		@c.process "select"
-		@c.process "update 1 -timestamp 1 hour ago"
+		@c.process "update 1 -start 1 hour ago"
 		@c.process "track 1 -from 20 minutes ago -to 10 minutes ago"
 		@c.process "track 1 -from 9 minutes ago -to 7 minutes ago"
 		@c.process "track 1 -from 6 minutes ago -to 3 minutes ago"
