@@ -121,22 +121,22 @@ module RedBook
 
 		class CliHelper
 			def details(entry, total=1, index=0)
-				entry.then{details}.map{|d| padding(total, index)+'   - '+pair(d.detail_type => d.name)}.join "\n"
+				entry.then{details}.map{|d| padding(total, index)+pad(index)+'- '+pair(d.detail_type => d.name)}.join "\n"
 			end
 
 			def items(entry, total=1, index=0)
-				entry.then{items}.map{|i| padding(total, index)+'   - '+pair(i.item_type => i.name)}.chunk(2).map{|e| e.join ' | '}.join "\n"
+				entry.then{items}.map{|i| padding(total, index)+pad(index)+'- '+pair(i.item_type => i.name)}.join "\n"
 			end
 
 			def detail(entry, total=1, index=0)
 				"".tap do |result|
 					if entry.then{items}.length > 0 || entry.then{details}.length > 0 then
 						result << "\n"
-						result << padding(total, index)+" => Details:\n"
 						result << items(entry, total, index)
+						result << "\n"
 						result << details(entry, total, index)
 					end
-				end
+				end.chomp
 			end
 
 		end

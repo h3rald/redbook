@@ -31,14 +31,20 @@ describe RedBook::DetailPlugin do
 	it "should allow details and items to be updated" do
 		@c.process "log Testing items -project RedBook -version 1.0"
 		@c.process "log Testing details -code AB001 -notes Random notes"
+		@c.process "insert Testing..."
 		@c.process "select"
 		@c.process "update 1 -project Test"
 		@c.process "update 2 -code AB002 -notes More notes"
+		@c.process "update 3 -project Test2 -notes More notes -version 1.0"
 		it = @c.engine.dataset[0]
 		dt = @c.engine.dataset[1]
+		id = @c.engine.dataset[2]
 		it.get_item(:project).should == "Test"
 		dt.get_detail(:code).should == "AB002"
 		dt.get_field(:notes).should == "More notes"
+		id.get_field(:project).should == "Test2"
+		id.get_field(:version).should == "1.0"
+		id.get_field(:notes).should == "More notes"
 	end
 
 	it "should allow entries to be filtered by projects and items" do

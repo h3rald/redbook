@@ -16,6 +16,10 @@ module RedBook
 				' '*(Math.log10(total).floor-Math.log10(index).floor + 1)
 			end
 
+			def pad(num)
+				' '*(Math.log10(num).floor + 2)
+			end
+
 			def message(m)
 				colors = {:info => 'green', :warning => 'yellow', :error => 'red', :debug => 'magenta'}
 				prefix = ">>".send :"#{colors[m.name]}"
@@ -24,7 +28,7 @@ module RedBook
 			end
 
 			def pair(p)
-				"#{p.name.to_s.camel_case.dark_green}: #{p.value.to_s.camel_case}"
+				"#{(p.name.to_s.camel_case+':').dark_green} #{p.value.to_s.camel_case}"
 			end
 		end
 

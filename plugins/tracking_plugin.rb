@@ -183,24 +183,23 @@ module RedBook
 			def tracking(a, ttl=1, indx=0)
 				"".tap do |result|
 					result << "\n"
-					result << padding(ttl, indx)+" => Tracking Info:\n".dark_green
-					result << padding(ttl, indx)+"   - "+pair({:start => a.activity.start.textualize})+' '+pair({:end => a.activity.end.textualize})+"\n"
-					result << padding(ttl, indx)+"   - "+pair({:duration => a.activity.duration.textualize(RedBook.config.duration_format)})
+					result << padding(ttl, indx)+pad(indx)+"- "+pair({:start => a.activity.start.textualize})+' '+pair({:end => a.activity.end.textualize})+"\n"
+					result << padding(ttl, indx)+pad(indx)+"- "+pair({:duration => a.activity.duration.textualize(RedBook.config.duration_format)})
 					result << ' '
 					result << "(#{a.activity.tracked_duration.textualize(RedBook.config.duration_format)})\n".cyan
 					result << records(a, ttl, indx)
-				end
+				end.chomp
 			end
 
 			def records(a, ttl=1, indx=0)
 				"".tap do |result|
 					if a.respond_to? :records then
-						result << padding(ttl, indx)+" => Tracking Records:\n".dark_green
+						result << padding(ttl, indx)+pad(indx)+"=> Tracking Records:\n".dark_green
 						a.records.each do |r|
-							result << padding(ttl, indx)+'   - '+pair({:start => r.start.textualize})+' -> '+pair({:end => r.end.textualize})+"\n"
+							result << padding(ttl, indx)+pad(indx)+'- '+pair({:start => r.start.textualize})+' -> '+pair({:end => r.end.textualize})+"\n"
 						end
 					end
-				end.chomp
+				end
 			end
 
 			def activity_icon(entry)
@@ -346,7 +345,7 @@ module RedBook
 				end
 				activity.track 
 				entry.activity = activity
-				entry.save
+				entry.save rescue nil
 			end
 			continue
 		end

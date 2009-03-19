@@ -276,7 +276,7 @@ module RedBook
 			@dataset[index].tap do |entry|
 				attrs.else(:blank?).then do
 					entry.attributes = attrs
-					entry.save
+					entry.save rescue nil
 				end
 			end
 		end
