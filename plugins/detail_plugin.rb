@@ -7,6 +7,7 @@ module RedBook
 			create_resource :items, :inventory => true
 			create_resource :details
 			create_resource :item_map
+			RedBook.config.items.each { |i| completion_for i.to_s.plural.to_sym, [i] }
 		end
 	end
 
@@ -167,6 +168,20 @@ module RedBook
 	end
 
 	class Engine
+
+		define_hook(:after_refresh_table) do |params|
+			table = params[:table]
+			inventory = params[:inventory]
+			if table == :items then
+				inventory.delete(table)
+				types = Repository.query("SELECT DISTINCT item_type FROM items")
+				types.each do |t|
+					data = Repository::Item.all(:item_type => t)
+					inventory[t.plural.to_sym] = data.map{|d| d.name} unless data.blank?
+				end
+			end
+			continue
+		end
 
 		define_hook(:after_insert) do |params|
 			details = {}

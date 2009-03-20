@@ -6,7 +6,8 @@ module RedBook
 
 		def setup
 			create_resource :tag_map
-			create_resource :tags, :inventory => true, :completion_for => [:tag, :untag, :tags]
+			create_resource :tags, :inventory => true 
+			completion_for :tags, [:tag, :untag, :tags]
 		end
 	end
 

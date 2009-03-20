@@ -160,7 +160,7 @@ module RedBook
 		# * <i>:before_refresh</i> :tables => Array [Symbol] 
 		# * <i>:after_refresh</i> :inventory => Array [Hash][Object] 
 		# * <i>:before_refresh_table</i> :table => Symbol 
-		# * <i>:after_refresh_table</i> :tables => Hash [Object] 
+		# * <i>:after_refresh_table</i> :table => Symbol, :inventory => Array [Hash][Object] 
 		def refresh(tables=[])
 			hook :before_refresh, :tables => tables
 			tables.then(:blank?){RedBook.inventory_tables}.else{tables}.each do |t|
@@ -172,7 +172,7 @@ module RedBook
 				model.all.each do |i|
 					@inventory[t.to_sym] << i.name
 				end
-				hook :after_refresh_table, :inventory_table => @inventory[t.to_sym]
+				hook :after_refresh_table, :table => t.to_sym, :inventory => @inventory 
 			end
 			hook :after_refresh, :inventory => @inventory
 		end
@@ -180,7 +180,7 @@ module RedBook
 		# Evaluates a string as Ruby code.
 		def ruby(string)
 			begin
-				Kernel.instance_eval string
+				instance_eval string
 			rescue
 				raise EngineError, "Error evaluating '#{string}'"
 			end

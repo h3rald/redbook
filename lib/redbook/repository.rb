@@ -9,6 +9,10 @@ module RedBook
 			DataMapper.setup(:default, params)
 		end
 
+		def self.query(string)
+			DataMapper.repository(:default).adapter.query(string)
+		end
+
 		class_instance_variable :resources => []
 
 		def self.reset

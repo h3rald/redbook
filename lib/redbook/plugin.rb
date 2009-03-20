@@ -42,24 +42,23 @@ module RedBook
 				debug " -> Created #{name} table."
 			end
 			RedBook.inventory_tables << table if options[:inventory] == true 
-			completion_for table, options[:completion_for] unless options[:completion_for].blank?
 		end
 
-		def completion_for(table, operations=[])
+		def completion_for(table, directives=[])
 			RedBook::Cli.define_hook(:setup_completion) do |params|
 				matches = params[:matches]
 				c = params[:cli]
-				regexps = {}
-				ops = operations.map{ |o| o.to_s }.join('|')
-				regexps[:operations] = /:(#{ops}) (([a-zA-Z0-9+_-]+)\s?)*$/
-					regexps[:rename] = /:rename #{table} :from (([a-zA-Z0-9+_-]+)\s?)*$/
-					if Rawline.editor.line.text.match(regexps[:operations]) || Rawline.editor.line.text.match(regexps[:rename])   then
-						c.engine.inventory[table].each { |t| matches << t unless Rawline.editor.line.text.match t} if c.engine.inventory[table]
-					end
-				{:value => matches, :stop => matches.blank? ? false : true}
+				regexps = {}.tap do |rx|
+					dirs = directives.map{ |o| o.to_s }.join('|')
+					rx[:directives] = /(#{dirs}) (([a-zA-Z0-9+_-]+)\s?)*$/
+					rx[:rename] = /^rename #{table.to_s.singular} -from (([a-zA-Z0-9+_-]+)\s?)*$/
+				end
+				if Rawline.editor.line.text.match(regexps[:directives]) || Rawline.editor.line.text.match(regexps[:rename]) then
+					c.engine.inventory[table].each { |t| matches << t unless Rawline.editor.line.text.match t} if c.engine.inventory[table]
+				end
+				RedBook::Cli.stop_hooks_unless !matches.blank?
 			end
 		end
-
 
 	end
 

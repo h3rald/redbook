@@ -70,36 +70,37 @@ module RedBook
 				if Rawline.editor.line.text.strip == str.strip then
 					return operations.find_all { |e| e.to_s.match(/^#{Regexp.escape(str)}/) }
 				else
-					matches = []
-					words = Rawline.editor.line.words
-					name = words[0].to_sym
-					add_operation_params = lambda do |name, matches|
-						operation = RedBook.operations[name]
-						if operation then
-							operation.parameters.each_pair do |l,v|
-								parameter = "-#{v}"
-								matches << parameter unless Rawline.editor.line.text.match parameter
-							end
-							return true
-						end
-						return false
-					end
-					unless add_operation_params.call name, matches then  
-						# Try macros
-						macro = RedBook.macros[name]
-						if macro then
-							macro_params = macro.scan(/([a-z_]+)/).to_a.flatten
-							macro_params.each { |p| matches << p unless Rawline.editor.line.text.match p}
-							add_operation_params.call macro_params[0].to_sym, matches
-							# Remove original operation from parameters
-							matches.delete(macro_params[0])
-						end
-					end
-					if Rawline.editor.line.text.match /rename\s[a-z]+$/ then
-						RedBook.inventory_tables.each { |t| matches << t.to_s }
-					end
+					name = Rawline.editor.line.words[0].to_sym
+					matches = match_parameter(name) + match_macro(name)
+					RedBook.inventory_tables.each { |t| matches << t.to_s.singular } if Rawline.editor.line.text.match /^rename\s[a-z]+$/
+					RedBook.inventory_tables.each { |t| matches << t.to_s } if Rawline.editor.line.text.match /^refresh\s[a-z]+$/
 					hook :setup_completion, :cli => self, :matches => matches
 					return matches.find_all { |e| e.to_s.match(/^#{Regexp.escape(str)}/) }
+				end
+			end
+		end
+
+		private
+
+		def match_parameter(name)
+			[].tap do |a|
+				RedBook.operations[name.to_sym].then do
+					parameters.each_value do |v|
+						parameter = "-#{v}"
+						a << parameter unless Rawline.editor.line.text.match parameter
+					end
+				end
+			end
+		end
+
+		def match_macro(name)
+			[].tap do |matches|
+				RedBook.macros[name.to_sym].then do |macro|
+					macro_params = macro.scan(/([a-z_]+)/).to_a.flatten
+					macro_params.each { |p| matches << "-#{p}" unless Rawline.editor.line.text.match p}
+					matches + match_parameter(macro_params[0].to_sym)
+					# Remove original operation from parameters
+					matches.delete("-#{macro_params[0]}")
 				end
 			end
 		end
@@ -112,7 +113,7 @@ module RedBook
 			Rawline.editor.bind(seq) do
 				case 
 				when command.is_a?(String) then
-			 		Rawline.editor.write_line command
+					Rawline.editor.write_line command
 				when command.is_a?(Proc) then
 					command.call
 				end

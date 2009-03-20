@@ -99,7 +99,7 @@ module RedBook
 		parameter(:to) { set :required }
 		body { |params|
 			@engine.rename params[:rename], params[:from], params[:to]
-			info "#{params[:rename].to_s.camelize} '#{params[:from]}' renamed to '#{params[:to]}'."
+			info "#{params[:rename].to_s.camel_case} '#{params[:from]}' renamed to '#{params[:to]}'."
 		}
 	}
 
@@ -116,7 +116,7 @@ module RedBook
 		target { type :list }
 		body { |params|
 			@engine.refresh params[:inventory]
-			info "Inventory loaded."
+			info "Inventory updated."
 		}
 	}
 
