@@ -1,8 +1,4 @@
-		<details>
-		<% @object.details.each do |d| %>
-			<detail type="<%= d.detail_type %>"><%= d.name %></detail>
-		<% end %>
-		<% @object.items.each do |i| %>
-			<detail type="<%= i.item_type %>"><%= i.name %></detail>
-		<% end %>
+		<details><% @object.details.each do |d| %>
+			<detail type="<%= d.detail_type %>"><%= d.name %></detail><% end %><% @object.items.each do |i| %>
+			<detail type="<%= i.item_type %>"><%= i.name %></detail><% end %>
 		</details>

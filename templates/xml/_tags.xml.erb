@@ -1,4 +1,3 @@
-		<tags><% @tags.to_a.each do |t| %>
+		<tags><% @object.tags.each do |t| %>
 			<tag><%= t.name -%></tag><% end %>
 		</tags>
-

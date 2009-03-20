@@ -1,8 +1,9 @@
-	<activity>
+<%
+	extras = @object.then([:respond_to?, :tags]){chain(:tags, :length, [:>, 0])} || @object.then([:respond_to?, :details]){chain(:details, :length, [:>, 0])} || @object.then([:respond_to?, :items]){chain(:items, :length, [:>, 0])}	|| @object.then([:respond_to?, :activity]){chain(:activity, :entry_id)} 
+%>	<activity>
 		<text><%= @object.text -%></text>
-		<timestamp><%= @object.timestamp -%></timestamp><%= 
-			@partial.call :tags if @object.respond_to? :tags -%><%=
-			@partial.call :detail if @detail %><%=
-			@partial.call :tracking if @tracking %>
+		<timestamp><%= @object.timestamp -%></timestamp><% if extras then %><%= 
+			"\n"+@partial.call(:tags) if @object.chain(:tags, :length) > 0 %><%=	
+			"\n"+@partial.call(:detail) if @object.chain(:details, :length) > 0 || @object.chain(:items, :length) > 0 %><%= 
+			"\n"+@partial.call(:tracking) if @object.chain(:activity) %><% end %>
 	</activity>
-
