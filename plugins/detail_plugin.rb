@@ -142,6 +142,22 @@ module RedBook
 		end
 
 		class TxtHelper
+			
+			def details(entry, total=1, index=0)
+				entry.then{details}.map{|d| '  '+'- '+pair(d.detail_type => d.name)}.join "\n"
+			end
+
+			def items(entry, total=1, index=0)
+				entry.then{items}.map{|i| '  '+'- '+pair(i.item_type => i.name)}.join "\n"
+			end
+
+			def detail(entry, total=1, index=0)
+				super(entry, total, index)
+			end
+
+		end
+
+		class TxtH
 
 			def detail(entry, total=1, index=0)
 				super(entry, total, index).uncolorize

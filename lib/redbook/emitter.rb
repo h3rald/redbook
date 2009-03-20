@@ -35,14 +35,17 @@ module RedBook
 		class TxtHelper < CliHelper
 
 			def entry(e, total=1, index=0)
-				super(e, total, index).uncolorize
+				"#{e.timestamp.textualize} -- #{e.text}"
 			end
-
+			
 			def message(m)
 				"[#{m.name}] #{m.value}"
 			end
-		end
 
+			def pair(p)
+				super(p).uncolorize
+			end
+		end
 
 		attr_accessor :templates
 

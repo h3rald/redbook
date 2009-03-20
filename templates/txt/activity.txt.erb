@@ -1,3 +1,9 @@
-<%= @helper.activity(@object, @total, @index) %><%= @partial.call :tags if @object.respond_to? :tags %><%=
-@partial.call :detail if @detail %><%=
-@partial.call :tracking if @tracking %>
+<%
+	tags = @object.then([:respond_to?, :tags]){chain(:tags, :length, [:>, 0])}
+	detail = @object.then([:respond_to?, :details]){chain(:details, :length, [:>, 0])} || @object.then([:respond_to?, :items]){chain(:items, :length, [:>, 0])}
+	activity = @object.then([:respond_to?, :activity]){chain(:activity, :entry_id)} 
+	extras = tags || detail || activity
+%><%= @helper.activity(@object, @total, @index) %><% if extras then %><%= 
+	@partial.call :tags if tags %><%=
+	@partial.call :detail if detail %><%=
+	@partial.call :tracking if activity %><% end %>

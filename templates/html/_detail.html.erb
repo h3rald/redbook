@@ -1,14 +1,10 @@
-	<table class="details">
-		<% @object.details.each do |d| %>
-		<tr>
-			<td class="label"><%= d.detail_type.capitalize %></td>
-			<td><%= d.name %></td>
-		</tr>
-		<% end %>
-		<% @object.items.each do |i| %>
-		<tr>
-			<td class="label"><%= i.item_type.capitalize %></td>
-			<td><%= i.name %></td>
-		</tr>
-		<% end %>
-	</table>
+		<table class="details"><% @object.details.each do |d| %>
+			<tr>
+				<td class="label"><%= d.detail_type.capitalize %></td>
+				<td><%= d.name %></td>
+			</tr><% end %><% @object.items.each do |i| %>
+			<tr>
+				<td class="label"><%= i.item_type.capitalize %></td>
+				<td><%= i.name %></td>
+			</tr><% end %>
+		</table>

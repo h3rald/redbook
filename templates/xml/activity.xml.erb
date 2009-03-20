@@ -1,9 +1,12 @@
 <%
-	extras = @object.then([:respond_to?, :tags]){chain(:tags, :length, [:>, 0])} || @object.then([:respond_to?, :details]){chain(:details, :length, [:>, 0])} || @object.then([:respond_to?, :items]){chain(:items, :length, [:>, 0])}	|| @object.then([:respond_to?, :activity]){chain(:activity, :entry_id)} 
+	tags = @object.then([:respond_to?, :tags]){chain(:tags, :length, [:>, 0])}
+	detail = @object.then([:respond_to?, :details]){chain(:details, :length, [:>, 0])} || @object.then([:respond_to?, :items]){chain(:items, :length, [:>, 0])}
+	activity = @object.then([:respond_to?, :activity]){chain(:activity, :entry_id)} 
+	extras = tags || detail || activity
 %>	<activity>
 		<text><%= @object.text -%></text>
 		<timestamp><%= @object.timestamp -%></timestamp><% if extras then %><%= 
-			"\n"+@partial.call(:tags) if @object.chain(:tags, :length) > 0 %><%=	
-			"\n"+@partial.call(:detail) if @object.chain(:details, :length) > 0 || @object.chain(:items, :length) > 0 %><%= 
-			"\n"+@partial.call(:tracking) if @object.chain(:activity) %><% end %>
+			"\n"+@partial.call(:tags) if tags %><%=	
+			"\n"+@partial.call(:detail) if detail %><%= 
+			"\n"+@partial.call(:tracking) if activity %><% end %>
 	</activity>

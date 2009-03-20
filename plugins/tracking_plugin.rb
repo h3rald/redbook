@@ -193,7 +193,7 @@ module RedBook
 
 			def records(a, ttl=1, indx=0)
 				"".tap do |result|
-					if a.respond_to? :records then
+					if a.then([:respond_to?, :records]).chain(:records, :length) > 0 then
 						result << padding(ttl, indx)+pad(indx)+"=> Tracking Records:\n".dark_green
 						a.records.each do |r|
 							result << padding(ttl, indx)+pad(indx)+'- '+pair({:start => r.start.textualize})+' -> '+pair({:end => r.end.textualize})+"\n"
@@ -223,12 +223,34 @@ module RedBook
 
 		class TxtHelper
 
-			def activity(entry, total=1, index=0)
-				super(entry, total, index).uncolorize
+			def activity(a, total=1, index=0)
+				[a.timestamp.textualize, '--',  a.text, "[#{a.activity.tracking}]"].join ' '  
+			end
+
+			def tracking(a, ttl=1, indx=0)
+				"".tap do |result|
+					result << "\n"
+					result << '  '+"- "+pair({:start => a.activity.start.textualize})+' '+pair({:end => a.activity.end.textualize})+"\n"
+					result << '  '+"- "+pair({:duration => a.activity.duration.textualize(RedBook.config.duration_format)})
+					result << '  '
+					result << "(#{a.activity.tracked_duration.textualize(RedBook.config.duration_format)})\n"
+					result << records(a, ttl, indx)
+				end.chomp
 			end
 
 			def activity_tracking(entry, total=1, index=0)
 				super(entry, total, index).uncolorize
+			end
+
+			def records(a, ttl=1, indx=0)
+				"".tap do |result|
+					if a.then([:respond_to?, :records]).chain(:records, :length) > 0 then
+						result << '  '+"=> Tracking Records:\n"
+						a.records.each do |r|
+							result << '    '+'- '+pair({:start => r.start.textualize})+' -> '+pair({:end => r.end.textualize})+"\n"
+						end
+					end
+				end
 			end
 
 		end
