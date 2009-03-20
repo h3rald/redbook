@@ -3,5 +3,5 @@
 	detail = @object.then([:respond_to?, :details]){chain(:details, :length, [:>, 0])} || @object.then([:respond_to?, :items]){chain(:items, :length, [:>, 0])}
 	extras = tags || detail 
 %><%= @helper.entry(@object, @total, @index) %><% if extras then %><%= 
-	"\n"+@partial.call :tags if tags %><%=
-	"\n"+@partial.call :detail if detail %><% end %>
+	"\n"+@partial.call(:tags) if tags %><%=
+	"\n"+@partial.call(:detail) if detail %><% end %>

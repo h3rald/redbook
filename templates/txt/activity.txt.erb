@@ -4,6 +4,6 @@
 	activity = @object.then([:respond_to?, :activity]){chain(:activity, :entry_id)} 
 	extras = tags || detail || activity
 %><%= @helper.activity(@object, @total, @index) %><% if extras then %><%= 
-	@partial.call :tags if tags %><%=
-	@partial.call :detail if detail %><%=
-	@partial.call :tracking if activity %><% end %>
+	"\n"+@partial.call(:tags) if tags %><%=
+	"\n"+@partial.call(:detail) if detail %><%=
+	"\n"+@partial.call(:tracking) if activity %><% end %>
