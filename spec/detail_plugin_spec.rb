@@ -47,6 +47,23 @@ describe RedBook::DetailPlugin do
 		id.get_field(:notes).should == "More notes"
 	end
 
+	it "should allow items to be renamed" do
+		@c.process "insert Testing renaming -project test" 
+		@c.process "insert Testing renaming -version test" 
+		@c.process "insert Testing renaming -project test3" 
+		@c.engine.select
+		@c.process "rename project -from test -to test1"
+		RedBook::Repository::Item.first(:name => 'test1', :item_type => 'project').should_not == nil
+		RedBook::Repository::Item.first(:name => 'test', :item_type => 'version').should_not == nil
+		@c.engine.dataset[0].get_field(:project).should == 'test1'
+		# Merge if item exists
+		RedBook::Repository::Item.all.length.should == 3
+		@c.process "rename project -from test3 -to test1"
+		RedBook::Repository::Item.all(:name => 'test1', :item_type => 'project').length.should == 1
+		RedBook::Repository::Item.all(:name => 'test', :item_type => 'version').length.should == 1
+		RedBook::Repository::Item.all.length.should == 2
+	end
+
 	it "should allow entries to be filtered by projects and items" do
 		@c.process "log Testing items -project RedBook -version 1.0"
 		@c.process "log Testing details -code AB001 -notes Random notes"

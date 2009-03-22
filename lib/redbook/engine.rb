@@ -129,15 +129,42 @@ module RedBook
 		end
 
 		# Renames any record which has a name field
+		#
+		# <i>Hooks</i>
+		# * <i>:rename_special_record</i> :type => Symbol, :from => String, :String => String
 		def rename(type, from, to)
-			c = RedBook::Repository.const_get "#{type.to_s.camel_case}".to_sym
-			raise EngineError, "Unknown table '#{type.to_s.plural}'." unless c
-			raise EngineError, "#{type.to_s.camel_case.plural} cannot be renamed." unless c.method_defined? :name
-			c.first(:name => from).tap do |i|
-				raise EngineError, "There is no #{type.to_s} called '#{from}'" unless i
-				i.name = to
-				i.save
+			table = type.to_s.plural
+			model = type.to_s.camel_case
+			begin
+				c = RedBook::Repository.const_get "#{model.to_sym}".to_sym 
+			rescue
+				return if hook :rename_special_record, :type => type, :from => from, :to => to
+				raise EngineError, "Unknown table '#{table}'."
 			end
+			raise EngineError, "#{type.to_s.camel_case.plural} cannot be renamed." unless c.method_defined? :name
+			item = c.first(:name => from)
+			unless item then
+				raise EngineError, "There is no #{type} called '#{from}'"
+			end
+			item.tap do |i|
+				existing = c.first(:name => to)
+				if existing then # merge (update associations)
+					Repository.const_get("#{model}Map".to_sym).all("#{type}_id".to_sym => i.id).each do |m|
+						m.send("#{type}_id=", existing.id)
+						m.save
+					end
+					i.destroy
+				else
+					i.name = to
+					i.save
+				end
+			end
+			# Update dataset
+			@dataset.each do |e|
+				e.then([:respond_to?, table.to_sym]){e.send(table.to_sym).reload}
+			end
+			# Refresh inventory
+			refresh [table.to_sym]
 		end
 
 		# Redefining Messaging::debug
@@ -212,6 +239,7 @@ module RedBook
 					Repository.const_get("#{model.to_s}Map".to_sym).first("#{name}_id".to_sym => o.id).then(:blank?) do
 						o.destroy
 					end
+					refresh [table]
 				end
 			rescue
 				raise EngineError, "Unable to cleanup '#{table.to_s}'"

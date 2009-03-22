@@ -101,6 +101,7 @@ module RedBook
 
 			# Triggers the execution of a particular hook at instance level.
 			def hook(id, params={})
+				params[:self] = self
 				self.class.hooks.execute id, params
 			end
 		end

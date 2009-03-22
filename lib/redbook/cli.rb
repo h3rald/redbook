@@ -72,8 +72,7 @@ module RedBook
 				else
 					name = Rawline.editor.line.words[0].to_sym
 					matches = match_parameter(name) + match_macro(name)
-					RedBook.inventory_tables.each { |t| matches << t.to_s.singular } if Rawline.editor.line.text.match /^rename\s[a-z]+$/
-					RedBook.inventory_tables.each { |t| matches << t.to_s } if Rawline.editor.line.text.match /^refresh\s[a-z]+$/
+					@engine.inventory.each_key { |t| matches << t.to_s.singular } if Rawline.editor.line.text.match(/^rename\s[a-z]+$/)
 					hook :setup_completion, :cli => self, :matches => matches
 					return matches.find_all { |e| e.to_s.match(/^#{Regexp.escape(str)}/) }
 				end
@@ -86,8 +85,7 @@ module RedBook
 			[].tap do |a|
 				RedBook.operations[name.to_sym].then do
 					parameters.each_value do |v|
-						parameter = "-#{v}"
-						a << parameter unless Rawline.editor.line.text.match parameter
+						a << "-#{v}" unless Rawline.editor.line.text.match v
 					end
 				end
 			end

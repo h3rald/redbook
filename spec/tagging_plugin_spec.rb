@@ -78,9 +78,19 @@ describe RedBook::TaggingPlugin do
 		@c.engine.dataset.length.should == 1
 	end
 
-	it "should add tags to the inventory" do
-		@c.process "refresh tags"
-		@c.engine.inventory[:tags].length.should == RedBook::Repository::Tag.all.length
+	it "should allow tags to be renamed" do
+		@c.process "insert Testing renaming -tags test" 
+		@c.process "insert Testing renaming -tags test2" 
+		@c.process "insert Testing renaming -tags test3" 
+		@c.engine.select
+		@c.process "rename tag -from test -to test1"
+		RedBook::Repository::Tag.first(:name => 'test1').should_not == nil
+		@c.engine.dataset[0].tags[0].name.should == 'test1'
+		# Merge if tag exists
+		RedBook::Repository::Tag.all.length.should == 3
+		@c.process "rename tag -from test2 -to test1"
+		@c.process "rename tag -from test3 -to test1"
+		RedBook::Repository::Tag.all(:name => 'test1').length.should == 1
+		RedBook::Repository::Tag.all.length.should == 1
 	end
-
 end

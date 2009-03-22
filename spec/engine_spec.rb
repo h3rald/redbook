@@ -80,12 +80,4 @@ describe RedBook::Engine do
 		File.exist?(file).should == true
 	end
 
-	it "should allow renaming for named objects" do
-		t = RedBook::Repository::Tag.new :name => 'tag1'
-		t.save
-		@e.rename :tag, 'tag1', 'new_tag'
-		RedBook::Repository::Tag.first(:name => 'new_tag').should_not == nil
-	end
-
-
 end

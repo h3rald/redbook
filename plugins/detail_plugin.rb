@@ -143,7 +143,7 @@ module RedBook
 		end
 
 		class TxtHelper
-			
+
 			def details(entry, total=1, index=0)
 				entry.then{details}.map{|d| '  '+'- '+pair(d.detail_type => d.name)}.join "\n"
 			end
@@ -183,6 +183,38 @@ module RedBook
 			continue
 		end
 
+		define_hook(:rename_special_record) do |params|
+			type = params[:type].to_sym
+			to = params[:to]
+			from = params[:from]
+			if type.in? RedBook.config.items then
+				_old = Repository::Item.first(:item_type => type.to_s, :name => from)
+				raise EngineError, "#{type.to_s.camel_case.capitalize} '#{from}' not found" unless _old
+				_old.tap do |i|
+					existing = Repository::Item.first(:name => to)
+					if existing then # merge (update associations)
+						Repository::ItemMap.all(:item_id => i.id).each do |m|
+							m.item_id = existing.id
+							m.save
+						end
+						i.destroy
+					else
+						i.name = to
+						i.save
+					end
+				end
+				# Update dataset
+				params[:self].dataset.each do |e|
+					e.then([:respond_to?, :items]){e.items.reload}
+				end
+				# Refresh inventory
+				params[:self].refresh [:items]
+				stop(true)
+			else
+				continue(false)
+			end	
+		end
+
 		define_hook(:after_insert) do |params|
 			details = {}
 			items = {}
@@ -190,8 +222,10 @@ module RedBook
 			params[:attributes].each_pair do |k, v|
 				if RedBook.config.details.include? k then
 					entry.set_detail k => v	
+					params[:self].refresh [:details]
 				elsif RedBook.config.items.include? k then
 					entry.set_item k => v	
+					params[:self].refresh [:items]
 				end
 			end
 			continue
@@ -204,8 +238,10 @@ module RedBook
 			params[:attributes].each_pair do |k, v|
 				if RedBook.config.details.include? k then
 					entry.set_detail k => v	
+					params[:self].refresh [:details]
 				elsif RedBook.config.items.include? k then
 					entry.set_item k => v	
+					params[:self].refresh [:items]
 				end
 			end
 			continue

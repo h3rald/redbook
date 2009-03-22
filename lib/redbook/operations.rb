@@ -112,14 +112,6 @@ module RedBook
 		}
 	}
 
-	operation(:refresh){
-		target { type :list }
-		body { |params|
-			@engine.refresh params[:inventory]
-			info "Inventory updated."
-		}
-	}
-
 	operation(:use){
 		target { set :required }
 		body { |params|
@@ -165,9 +157,8 @@ module RedBook
 		body { |params|
 			if @engine.dataset.blank? then
 				warning "Empty dataset."
-				return
 			end
-			display @dataset if RedBook.output
+			display @engine.dataset unless @engine.dataset.blank? || !RedBook.output 
 		}
 	}
 	operation(:clear) {

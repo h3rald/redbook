@@ -86,7 +86,9 @@ module RedBook
 						e.add_tag t
 					end
 				end
+				e.tags.reload
 			end
+			refresh [:tags]
 		end
 
 		def untag(tags, indexes=nil)
@@ -101,6 +103,7 @@ module RedBook
 					end
 				end
 			end
+			refresh [:tags]
 		end
 
 		define_hook(:after_insert) do |params|
@@ -111,6 +114,7 @@ module RedBook
 					entry.add_tag t					
 				end
 			end
+			params[:self].refresh [:tags]
 			continue
 		end
 
@@ -125,6 +129,7 @@ module RedBook
 				tags.each do |t|
 					entry.add_tag t					
 				end
+				params[:self].refresh [:tags]
 			end
 			continue
 		end		
