@@ -19,12 +19,15 @@ module RedBook
 	config.repositories[:personal] = RedBook::HOME_DIR/"personal.rbk"
 
 	# Plugins
-	config.plugins.list = [:tracking, :tagging, :aggregation, :detail]
+	config.plugins.list = [:tracking, :tagging, :aggregation, :detail, :archiving]
 	config.plugins.directories = [LIB_DIR/'../plugins', HOME_DIR/'.redbook-plugins', HOME_DIR/'redbook-plugins']
 
 	# Detail Plugin
 	config.details = [:code, :notes]
 	config.items = [:project, :version]
+
+	# Archiving Plugin
+	config.archiving.directory = RedBook::HOME_DIR/'backup'
 
 	# Aggregation Plugin
 	config.calculation_fields = {}

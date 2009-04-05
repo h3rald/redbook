@@ -5,7 +5,7 @@ module RedBook
 	end
 
 	operation(:calculate) {
-		parameter(:calculate) { set :required; type :enum; restrict_to 'sum', 'average', 'max', 'min'}
+		target { set :required; type :enum; restrict_to 'sum', 'average', 'max', 'min'}
 		parameter(:on) { set :required }
 		body { |params|
 			result = @engine.calculate params[:calculate], params[:on]

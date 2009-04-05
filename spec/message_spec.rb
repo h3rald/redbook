@@ -30,6 +30,7 @@ end
 describe RedBook::Messaging do
 
 	it "should define standard message types" do
+		RedBook.output = true
 		a = TestObserved.new
 		a.info("hello!").name.should == :info
 		a.warning("hello!").name.should == :warning
@@ -39,6 +40,7 @@ describe RedBook::Messaging do
 	end
 
 	it "should be observable" do
+		RedBook.output = true
 		observer = TestObserver.new
 		observed = TestObserved.new(observer)
 		observed.do_something

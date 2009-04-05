@@ -1,13 +1,5 @@
 #!/usr/bin/env ruby
 
-module Kernel
-
-	def msg(name, value)
-		{}.tap { |h| h[name] = value; h.resource_type = :message }
-	end
-
-end
-
 class Object
 
 	def class_instance_variable(pair)
@@ -37,10 +29,6 @@ class Proc #:nodoc:
   end
 end
 
-class Object
-  end
-
-
 class Hash
 
 	attr_accessor :resource_type 
@@ -57,6 +45,14 @@ class Hash
 	def value
 		return nil unless self.pair?
 		values[0]
+	end
+
+end
+
+module Kernel
+
+	def msg(name, value)
+		{}.tap { |h| h[name] = value; h.resource_type = :message }
 	end
 
 end
